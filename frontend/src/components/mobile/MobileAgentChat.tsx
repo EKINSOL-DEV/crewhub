@@ -660,6 +660,140 @@ interface ChatInputAreaProps {
   readonly accentColor: string
 }
 
+interface VoiceControlButtonsProps {
+  readonly isRecording: boolean
+  readonly isSending: boolean
+  readonly isUploading: boolean
+  readonly isSendDisabled: boolean
+  readonly sendBtnBg: string
+  readonly sendBtnColor: string
+  readonly sendBtnCursor: string
+  readonly micSupported: boolean
+  readonly micPreparing: boolean
+  readonly inputValue: string
+  readonly hasPendingFiles: boolean
+  readonly onStopAndSend: () => void
+  readonly onCancelRecording: () => void
+  readonly onStartRecording: () => void
+  readonly onSend: () => void
+}
+
+function VoiceControlButtons({
+  isRecording,
+  isSending,
+  isUploading,
+  isSendDisabled,
+  sendBtnBg,
+  sendBtnColor,
+  sendBtnCursor,
+  micSupported,
+  micPreparing,
+  inputValue,
+  hasPendingFiles,
+  onStopAndSend,
+  onCancelRecording,
+  onStartRecording,
+  onSend,
+}: VoiceControlButtonsProps) {
+  if (isRecording) {
+    return (
+      <>
+        <button
+          onClick={onStopAndSend}
+          title="Stop & send voice message"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            border: 'none',
+            background: '#22c55e',
+            color: '#fff',
+            cursor: 'pointer',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: CLS_BACKGROUND_015S,
+          }}
+        >
+          <ArrowUp size={20} />
+        </button>
+        <button
+          onClick={onCancelRecording}
+          title="Cancel recording"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            border: 'none',
+            background: VAR_MOBILE_ATTACH_BTN_BG,
+            color: VAR_MOBILE_TEXT_SECONDARY,
+            cursor: 'pointer',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: CLS_BACKGROUND_015S,
+          }}
+        >
+          <X size={18} />
+        </button>
+      </>
+    )
+  }
+  const micDisabled = micPreparing || isSending || isUploading
+  return (
+    <>
+      {micSupported && (
+        <button
+          onClick={onStartRecording}
+          disabled={micDisabled}
+          title="Voice message"
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            border: 'none',
+            background: VAR_MOBILE_ATTACH_BTN_BG,
+            color: VAR_MOBILE_TEXT_SECONDARY,
+            cursor: micDisabled ? 'default' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'background 0.15s, color 0.15s',
+          }}
+        >
+          {micPreparing ? '⏳' : <Mic size={20} />}
+        </button>
+      )}
+      {(inputValue.trim() || hasPendingFiles) && (
+        <button
+          onClick={onSend}
+          disabled={isSendDisabled}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 14,
+            border: 'none',
+            background: sendBtnBg,
+            color: sendBtnColor,
+            cursor: sendBtnCursor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18,
+            flexShrink: 0,
+            transition: CLS_BACKGROUND_015S,
+          }}
+        >
+          {isSending ? '⏳' : '➤'}
+        </button>
+      )}
+    </>
+  )
+}
+
 function ChatInputArea({
   inputRef,
   isRecording,
@@ -689,12 +823,15 @@ function ChatInputArea({
   const sendBtnBg = isSendDisabled ? 'var(--mobile-msg-assistant-bg)' : accentColor
   const sendBtnColor = isSendDisabled ? VAR_MOBILE_TEXT_MUTED : '#fff'
   const sendBtnCursor = isSendDisabled ? 'default' : 'pointer'
+  const borderTop = pendingFiles.length > 0 ? 'none' : BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER
+  const attachBg = pendingFiles.length > 0 ? accentColor + '20' : VAR_MOBILE_ATTACH_BTN_BG
+  const attachColor = pendingFiles.length > 0 ? accentColor : VAR_MOBILE_TEXT_SECONDARY
 
   return (
     <div
       style={{
         padding: '10px 12px calc(env(safe-area-inset-bottom, 8px) + 10px)',
-        borderTop: pendingFiles.length > 0 ? 'none' : BORDER_1PX_SOLID_VAR_MOBILE_DIVIDER,
+        borderTop,
         display: 'flex',
         flexDirection: 'column',
         gap: 4,
@@ -734,8 +871,8 @@ function ChatInputArea({
               height: 44,
               borderRadius: 14,
               border: 'none',
-              background: pendingFiles.length > 0 ? accentColor + '20' : VAR_MOBILE_ATTACH_BTN_BG,
-              color: pendingFiles.length > 0 ? accentColor : VAR_MOBILE_TEXT_SECONDARY,
+              background: attachBg,
+              color: attachColor,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -776,99 +913,23 @@ function ChatInputArea({
             el.style.height = Math.min(el.scrollHeight, 100) + 'px'
           }}
         />
-        {isRecording ? (
-          <>
-            <button
-              onClick={onStopAndSend}
-              title="Stop & send voice message"
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                border: 'none',
-                background: '#22c55e',
-                color: '#fff',
-                cursor: 'pointer',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: CLS_BACKGROUND_015S,
-              }}
-            >
-              <ArrowUp size={20} />
-            </button>
-            <button
-              onClick={onCancelRecording}
-              title="Cancel recording"
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                border: 'none',
-                background: VAR_MOBILE_ATTACH_BTN_BG,
-                color: VAR_MOBILE_TEXT_SECONDARY,
-                cursor: 'pointer',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: CLS_BACKGROUND_015S,
-              }}
-            >
-              <X size={18} />
-            </button>
-          </>
-        ) : (
-          <>
-            {micSupported && (
-              <button
-                onClick={onStartRecording}
-                disabled={micPreparing || isSending || isUploading}
-                title="Voice message"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: VAR_MOBILE_ATTACH_BTN_BG,
-                  color: VAR_MOBILE_TEXT_SECONDARY,
-                  cursor: micPreparing || isSending || isUploading ? 'default' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'background 0.15s, color 0.15s',
-                }}
-              >
-                {micPreparing ? '⏳' : <Mic size={20} />}
-              </button>
-            )}
-            {(inputValue.trim() || hasPendingFiles) && (
-              <button
-                onClick={onSend}
-                disabled={isSendDisabled}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  border: 'none',
-                  background: sendBtnBg,
-                  color: sendBtnColor,
-                  cursor: sendBtnCursor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 18,
-                  flexShrink: 0,
-                  transition: CLS_BACKGROUND_015S,
-                }}
-              >
-                {isUploading ? '⏳' : '➤'}
-              </button>
-            )}
-          </>
-        )}
+        <VoiceControlButtons
+          isRecording={isRecording}
+          isSending={isSending}
+          isUploading={isUploading}
+          isSendDisabled={isSendDisabled}
+          sendBtnBg={sendBtnBg}
+          sendBtnColor={sendBtnColor}
+          sendBtnCursor={sendBtnCursor}
+          micSupported={micSupported}
+          micPreparing={micPreparing}
+          inputValue={inputValue}
+          hasPendingFiles={hasPendingFiles}
+          onStopAndSend={onStopAndSend}
+          onCancelRecording={onCancelRecording}
+          onStartRecording={onStartRecording}
+          onSend={onSend}
+        />
       </div>
     </div>
   )
