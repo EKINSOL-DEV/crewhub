@@ -100,8 +100,7 @@ def _extract_final_raw_text(final_result: Any) -> Optional[str]:
     return None
 
 
-async def stream_prop_generation(  # noqa: C901, NOSONAR
-    # noqa: C901 — async generator state machine: multi-phase SSE streaming
+async def stream_prop_generation(  # noqa: C901  # NOSONAR
     # orchestrator (connect→send→accept→poll→post-process). Splitting across
     # multiple sub-generators would obscure the sequential control flow.
     request,  # starlette.requests.Request — checked only for is_disconnected()

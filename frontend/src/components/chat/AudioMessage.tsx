@@ -7,11 +7,13 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
+type AudioVariant = 'zen' | 'float' | 'mobile'
+
 interface AudioMessageProps {
   readonly url: string
   readonly duration?: number
   /** Visual variant to match parent chat bubble */
-  readonly variant?: 'zen' | 'float' | 'mobile'
+  readonly variant?: AudioVariant
   /** Whether this is a user message (affects color) */
   readonly isUser?: boolean
   readonly accentColor?: string
@@ -30,7 +32,7 @@ interface AudioPalette {
   transcriptBorder: string
 }
 
-const NON_USER_AUDIO_PALETTES: Record<'zen' | 'float' | 'mobile', AudioPalette> = {
+const NON_USER_AUDIO_PALETTES: Record<AudioVariant, AudioPalette> = {
   mobile: {
     containerBg: 'rgba(255,255,255,0.08)',
     textColor: '#e2e8f0',
@@ -58,7 +60,7 @@ const NON_USER_AUDIO_PALETTES: Record<'zen' | 'float' | 'mobile', AudioPalette> 
 }
 
 function getAudioPalette(
-  variant: 'zen' | 'float' | 'mobile',
+  variant: AudioVariant,
   isUser: boolean,
   accentColor: string
 ): AudioPalette {

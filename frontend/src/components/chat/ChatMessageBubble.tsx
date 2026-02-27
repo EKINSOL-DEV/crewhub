@@ -427,7 +427,6 @@ interface BubbleRenderProps {
   readonly audioAttachments: BubbleMediaAttachment[]
   readonly accentColor: string
   readonly showThinking: boolean
-  readonly showToolDetails: boolean
 }
 
 function ZenMessageContent({
@@ -563,6 +562,11 @@ function getInlineBubbleStyle(
   }
 }
 
+interface InlineMessageContentProps extends BubbleRenderProps {
+  readonly variant: ChatVariant
+  readonly showToolDetails: boolean
+}
+
 function InlineMessageContent({
   msg,
   isUser,
@@ -575,7 +579,7 @@ function InlineMessageContent({
   showThinking,
   showToolDetails,
   variant,
-}: BubbleRenderProps & { readonly variant: ChatVariant }) {
+}: InlineMessageContentProps) {
   const isDark = variant === 'mobile'
 
   if (msg.role === 'system') {
@@ -755,14 +759,15 @@ const ChatMessageBubbleInner = memo(
       audioAttachments,
       accentColor,
       showThinking,
-      showToolDetails,
     }
 
     if (variant === 'zen') {
       return <ZenMessageContent {...sharedProps} />
     }
 
-    return <InlineMessageContent {...sharedProps} variant={variant} />
+    return (
+      <InlineMessageContent {...sharedProps} variant={variant} showToolDetails={showToolDetails} />
+    )
   },
   (prev, next) => {
     return (
