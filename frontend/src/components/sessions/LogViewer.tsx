@@ -181,12 +181,7 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
       onClick={handleBackdropClick}
       className="fixed inset-0 z-[60] m-0 h-screen w-screen max-h-none max-w-none bg-transparent p-0 overflow-y-auto backdrop:bg-black/80 open:flex open:items-center open:justify-center"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="none" // NOSONAR: decorative/overlay element; presentation role is appropriate here
-        className="relative w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col border bg-background shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95 duration-200"
-      >
+      <div className="relative w-[calc(100vw-2rem)] sm:max-w-4xl h-[calc(100vh-2rem)] sm:max-h-[90vh] flex flex-col border bg-background shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95 duration-200">
         {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}

@@ -147,12 +147,14 @@ function FilterSheet({
         display: 'flex',
         alignItems: 'flex-end',
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
+        if (e.key === 'Escape') onClose()
       }}
     >
-      <div // NOSONAR: onClick only prevents event bubble, not interactive
+      <div
         style={{
           width: '100%',
           maxHeight: '70vh',
@@ -163,8 +165,7 @@ function FilterSheet({
           flexDirection: 'column',
           overflow: 'hidden',
         }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
         aria-modal="true"
       >
         <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 16 }}>

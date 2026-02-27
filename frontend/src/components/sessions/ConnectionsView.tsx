@@ -268,12 +268,7 @@ function ConnectionDialog({
       onClick={(e) => e.target === e.currentTarget && onOpenChange(false)}
       className="backdrop:bg-black/50 backdrop:backdrop-blur-sm rounded-lg border shadow-lg w-full max-w-[500px] p-0 z-[85]"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="none" // NOSONAR: decorative/overlay element; presentation role is appropriate here
-        className="bg-background rounded-lg overflow-hidden"
-      >
+      <div className="bg-background rounded-lg overflow-hidden">
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
           <h2 className="text-lg font-semibold">{isEdit ? 'Edit Connection' : 'Add Connection'}</h2>

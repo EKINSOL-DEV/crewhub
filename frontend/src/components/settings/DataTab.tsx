@@ -414,12 +414,7 @@ function BackupSection() {
         onClick={(e) => e.target === e.currentTarget && setShowImportConfirm(false)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Import Backup?</h2>
             <div className="flex items-start gap-2 mt-2">

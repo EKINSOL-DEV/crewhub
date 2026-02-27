@@ -134,12 +134,14 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
         alignItems: 'flex-end',
         backdropFilter: 'blur(4px)',
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
+        if (e.key === 'Escape') onClose()
       }}
     >
-      <div // NOSONAR: onClick only prevents event bubble, not interactive
+      <div
         style={{
           width: '100%',
           maxHeight: '85vh',
@@ -151,8 +153,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
           gap: 16,
           overflowY: 'auto',
         }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
         aria-modal="true"
       >
         {/* Header */}
@@ -291,12 +292,14 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
         display: 'flex',
         alignItems: 'flex-end',
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
+        if (e.key === 'Escape') onClose()
       }}
     >
-      <div // NOSONAR: onClick only prevents event bubble, not interactive
+      <div
         style={{
           width: '100%',
           maxHeight: '60vh',
@@ -305,8 +308,7 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
           padding: '20px',
           overflowY: 'auto',
         }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
         aria-modal="true"
       >
         <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 16 }}>

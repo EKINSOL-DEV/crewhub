@@ -211,12 +211,14 @@ function ProjectDetailModal({
         alignItems: 'flex-end',
         backdropFilter: 'blur(4px)',
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
+        if (e.key === 'Escape') onClose()
       }}
     >
-      <div // NOSONAR: onClick only prevents event bubble, not interactive
+      <div
         style={{
           width: '100%',
           maxHeight: '85vh',
@@ -228,8 +230,7 @@ function ProjectDetailModal({
           gap: 20,
           overflowY: 'auto',
         }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
         aria-modal="true"
       >
         {/* Header */}

@@ -241,10 +241,8 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
       "
     >
       {/* Dialog content panel */}
-      <div // NOSONAR: onClick only prevents event bubble, not interactive
+      <div
         className="w-[calc(100vw-2rem)] max-w-[1800px] h-[calc(100vh-2rem)] max-h-[1000px] flex flex-col p-0 gap-0 rounded-lg border bg-background shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
         role="document"
       >
         {/* Header */}
@@ -442,15 +440,15 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
           <button
             type="button"
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
-            onClick={() => setEditingTask(null)}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setEditingTask(null)
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setEditingTask(null)
             }}
           >
-            <div // NOSONAR: onClick only prevents event bubble, not interactive
+            <div
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
               aria-modal="true"
             >
               <div className="flex items-center justify-between mb-4">

@@ -30,12 +30,14 @@ export function ParticipantListSheet({
         flexDirection: 'column',
         justifyContent: 'flex-end',
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
+        if (e.key === 'Escape') onClose()
       }}
     >
-      <div // NOSONAR: onClick only prevents event bubble, not interactive
+      <div
         style={{
           background: '#1e293b',
           borderRadius: '20px 20px 0 0',
@@ -44,8 +46,7 @@ export function ParticipantListSheet({
           flexDirection: 'column',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         }}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        role="dialog"
         aria-modal="true"
       >
         {/* Handle */}

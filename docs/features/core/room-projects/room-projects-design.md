@@ -122,7 +122,7 @@ R3F uses Three.js raycasting under the hood — no manual raycaster needed. The 
 
 ```tsx
 <group
-  onClick={(e) => {
+  onClick={(e)=> {
     e.stopPropagation()
     focusRoom(room.id)       // existing: zooms camera
     openRoomPanel(room.id)   // new: opens room HUD

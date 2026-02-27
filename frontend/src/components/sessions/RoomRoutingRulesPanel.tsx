@@ -357,12 +357,7 @@ export function RoomRoutingRulesPanel({
         onClick={(e) => e.target === e.currentTarget && setShowCreateDialog(false)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           {/* Header */}
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Create Routing Rule</h2>
@@ -495,12 +490,7 @@ export function RoomRoutingRulesPanel({
         onClick={(e) => e.target === e.currentTarget && setShowPreviewDialog(false)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden">
           {/* Header */}
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Rule Preview</h2>
@@ -550,12 +540,7 @@ export function RoomRoutingRulesPanel({
         onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           {/* Header */}
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Delete Rule?</h2>

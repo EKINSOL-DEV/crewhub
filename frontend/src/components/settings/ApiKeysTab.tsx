@@ -485,12 +485,7 @@ function CreateKeyModal({
   }
 
   return (
-    <div
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-      role="none"
-      className="bg-background border rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden"
-    >
+    <div className="bg-background border rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
       <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b">
         <div className="p-2 rounded-lg bg-primary/10">
           <Plus className="h-5 w-5 text-primary" />
@@ -638,12 +633,7 @@ function KeyRevealModal({
   }
 
   return (
-    <div
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-      role="none"
-      className="bg-background border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden"
-    >
+    <div className="bg-background border rounded-xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
       <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b bg-amber-50/80 dark:bg-amber-900/20">
         <AlertTriangle className="h-6 w-6 text-amber-500 shrink-0" />
         <div>

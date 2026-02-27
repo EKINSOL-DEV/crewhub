@@ -353,12 +353,15 @@ export function TaskBoard({
             justifyContent: 'center',
             zIndex: 65,
           }}
-          onClick={() => setShowCreateForm(false)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowCreateForm(false)
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setShowCreateForm(false)
           }}
+          aria-label="Close create task dialog"
         >
-          <div // NOSONAR: onClick only prevents event bubble, not interactive
+          <div
             style={{
               background: '#fff',
               borderRadius: 12,
@@ -368,8 +371,7 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
+            role="dialog"
             aria-modal="true"
           >
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>Create New Task</h3>
@@ -402,12 +404,15 @@ export function TaskBoard({
             justifyContent: 'center',
             zIndex: 65,
           }}
-          onClick={() => setEditingTask(null)}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingTask(null)
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Escape') setEditingTask(null)
           }}
+          aria-label="Close edit task dialog"
         >
-          <div // NOSONAR: onClick only prevents event bubble, not interactive
+          <div
             style={{
               background: '#fff',
               borderRadius: 12,
@@ -417,8 +422,7 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
+            role="dialog"
             aria-modal="true"
           >
             <div

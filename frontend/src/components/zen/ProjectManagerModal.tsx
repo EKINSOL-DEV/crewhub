@@ -716,7 +716,8 @@ export function ProjectManagerModal({
   }
 
   return (
-    <div
+    <button
+      type="button"
       style={overlayStyle}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
@@ -724,14 +725,9 @@ export function ProjectManagerModal({
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
-      role="none"
+      aria-label="Close project manager"
     >
-      <div
-        style={modalStyle}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-        role="none"
-      >
+      <div style={modalStyle}>
         {view === 'list' && renderHeader('Manage Projects')}
         {view === 'create' && renderHeader('New Project', true)}
         {view === 'edit' && renderHeader('Edit Project', true)}
@@ -744,6 +740,6 @@ export function ProjectManagerModal({
         {view === 'details' && renderDetails()}
         {view === DELETE_CONFIRM && renderDeleteConfirm()}
       </div>
-    </div>
+    </button>
   )
 }

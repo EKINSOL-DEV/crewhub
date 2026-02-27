@@ -740,12 +740,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         onClick={(e) => e.target === e.currentTarget && setShowCreateRoomDialog(false)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Create New Room</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -840,12 +835,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         onClick={(e) => e.target === e.currentTarget && setDeleteRoomConfirm(null)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Delete Room?</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -874,12 +864,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         onClick={(e) => e.target === e.currentTarget && setShowCreateRuleDialog(false)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Create Routing Rule</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -1005,12 +990,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         onClick={(e) => e.target === e.currentTarget && setDeleteRuleConfirm(null)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">Delete Rule?</h2>
             <p className="text-sm text-muted-foreground mt-1">
@@ -1038,12 +1018,7 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         onClick={(e) => e.target === e.currentTarget && setShowTestRulesDialog(false)}
         className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
       >
-        <div
-          onClick={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
-          role="none"
-          className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden"
-        >
+        <div className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden">
           <div className="px-6 pt-6 pb-4">
             <h2 className="text-lg font-semibold">🧪 Test Routing Rules</h2>
             <p className="text-sm text-muted-foreground mt-1">
