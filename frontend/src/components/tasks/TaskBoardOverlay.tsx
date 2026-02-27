@@ -88,7 +88,6 @@ export function TaskBoardOverlay({
   const [draggedTask, setDraggedTask] = useState<Task | null>(null)
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
 
-  // State for the "Run or Self" dialog when dragging todo → in_progress
   const [pendingDropTask, setPendingDropTask] = useState<Task | null>(null)
   const [showRunOrSelfDialog, setShowRunOrSelfDialog] = useState(false)
   const [showSpawnDialogForDrop, setShowSpawnDialogForDrop] = useState(false)
@@ -216,7 +215,6 @@ export function TaskBoardOverlay({
       return
     }
 
-    // Special case: todo → in_progress shows the choice dialog
     if (draggedTask.status === 'todo' && newStatus === 'in_progress') {
       setPendingDropTask(draggedTask)
       setShowRunOrSelfDialog(true)
@@ -333,8 +331,9 @@ export function TaskBoardOverlay({
           const isDropTarget = dragOverColumn === col.status
 
           return (
-            <div
+            <section
               key={col.status}
+              aria-label={`${col.label} tasks`}
               className={cn(
                 'flex flex-col rounded-xl border bg-muted/30 min-h-[400px] transition-all',
                 isDropTarget &&
@@ -343,13 +342,6 @@ export function TaskBoardOverlay({
               onDragOver={(e) => handleDragOver(e, col.status)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, col.status)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                }
-              }}
-              role="region"
-              tabIndex={0}
             >
               {/* Column Header */}
               <div
@@ -390,18 +382,11 @@ export function TaskBoardOverlay({
                   </div>
                 ) : (
                   columnTasks.map((task) => (
-                    <div
+                    <article
                       key={task.id}
                       draggable
                       onDragStart={handleTaskDragStart(task)}
                       onDragEnd={handleDragEnd}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                        }
-                      }}
-                      role="group"
-                      tabIndex={0}
                       className={cn(
                         'cursor-grab active:cursor-grabbing transition-opacity',
                         draggedTask?.id === task.id && 'opacity-50'
@@ -413,11 +398,11 @@ export function TaskBoardOverlay({
                         onClick={(t) => setEditingTask(t)} // NOSONAR: mouse/drag interaction
                         onStatusChange={handleStatusChange}
                       />
-                    </div>
+                    </article>
                   ))
                 )}
               </div>
-            </div>
+            </section>
           )
         })}
       </div>
@@ -584,7 +569,6 @@ export function TaskBoardOverlay({
           </button>
         )}
 
-        {/* Run or Self Dialog - shown when dragging todo → in_progress */}
         {pendingDropTask && (
           <RunOrSelfDialog
             task={pendingDropTask}
