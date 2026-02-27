@@ -258,32 +258,42 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
         maxWidth: '100%',
       }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          fontWeight: 500,
-          color: '#b45309',
-          cursor: hasDetails ? 'pointer' : 'default',
-        }}
-        role={hasDetails ? 'button' : undefined}
-        tabIndex={hasDetails ? 0 : undefined}
-        aria-expanded={hasDetails ? expanded : undefined}
-        onClick={() => hasDetails && setExpanded(!expanded)}
-        onKeyDown={(e) => {
-          if (!hasDetails) return
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setExpanded(!expanded)
-          }
-        }}
-      >
-        🔧 {tool.name} {isSuccess ? '✓' : '✗'}
-        {hasDetails && (
+      {hasDetails ? (
+        <button
+          type="button"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontWeight: 500,
+            color: '#b45309',
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+            textAlign: 'left',
+            width: '100%',
+          }}
+          aria-expanded={expanded}
+          onClick={() => setExpanded(!expanded)}
+        >
+          🔧 {tool.name} {isSuccess ? '✓' : '✗'}
           <span style={{ fontSize: 10, marginLeft: 'auto' }}>{expanded ? '▼' : '▶'}</span>
-        )}
-      </div>
+        </button>
+      ) : (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontWeight: 500,
+            color: '#b45309',
+          }}
+        >
+          🔧 {tool.name} {isSuccess ? '✓' : '✗'}
+        </div>
+      )}
       {expanded && tool.input && (
         <pre
           style={{

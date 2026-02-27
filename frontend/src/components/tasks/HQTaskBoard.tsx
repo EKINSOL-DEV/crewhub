@@ -260,15 +260,17 @@ function CompactTaskCard({
 
   return (
     <div
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onClick={() => onClick?.(task)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          onClick?.(task)
-        }
-      }}
+      {...(onClick ? {
+        role: 'button' as const,
+        tabIndex: 0,
+        onClick: () => onClick(task),
+        onKeyDown: (e: React.KeyboardEvent) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onClick(task)
+          }
+        },
+      } : {})}
       className={cn(
         'group px-2 py-1.5 bg-gray-50 dark:bg-gray-800 rounded border-l-2 cursor-pointer',
         'hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',

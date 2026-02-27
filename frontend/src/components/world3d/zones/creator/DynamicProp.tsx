@@ -30,9 +30,22 @@ interface DynamicPropProps {
   readonly onDraggingChanged?: (dragging: boolean) => void
 }
 
+function PartGeometry({ type, args, onRef }: {
+  type: string
+  args: any
+  onRef: (geo: THREE.BufferGeometry | null) => void
+}) {
+  switch (type) {
+    case 'box': return <boxGeometry ref={onRef} args={args} />
+    case 'cylinder': return <cylinderGeometry ref={onRef} args={args} />
+    case 'sphere': return <sphereGeometry ref={onRef} args={args} />
+    case 'cone': return <coneGeometry ref={onRef} args={args} />
+    case 'torus': return <torusGeometry ref={onRef} args={args} />
+    default: return <boxGeometry ref={onRef} args={[0.3, 0.3, 0.3]} />
+  }
+}
+
 function DynamicMesh({
-  // NOSONAR
-  // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
   part,
   index,
   editMode,
@@ -48,30 +61,12 @@ function DynamicMesh({
   const toon = getToonMaterialProps(part.color)
   const meshRef = useRef<THREE.Mesh>(null)
 
-  // Center geometry so pivot point is at visual center
   const centerGeometry = useCallback((geo: THREE.BufferGeometry | null) => {
     if (geo) {
       geo.computeBoundingBox()
       geo.center()
     }
   }, [])
-
-  const geometry = (() => {
-    switch (part.type) {
-      case 'box':
-        return <boxGeometry ref={centerGeometry} args={part.args as any} />
-      case 'cylinder':
-        return <cylinderGeometry ref={centerGeometry} args={part.args as any} />
-      case 'sphere':
-        return <sphereGeometry ref={centerGeometry} args={part.args as any} />
-      case 'cone':
-        return <coneGeometry ref={centerGeometry} args={part.args as any} />
-      case 'torus':
-        return <torusGeometry ref={centerGeometry} args={part.args as any} />
-      default:
-        return <boxGeometry ref={centerGeometry} args={[0.3, 0.3, 0.3]} />
-    }
-  })()
 
   const rotation =
     part.rotation && (part.rotation[0] !== 0 || part.rotation[1] !== 0 || part.rotation[2] !== 0)
@@ -132,7 +127,7 @@ function DynamicMesh({
           : undefined
       }
     >
-      {geometry}
+      <PartGeometry type={part.type} args={part.args as any} onRef={centerGeometry} />
       {part.emissive ? (
         <meshStandardMaterial
           color={selected ? '#88aaff' : part.color}
@@ -170,7 +165,6 @@ function SelectedPartMesh({
       ? part.rotation
       : undefined
 
-  // Center geometry so TransformControls gizmo appears at visual center
   const centerGeometry = useCallback((geo: THREE.BufferGeometry | null) => {
     if (geo) {
       geo.computeBoundingBox()
@@ -178,26 +172,9 @@ function SelectedPartMesh({
     }
   }, [])
 
-  const geometry = (() => {
-    switch (part.type) {
-      case 'box':
-        return <boxGeometry ref={centerGeometry} args={part.args as any} />
-      case 'cylinder':
-        return <cylinderGeometry ref={centerGeometry} args={part.args as any} />
-      case 'sphere':
-        return <sphereGeometry ref={centerGeometry} args={part.args as any} />
-      case 'cone':
-        return <coneGeometry ref={centerGeometry} args={part.args as any} />
-      case 'torus':
-        return <torusGeometry ref={centerGeometry} args={part.args as any} />
-      default:
-        return <boxGeometry ref={centerGeometry} args={[0.3, 0.3, 0.3]} />
-    }
-  })()
-
   return (
     <mesh ref={meshRef} castShadow position={part.position} rotation={rotation}>
-      {geometry}
+      <PartGeometry type={part.type} args={part.args as any} onRef={centerGeometry} />
       {part.emissive ? (
         <meshStandardMaterial color="#88aaff" emissive="#4466ff" emissiveIntensity={0.8} />
       ) : (

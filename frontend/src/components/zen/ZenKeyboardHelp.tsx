@@ -4,7 +4,7 @@
  * Triggered by Ctrl+/ or ?
  */
 
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface ShortcutGroup {
   title: string
@@ -112,15 +112,15 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
     return () => window.removeEventListener('keydown', handleKeyDown, true)
   }, [onClose])
 
-  // Click outside to close
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
+  // Click outside to close (a11y: avoid handlers on non-interactive elements)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === backdropRef.current) onClose()
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [onClose])
 
   // Focus trap
   useEffect(() => {
@@ -129,16 +129,11 @@ export function ZenKeyboardHelp({ onClose }: ZenKeyboardHelpProps) {
 
   return (
     <div
-      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
+      ref={backdropRef}
       className="zen-keyboard-help-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Keyboard Shortcuts"
-      tabIndex={0}
-      onClick={handleBackdropClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
     >
       <div ref={modalRef} className="zen-keyboard-help" tabIndex={-1}>
         <header className="zen-keyboard-help-header">

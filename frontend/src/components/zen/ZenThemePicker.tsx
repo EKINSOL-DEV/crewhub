@@ -70,15 +70,17 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
     }
   }, [selectedIndex])
 
-  // Click outside to close
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === containerRef.current) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
+  // Click outside to close + Escape (a11y: avoid handlers on non-interactive elements)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handleClick = (e: MouseEvent) => { if (e.target === containerRef.current) onClose() }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClick)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClick)
+    }
+  }, [onClose])
 
   const handleThemeClick = useCallback(
     (theme: ThemeInfo, index: number) => {
@@ -91,17 +93,11 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
 
   return (
     <div
-      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
       ref={containerRef}
       className="zen-theme-picker-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Select Theme"
-      tabIndex={0}
-      onClick={handleBackdropClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
     >
       <div className="zen-theme-picker">
         <div className="zen-theme-picker-header">

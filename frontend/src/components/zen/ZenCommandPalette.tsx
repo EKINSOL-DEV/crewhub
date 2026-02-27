@@ -158,15 +158,22 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
     items[selectedIndex]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [selectedIndex])
 
-  // Click outside to close
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
+  // Click outside to close + Escape key via useEffect (a11y: avoid handlers on non-interactive elements)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === backdropRef.current) onClose()
+    }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClick)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClick)
+    }
+  }, [onClose])
 
   // Category labels
   const categoryLabels: Record<string, { icon: string; label: string }> = {
@@ -181,16 +188,11 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
 
   return (
     <div
-      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
+      ref={backdropRef}
       className="zen-command-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Command Palette"
-      tabIndex={0}
-      onClick={handleBackdropClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
     >
       <div className="zen-command-palette">
         <div className="zen-command-input-wrapper">

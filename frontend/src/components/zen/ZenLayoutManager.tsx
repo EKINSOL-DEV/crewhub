@@ -192,27 +192,26 @@ export function ZenSaveLayoutModal({
     }
   }, [name, description, layout, existingLayout, onSave, onClose])
 
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
+  // Close on click-outside or Escape (a11y: avoid handlers on non-interactive elements)
+  const saveBackdropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handleClick = (e: MouseEvent) => { if (e.target === saveBackdropRef.current) onClose() }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClick)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClick)
+    }
+  }, [onClose])
 
   return (
     <div
-      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
+      ref={saveBackdropRef}
       className="zen-save-layout-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Save Layout"
-      tabIndex={0}
-      onClick={handleBackdropClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
     >
       <div className="zen-save-layout-modal">
         <header className="zen-save-layout-header">
@@ -388,27 +387,26 @@ export function ZenLayoutPicker({
     [confirmDelete, onDeleteSaved]
   )
 
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
+  // Close on click-outside or Escape (a11y: avoid handlers on non-interactive elements)
+  const pickerBackdropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    const handleClick = (e: MouseEvent) => { if (e.target === pickerBackdropRef.current) onClose() }
+    document.addEventListener('keydown', handleKey)
+    document.addEventListener('mousedown', handleClick)
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      document.removeEventListener('mousedown', handleClick)
+    }
+  }, [onClose])
 
   return (
     <div
-      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
+      ref={pickerBackdropRef}
       className="zen-layout-picker-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Choose Layout"
-      tabIndex={0}
-      onClick={handleBackdropClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
     >
       <div className="zen-layout-picker-modal">
         <header className="zen-layout-picker-header">

@@ -70,12 +70,18 @@ export function ProjectFilterSelect({
     [onSelect]
   )
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setIsOpen(false)
-      setSearch('')
+  // Escape key handler via useEffect (a11y: avoid handlers on non-interactive elements)
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+        setSearch('')
+      }
     }
-  }, [])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen])
 
   const displayLabel = currentProjectId
     ? currentProjectName || projects.find((p) => p.id === currentProjectId)?.name || 'Project'
@@ -87,9 +93,6 @@ export function ProjectFilterSelect({
     <div
       ref={dropdownRef}
       style={{ position: 'relative' }}
-      onKeyDown={handleKeyDown}
-      role="group"
-      tabIndex={-1}
     >
       {/* Trigger button */}
       <button

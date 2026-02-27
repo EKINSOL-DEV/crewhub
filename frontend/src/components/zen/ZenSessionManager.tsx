@@ -214,27 +214,23 @@ export function ZenAgentPicker({
     setSelectedIndex(0)
   }, [query])
 
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.target === e.currentTarget) {
-        onClose()
-      }
-    },
-    [onClose]
-  )
+  // Close on click-outside (a11y: avoid handlers on non-interactive elements)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (e.target === backdropRef.current) onClose()
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [onClose])
 
   return (
     <div
-      // NOSONAR: backdrop div closes modal on click; keyboard handler added for accessibility
+      ref={backdropRef}
       className="zen-picker-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Select Agent"
-      tabIndex={0}
-      onClick={handleBackdropClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-      }}
     >
       <div className="zen-picker-modal">
         <div className="zen-picker-search">

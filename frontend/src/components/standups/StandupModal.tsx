@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useStandups } from '@/hooks/useStandups'
 import { API_BASE } from '@/lib/api'
 
@@ -114,13 +114,27 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
     }
   }
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     onClose()
     onComplete?.()
-  }
+  }, [onClose, onComplete])
+
+  // Close on click-outside or Escape (a11y: avoid handlers on non-interactive elements)
+  const backdropRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
+    const onClick = (e: MouseEvent) => { if (e.target === backdropRef.current) handleClose() }
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onClick)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.removeEventListener('mousedown', onClick)
+    }
+  }, [handleClose])
 
   return (
     <div
+      ref={backdropRef}
       style={{
         position: 'fixed',
         inset: 0,
@@ -134,21 +148,6 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
       role="dialog"
       aria-modal="true"
       aria-label="Standup"
-      tabIndex={0}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) handleClose()
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          handleClose()
-          return
-        }
-
-        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
-          e.preventDefault()
-          handleClose()
-        }
-      }}
     >
       <div
         style={{
