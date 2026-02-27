@@ -27,7 +27,7 @@ export function ZenTooltip({
 }: ZenTooltipProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [coords, setCoords] = useState({ x: 0, y: 0 })
-  const triggerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
   const timeoutRef = useRef<number | null>(null)
 
@@ -112,18 +112,17 @@ export function ZenTooltip({
 
   return (
     <>
-      <div
+      <button
+        type="button"
         ref={triggerRef}
         className="zen-tooltip-trigger"
         onMouseEnter={showTooltip}
         onMouseLeave={hideTooltip}
         onFocus={showTooltip}
         onBlur={hideTooltip}
-        role="button"
-        tabIndex={0}
       >
         {children}
-      </div>
+      </button>
 
       {isVisible &&
         createPortal(

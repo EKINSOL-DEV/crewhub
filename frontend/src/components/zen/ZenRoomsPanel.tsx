@@ -22,11 +22,10 @@ interface RoomItemProps {
 
 function RoomItem({ room, isSelected, sessionCount, onSelect }: RoomItemProps) {
   return (
-    <div
+    <button
+      type="button"
       className={`zen-room-item ${isSelected ? 'zen-room-item-selected' : ''}`}
       onClick={onSelect}
-      role="button"
-      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -64,7 +63,7 @@ function RoomItem({ room, isSelected, sessionCount, onSelect }: RoomItemProps) {
           ⭐
         </div>
       )}
-    </div>
+    </button>
   )
 }
 
@@ -188,7 +187,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
       </div>
 
       {/* All rooms option */}
-      <div className="zen-rooms-list">
+      <button type="button" className="zen-rooms-list">
         <div
           className={`zen-room-item zen-room-item-all ${selectedRoomId ? '' : 'zen-room-item-selected'}`}
           onClick={() => handleSelect(null)}
@@ -220,7 +219,7 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
             onSelect={() => handleSelect(room)}
           />
         ))}
-      </div>
+      </button>
 
       {/* Footer with count */}
       <div className="zen-rooms-footer">

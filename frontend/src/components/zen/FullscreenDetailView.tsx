@@ -367,14 +367,13 @@ export function FullscreenDetailView({
   const statusConfig = task ? getStatusConfig(task.status) : null
 
   const overlay = (
-    <div
+    <button
+      type="button"
       className="zen-fs-overlay"
       data-fullscreen-overlay
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
-      tabIndex={0}
-      role="button"
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           if (e.target === e.currentTarget) onClose()
@@ -593,7 +592,7 @@ export function FullscreenDetailView({
       </div>
 
       <style>{fullscreenStyles}</style>
-    </div>
+    </button>
   )
 
   return createPortal(overlay, document.body)

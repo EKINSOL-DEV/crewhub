@@ -63,6 +63,8 @@ export function DocumentUploadZone({ projectId, onUploadComplete }: DocumentUplo
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={handleDrop}
+      role="region"
+      aria-label="Document upload zone"
     >
       {uploading ? (
         <div className="text-sm text-muted-foreground">Uploading...</div>

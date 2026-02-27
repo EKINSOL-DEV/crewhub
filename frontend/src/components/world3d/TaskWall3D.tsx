@@ -90,7 +90,8 @@ export function TaskWall3D({
           pointerEvents: pointerEventsEnabled,
         }}
       >
-        <div
+        <button
+          type="button"
           data-world-ui
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => {
@@ -104,8 +105,6 @@ export function TaskWall3D({
               e.nativeEvent.stopImmediatePropagation()
             }
           }}
-          tabIndex={0}
-          role="button"
           onPointerMove={(e) => e.stopPropagation()}
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
@@ -136,7 +135,7 @@ export function TaskWall3D({
             compact={false}
             maxTasksPerColumn={6}
           />
-        </div>
+        </button>
       </Html>
 
       {/* Focus button below the board (only show when not already in board focus) */}

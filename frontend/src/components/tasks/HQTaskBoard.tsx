@@ -259,6 +259,7 @@ function CompactTaskCard({
   }
 
   return (
+
     <div
       {...(onClick ? {
         role: 'button' as const,

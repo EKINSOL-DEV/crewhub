@@ -188,14 +188,13 @@ export function CrewBar({ agents, config, onTogglePin, className }: CrewBarProps
           {showOptions && (
             <>
               {/* Backdrop to close */}
-              <div
+              <button
+                type="button"
                 className="fixed inset-0 z-[59]"
                 onClick={() => setShowOptions(false)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') setShowOptions(false)
                 }}
-                role="button"
-                tabIndex={0}
                 aria-label="Close options"
               />
 

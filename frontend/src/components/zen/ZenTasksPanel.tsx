@@ -52,11 +52,10 @@ function TaskItem({ task, onStatusChange, onClick, isSelected }: Readonly<TaskIt
   }
 
   return (
-    <div
+    <button
+      type="button"
       className={`zen-task-item zen-task-status-${task.status}${isSelected ? ' zen-task-item-selected' : ''}`}
       onClick={onClick}
-      role="button"
-      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -103,7 +102,7 @@ function TaskItem({ task, onStatusChange, onClick, isSelected }: Readonly<TaskIt
           )}
         </div>
       )}
-    </div>
+    </button>
   )
 }
 

@@ -495,7 +495,8 @@ export function ProjectManagerModal({
           activeProjects.map((project) => {
             const ov = overview.find((o) => o.id === project.id)
             return (
-              <div
+              <button
+                type="button"
                 key={project.id}
                 style={{
                   display: 'flex',
@@ -512,8 +513,6 @@ export function ProjectManagerModal({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') openDetails(project)
                 }}
-                role="button"
-                tabIndex={0}
                 onMouseEnter={(e) => (e.currentTarget.style.background = VAR_ZEN_BG_HOVER)}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
@@ -563,7 +562,7 @@ export function ProjectManagerModal({
                 >
                   {ov ? `${ov.room_count} rooms` : ''}
                 </div>
-              </div>
+              </button>
             )
           })
         )}

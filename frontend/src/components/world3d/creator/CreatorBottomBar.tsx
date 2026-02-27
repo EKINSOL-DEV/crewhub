@@ -165,15 +165,14 @@ export function CreatorBottomBar() {
           {displayedProps.map((meta) => {
             const isSelected = selectedPropId === meta.propId
             return (
-              <div
+              <button
+                type="button"
                 key={meta.propId}
                 style={propCardStyle(isSelected)}
                 onClick={() => handlePropClick(meta.propId)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') handlePropClick(meta.propId)
                 }}
-                role="button"
-                tabIndex={0}
                 title={meta.displayName}
               >
                 {/* Color block with emoji */}
@@ -226,7 +225,7 @@ export function CreatorBottomBar() {
                 >
                   {meta.displayName}
                 </div>
-              </div>
+              </button>
             )
           })}
 
@@ -249,15 +248,14 @@ export function CreatorBottomBar() {
                 const propId = `crewhub:${gen.id}`
                 const isSelected = selectedPropId === propId
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={gen.id}
                     style={propCardStyle(isSelected)}
                     onClick={() => handlePropClick(propId)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') handlePropClick(propId)
                     }}
-                    role="button"
-                    tabIndex={0}
                     title={gen.prompt || gen.name}
                   >
                     {/* Icon block */}
@@ -310,7 +308,7 @@ export function CreatorBottomBar() {
                     >
                       {gen.name}
                     </div>
-                  </div>
+                  </button>
                 )
               })
             })()}
@@ -324,7 +322,7 @@ export function CreatorBottomBar() {
       </div>
 
       {/* Category Bar */}
-      <div style={categoryBarStyle}>
+      <button type="button" style={categoryBarStyle}>
         {/* "All" chip */}
         <div
           style={chipStyle(activeCategory === 'All')}
@@ -344,34 +342,32 @@ export function CreatorBottomBar() {
           const hasProps = ALL_PROPS.some((p) => p.category === cat)
           if (!hasProps) return null
           return (
-            <div
+            <button
+              type="button"
               key={cat}
               style={chipStyle(activeCategory === cat)}
               onClick={() => handleCategoryClick(cat)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') handleCategoryClick(cat)
               }}
-              role="button"
-              tabIndex={0}
             >
               {CATEGORY_LABELS[cat]}
-            </div>
+            </button>
           )
         })}
 
         {/* "✨ Generated" chip — AI-generated custom props */}
-        <div
+        <button
+          type="button"
           style={chipStyle(activeCategory === 'generated')}
           onClick={() => handleCategoryClick('generated')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('generated')
           }}
-          role="button"
-          tabIndex={0}
         >
           ✨ Generated
-        </div>
-      </div>
+        </button>
+      </button>
     </div>
   )
 }

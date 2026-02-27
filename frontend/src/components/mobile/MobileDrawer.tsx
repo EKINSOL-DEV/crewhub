@@ -55,7 +55,7 @@ const MENU_ITEMS: MenuItem[] = [
 ]
 
 export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: MobileDrawerProps) {
-  const backdropRef = useRef<HTMLDivElement>(null)
+  const backdropRef = useRef<HTMLButtonElement>(null)
 
   // Close on escape
   useEffect(() => {
@@ -80,11 +80,10 @@ export function MobileDrawer({ open, onClose, onNavigate, currentPanel }: Mobile
   return (
     <>
       {/* Backdrop */}
-      <div
+      <button
+        type="button"
         ref={backdropRef}
         onClick={onClose}
-        tabIndex={0}
-        role="button"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             onClose()

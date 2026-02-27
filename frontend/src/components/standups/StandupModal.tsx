@@ -133,6 +133,7 @@ export function StandupModal({ open, onClose, onComplete }: StandupModalProps) {
   }, [handleClose])
 
   return (
+
     <div
       ref={backdropRef}
       style={{

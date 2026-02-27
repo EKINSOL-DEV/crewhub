@@ -158,6 +158,7 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
     items[selectedIndex]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [selectedIndex])
 
+
   // Click outside to close + Escape key via useEffect (a11y: avoid handlers on non-interactive elements)
   const backdropRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -187,12 +188,13 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
   let globalIndex = -1
 
   return (
+
     <div
       ref={backdropRef}
       className="zen-command-backdrop"
-      role="dialog"
       aria-modal="true"
       aria-label="Command Palette"
+
     >
       <div className="zen-command-palette">
         <div className="zen-command-input-wrapper">

@@ -123,7 +123,8 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
   const currentColumn = COLUMNS.find((c) => c.status === task.status)
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'fixed',
         inset: 0,
@@ -137,8 +138,6 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
@@ -267,7 +266,7 @@ function TaskDetailModal({ task, onClose, onUpdateStatus }: TaskDetailModalProps
           </div>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -282,7 +281,8 @@ interface FilterSheetProps {
 
 function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: FilterSheetProps) {
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'fixed',
         inset: 0,
@@ -295,8 +295,6 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
@@ -375,7 +373,7 @@ function FilterSheet({ projects, selectedProjectId, onSelectProject, onClose }: 
           ))}
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 

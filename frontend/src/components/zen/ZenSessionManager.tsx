@@ -214,6 +214,7 @@ export function ZenAgentPicker({
     setSelectedIndex(0)
   }, [query])
 
+
   // Close on click-outside (a11y: avoid handlers on non-interactive elements)
   const backdropRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -228,9 +229,9 @@ export function ZenAgentPicker({
     <div
       ref={backdropRef}
       className="zen-picker-backdrop"
-      role="dialog"
       aria-modal="true"
       aria-label="Select Agent"
+
     >
       <div className="zen-picker-modal">
         <div className="zen-picker-search">

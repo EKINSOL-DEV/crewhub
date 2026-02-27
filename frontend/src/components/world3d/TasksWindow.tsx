@@ -163,10 +163,9 @@ export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
       }}
     >
       {/* Header (draggable) */}
-      <div
+      <button
+        type="button"
         onMouseDown={handleDragStart}
-        role="button"
-        tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
         }}
@@ -237,7 +236,7 @@ export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
         >
           ✕
         </button>
-      </div>
+      </button>
 
       {/* Task list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 6 }}>
@@ -287,11 +286,10 @@ export function TasksWindow({ projectId, roomId, onClose }: TasksWindowProps) {
       </div>
 
       {/* Resize handle (bottom-right corner) */}
-      <div
+      <button
+        type="button"
         data-resize-handle
         onMouseDown={handleResizeStart}
-        role="button"
-        tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
         }}

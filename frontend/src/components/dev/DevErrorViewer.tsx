@@ -328,10 +328,9 @@ function ErrorViewerModal({ onClose }: Readonly<{ onClose: () => void }>) {
                 }}
               >
                 {/* Error summary row */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setExpandedId(expanded ? null : err.id)}
-                  tabIndex={0}
-                  role="button"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       setExpandedId(expanded ? null : err.id)
@@ -380,7 +379,7 @@ function ErrorViewerModal({ onClose }: Readonly<{ onClose: () => void }>) {
                   >
                     {formatTime(err.timestamp)}
                   </span>
-                </div>
+                </button>
 
                 {/* Expanded details */}
                 {expanded && (

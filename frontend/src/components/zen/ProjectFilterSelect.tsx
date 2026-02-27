@@ -90,6 +90,7 @@ export function ProjectFilterSelect({
   const currentProject = currentProjectId ? projects.find((p) => p.id === currentProjectId) : null
 
   return (
+
     <div
       ref={dropdownRef}
       style={{ position: 'relative' }}

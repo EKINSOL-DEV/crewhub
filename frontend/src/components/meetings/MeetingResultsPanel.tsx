@@ -169,7 +169,8 @@ export function MeetingResultsPanel() {
   if (!sidebarMeetingId) return null
 
   const overlay = (
-    <div
+    <button
+      type="button"
       data-fullscreen-overlay
       style={{
         position: 'fixed',
@@ -185,8 +186,6 @@ export function MeetingResultsPanel() {
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose()
       }}
-      tabIndex={0}
-      role="button"
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           if (e.target === e.currentTarget) handleClose()
@@ -287,7 +286,7 @@ export function MeetingResultsPanel() {
           to { opacity: 1; }
         }
       `}</style>
-    </div>
+    </button>
   )
 
   return createPortal(overlay, document.body)

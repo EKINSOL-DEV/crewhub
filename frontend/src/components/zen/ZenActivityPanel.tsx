@@ -79,12 +79,11 @@ function ActiveTaskItem({
   readonly onSelect: () => void
 }>) {
   return (
-    <div
+    <button
+      type="button"
       className={`zen-active-task-item zen-fade-in ${isSelected ? 'zen-active-task-item-selected' : ''}`}
       style={{ opacity, cursor: 'pointer' }}
       onClick={onSelect}
-      role="button"
-      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -102,7 +101,7 @@ function ActiveTaskItem({
           </span>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 

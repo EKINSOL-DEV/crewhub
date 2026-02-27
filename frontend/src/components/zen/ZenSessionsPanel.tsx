@@ -66,11 +66,10 @@ function SessionItem({ session, displayName, isActive, isSelected, onSelect }: S
   const status = isActive ? 'active' : 'idle'
 
   return (
-    <div
+    <button
+      type="button"
       className={`zen-session-item ${isSelected ? 'zen-session-item-selected' : ''}`}
       onClick={onSelect}
-      role="button"
-      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -93,7 +92,7 @@ function SessionItem({ session, displayName, isActive, isSelected, onSelect }: S
           className={`zen-status-dot zen-status-dot-${status === 'active' ? 'thinking' : 'idle'}`}
         />
       </div>
-    </div>
+    </button>
   )
 }
 

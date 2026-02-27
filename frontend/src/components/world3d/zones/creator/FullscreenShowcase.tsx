@@ -91,7 +91,8 @@ export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps
   }, [codeContent])
 
   const overlay = (
-    <div
+    <button
+      type="button"
       className="psc-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
@@ -99,8 +100,6 @@ export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div className="psc-topbar">
         <div className="psc-topbar-left">
@@ -160,7 +159,7 @@ export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps
       </div>
 
       <style>{showcaseStyles}</style>
-    </div>
+    </button>
   )
 
   return createPortal(overlay, document.body)
@@ -250,14 +249,13 @@ function ShowcaseCard({
   const Comp = prop.component
 
   return (
-    <div
+    <button
+      type="button"
       className={`psc-card ${hovered ? 'psc-card-hover' : ''}`}
       onClick={onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onClick()
       }}
-      role="button"
-      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -280,7 +278,7 @@ function ShowcaseCard({
       <div className="psc-card-label" style={{ color: hovered ? prop.color : '#aaaacc' }}>
         {prop.name}
       </div>
-    </div>
+    </button>
   )
 }
 

@@ -52,7 +52,7 @@ function TreeNode({
   }, [isDir, node, onSelect])
 
   return (
-    <div>
+    <button type="button">
       <div
         role="button"
         tabIndex={0}
@@ -145,7 +145,7 @@ function TreeNode({
             onExpand={onExpand}
           />
         ))}
-    </div>
+    </button>
   )
 }
 

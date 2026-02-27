@@ -219,13 +219,12 @@ export function TaskTicker({ sessions, getRoomForSession, defaultRoomId }: TaskT
           </div>
 
           {/* Resize handle (bottom-right corner) */}
-          <div
+          <button
+            type="button"
             onMouseDown={(e) => handleResizeStart(e, 'both')}
             onKeyDown={(e: React.KeyboardEvent) => {
               if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
             }}
-            tabIndex={0}
-            role="button"
             style={{
               position: 'absolute',
               bottom: 0,

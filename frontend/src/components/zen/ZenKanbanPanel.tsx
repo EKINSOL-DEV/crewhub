@@ -66,7 +66,8 @@ function KanbanCard({
   }
 
   return (
-    <div
+    <button
+      type="button"
       className={`zen-kanban-card ${isDragging ? 'zen-kanban-card-dragging' : ''}`}
       draggable
       onDragStart={(e) => {
@@ -76,8 +77,6 @@ function KanbanCard({
       }}
       onDragEnd={onDragEnd}
       onClick={onExpand}
-      role="button"
-      tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
@@ -135,7 +134,7 @@ function KanbanCard({
           ))}
         </div>
       )}
-    </div>
+    </button>
   )
 }
 
@@ -185,7 +184,6 @@ function KanbanColumn({
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      role="group"
       aria-label={`${config.label} column`}
     >
       <div className="zen-kanban-column-header" style={{ borderColor: config.color }}>

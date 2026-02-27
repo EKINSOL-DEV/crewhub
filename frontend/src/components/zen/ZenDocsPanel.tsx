@@ -85,7 +85,7 @@ function DocTreeNode({
   const folderIcon = getNodeIcon(isDir, isExpanded)
 
   return (
-    <div>
+    <button type="button">
       <div
         onClick={() => {
           if (isDir) setExpanded((prev) => !prev)
@@ -171,7 +171,7 @@ function DocTreeNode({
             searchQuery={searchQuery}
           />
         ))}
-    </div>
+    </button>
   )
 }
 

@@ -199,7 +199,8 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
         {children}
         {/* Drag error toast overlay */}
         {drag.error && (
-          <div
+          <button
+            type="button"
             style={{
               position: 'fixed',
               bottom: '24px',
@@ -224,12 +225,10 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') clearError()
             }}
-            role="button"
-            tabIndex={0}
           >
             <span>⚠️</span>
             <span>{drag.error}</span>
-          </div>
+          </button>
         )}
         {/* Full-screen drag overlay (captures drops on outdoor/parking areas) */}
         {drag.isDragging && (

@@ -258,6 +258,7 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
         maxWidth: '100%',
       }}
     >
+
       {hasDetails ? (
         <button
           type="button"

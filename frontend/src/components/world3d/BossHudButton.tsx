@@ -74,7 +74,8 @@ export function BossHudButton({
   }
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'absolute',
         top: 16,
@@ -92,8 +93,6 @@ export function BossHudButton({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') handleClick()
       }}
-      role="button"
-      tabIndex={0}
       title="Fly to Assistent"
     >
       {/* Portrait circle */}
@@ -178,7 +177,7 @@ export function BossHudButton({
           50% { transform: scale(1.2); opacity: 0.8; }
         }
       `}</style>
-    </div>
+    </button>
   )
 }
 

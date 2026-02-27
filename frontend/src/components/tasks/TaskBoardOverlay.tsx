@@ -503,14 +503,13 @@ export function TaskBoardOverlay({
 
         {/* Create Task Modal */}
         {showCreateForm && (
-          <div
+          <button
+            type="button"
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={() => setShowCreateForm(false)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setShowCreateForm(false)
             }}
-            role="button"
-            tabIndex={0}
           >
             <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
@@ -529,19 +528,18 @@ export function TaskBoardOverlay({
                 isLoading={formLoading}
               />
             </div>
-          </div>
+          </button>
         )}
 
         {/* Edit Task Modal */}
         {editingTask && (
-          <div
+          <button
+            type="button"
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={() => setEditingTask(null)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setEditingTask(null)
             }}
-            role="button"
-            tabIndex={0}
           >
             <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
@@ -569,7 +567,7 @@ export function TaskBoardOverlay({
                 isLoading={formLoading}
               />
             </div>
-          </div>
+          </button>
         )}
 
         {/* Run or Self Dialog - shown when dragging todo → in_progress */}

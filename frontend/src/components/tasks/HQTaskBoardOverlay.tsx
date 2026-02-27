@@ -439,14 +439,13 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
 
         {/* Edit Task Modal */}
         {editingTask && (
-          <div
+          <button
+            type="button"
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={() => setEditingTask(null)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setEditingTask(null)
             }}
-            role="button"
-            tabIndex={0}
           >
             <div // NOSONAR: onClick only prevents event bubble, not interactive
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
@@ -483,7 +482,7 @@ export function HQTaskBoardOverlay({ open, onOpenChange }: HQTaskBoardOverlayPro
                 isLoading={formLoading}
               />
             </div>
-          </div>
+          </button>
         )}
       </div>
     </dialog>

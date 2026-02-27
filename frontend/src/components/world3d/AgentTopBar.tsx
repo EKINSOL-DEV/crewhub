@@ -214,7 +214,8 @@ function AgentPortraitButton({
   const [hovered, setHovered] = useState(false)
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -228,8 +229,6 @@ function AgentPortraitButton({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onClick()
       }}
-      role="button"
-      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title={title}
@@ -329,7 +328,7 @@ function AgentPortraitButton({
           ✕
         </button>
       )}
-    </div>
+    </button>
   )
 }
 
@@ -342,7 +341,8 @@ function AgentPickerToggle({
   const [hovered, setHovered] = useState(false)
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -355,8 +355,6 @@ function AgentPickerToggle({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onClick()
       }}
-      role="button"
-      tabIndex={0}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       title="Browse agents"
@@ -398,7 +396,7 @@ function AgentPickerToggle({
       >
         Agents
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -661,7 +659,8 @@ function DropdownItem({
   const [hovered, setHovered] = useState(false)
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -679,8 +678,6 @@ function DropdownItem({
         if (e.key === 'Enter' || e.key === ' ')
           onSelect(entry.session, entry.roomId, entry.name, entry.config)
       }}
-      role="button"
-      tabIndex={0}
     >
       {/* Small bot portrait */}
       <div
@@ -767,7 +764,7 @@ function DropdownItem({
           📌 Pin
         </button>
       )}
-    </div>
+    </button>
   )
 }
 

@@ -200,7 +200,8 @@ function ProjectDetailModal({
   }
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'fixed',
         inset: 0,
@@ -214,8 +215,6 @@ function ProjectDetailModal({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
@@ -428,7 +427,7 @@ function ProjectDetailModal({
           </div>
         )}
       </div>
-    </div>
+    </button>
   )
 }
 

@@ -421,7 +421,8 @@ function SelectionIndicator({
       {/* HUD Buttons floating above the prop */}
       {isMoving && (
         <Html position={hudPos} center zIndexRange={[100, 110]}>
-          <div
+          <button
+            type="button"
             style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
@@ -435,8 +436,6 @@ function SelectionIndicator({
                 e.stopPropagation()
               }
             }}
-            tabIndex={0}
-            role="button"
             onMouseUp={(e) => e.stopPropagation()}
           >
             <div style={HUD_CONTAINER_STYLE}>
@@ -504,7 +503,7 @@ function SelectionIndicator({
                 return isDragging ? 'Release to drop' : 'Drag to move • Arrows/WASD'
               })()}
             </div>
-          </div>
+          </button>
         </Html>
       )}
     </>

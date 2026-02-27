@@ -19,7 +19,8 @@ export function ParticipantListSheet({
   onRename,
 }: ParticipantListSheetProps) {
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'fixed',
         inset: 0,
@@ -33,8 +34,6 @@ export function ParticipantListSheet({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
@@ -184,6 +183,6 @@ export function ParticipantListSheet({
           })}
         </div>
       </div>
-    </div>
+    </button>
   )
 }

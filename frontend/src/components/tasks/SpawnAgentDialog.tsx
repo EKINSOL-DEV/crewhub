@@ -91,7 +91,8 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
   if (!isOpen) return null
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'fixed',
         inset: 0,
@@ -102,8 +103,6 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
         background: 'rgba(0,0,0,0.5)',
       }}
       onClick={onClose}
-      role="button"
-      tabIndex={0}
       aria-label="Close dialog"
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -112,7 +111,8 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
         }
       }}
     >
-      <div
+      <button
+        type="button"
         style={{
           background: '#fff',
           borderRadius: 12,
@@ -122,8 +122,6 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => e.stopPropagation()}
-        tabIndex={0}
-        role="button"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.stopPropagation()
@@ -307,7 +305,7 @@ export function SpawnAgentDialog({ task, isOpen, onClose, onRun, onSpawn }: Spaw
             )}
           </button>
         </div>
-      </div>
-    </div>
+      </button>
+    </button>
   )
 }

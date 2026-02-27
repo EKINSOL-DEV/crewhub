@@ -137,7 +137,8 @@ function FilterSheet({
   const [tab, setTab] = useState<'agent' | 'project' | 'type'>('agent')
 
   return (
-    <div
+    <button
+      type="button"
       style={{
         position: 'fixed',
         inset: 0,
@@ -150,8 +151,6 @@ function FilterSheet({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div // NOSONAR: onClick only prevents event bubble, not interactive
         style={{
@@ -344,7 +343,7 @@ function FilterSheet({
           )}
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 

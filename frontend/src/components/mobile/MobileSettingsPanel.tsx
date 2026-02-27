@@ -263,7 +263,8 @@ interface ToggleProps {
 }
 function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }: ToggleProps) {
   return (
-    <div
+    <button
+      type="button"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -278,8 +279,6 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onChange(!value)
       }}
-      role="button"
-      tabIndex={0}
     >
       <div>
         <div style={{ fontSize: 14, color: VAR_MOBILE_TEXT, fontWeight: 500 }}>{label}</div>
@@ -316,7 +315,7 @@ function Toggle({ value, onChange, label, description, accentColor = '#6366f1' }
           }}
         />
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -451,13 +450,12 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
   return (
     <>
       {/* Backdrop */}
-      <div
+      <button
+        type="button"
         onClick={handleBackdropClick}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
         }}
-        role="button"
-        tabIndex={0}
         style={{
           position: 'fixed',
           inset: 0,

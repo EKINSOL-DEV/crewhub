@@ -198,7 +198,8 @@ export function GroupThreadChat({
   return (
     <>
       {/* Header */}
-      <header
+      <button
+        type="button"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -209,8 +210,6 @@ export function GroupThreadChat({
           cursor: 'pointer',
         }}
         onClick={() => setShowParticipants(true)}
-        tabIndex={0}
-        role="button"
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             setShowParticipants(true)
@@ -259,7 +258,7 @@ export function GroupThreadChat({
               : `${onlineCount} of ${activeParticipants.length} online`}
           </div>
         </div>
-      </header>
+      </button>
 
       {/* Participants sheet */}
       {showParticipants && (

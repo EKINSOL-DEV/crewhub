@@ -29,7 +29,8 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
   const extraCount = state.placements.length - displayPlacements.length
 
   return (
-    <div
+    <button
+      type="button"
       className="fpm-delete-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel()
@@ -37,8 +38,6 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onCancel()
       }}
-      role="button"
-      tabIndex={0}
     >
       <div className="fpm-delete-dialog">
         <div className="fpm-delete-title">
@@ -82,7 +81,7 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
           </button>
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -212,15 +211,14 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
             historyIcon = '📐'
           }
           return (
-            <div
+            <button
+              type="button"
               key={r.id}
               className={`fpm-history-item ${selectedId === r.id ? 'fpm-history-item-active' : ''}`}
               onClick={() => handleSelect(r)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') handleSelect(r)
               }}
-              role="button"
-              tabIndex={0}
             >
               <div className="fpm-history-item-name">
                 {historyIcon} {r.name}
@@ -240,7 +238,7 @@ export function GenerationHistory({ onLoadProp, refreshKey = 0 }: GenerationHist
               >
                 🗑️
               </button>
-            </div>
+            </button>
           )
         })}
       </div>

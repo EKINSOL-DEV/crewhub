@@ -339,7 +339,8 @@ export function TaskBoard({
 
       {/* Create Task Modal */}
       {showCreateForm && (
-        <div
+        <button
+          type="button"
           style={{
             position: 'fixed',
             top: 0,
@@ -356,8 +357,6 @@ export function TaskBoard({
           onKeyDown={(e) => {
             if (e.key === 'Escape') setShowCreateForm(false)
           }}
-          role="button"
-          tabIndex={0}
         >
           <div // NOSONAR: onClick only prevents event bubble, not interactive
             style={{
@@ -384,12 +383,13 @@ export function TaskBoard({
               isLoading={formLoading}
             />
           </div>
-        </div>
+        </button>
       )}
 
       {/* Edit Task Modal */}
       {editingTask && (
-        <div
+        <button
+          type="button"
           style={{
             position: 'fixed',
             top: 0,
@@ -406,8 +406,6 @@ export function TaskBoard({
           onKeyDown={(e) => {
             if (e.key === 'Escape') setEditingTask(null)
           }}
-          role="button"
-          tabIndex={0}
         >
           <div // NOSONAR: onClick only prevents event bubble, not interactive
             style={{
@@ -458,7 +456,7 @@ export function TaskBoard({
               isLoading={formLoading}
             />
           </div>
-        </div>
+        </button>
       )}
     </div>
   )

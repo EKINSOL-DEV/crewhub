@@ -123,7 +123,11 @@ function updateRoomDetection(
   }
 }
 
-function checkRoomWalkability(worldX: number, worldZ: number, rooms: CollisionRoom[]): boolean | null {
+function checkRoomWalkability(
+  worldX: number,
+  worldZ: number,
+  rooms: CollisionRoom[]
+): boolean | null {
   for (const room of rooms) {
     const dx = worldX - room.centerX
     const dz = worldZ - room.centerZ

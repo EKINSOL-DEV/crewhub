@@ -206,13 +206,12 @@ export function PropBrowser() {
       }}
     >
       {/* ── Header (draggable) ── */}
-      <div
+      <button
+        type="button"
         onMouseDown={onMouseDown}
         onKeyDown={(e: React.KeyboardEvent) => {
           if (e.key === 'Enter' || e.key === ' ') e.preventDefault()
         }}
-        tabIndex={0}
-        role="button"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -249,7 +248,7 @@ export function PropBrowser() {
         >
           <X size={14} />
         </button>
-      </div>
+      </button>
 
       {/* ── Search bar ── */}
       <div style={{ padding: '8px 10px', flexShrink: 0 }}>

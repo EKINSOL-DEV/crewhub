@@ -19,7 +19,7 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
       themeInfo.findIndex((t) => t.id === currentThemeId)
     )
   )
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDialogElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   // Focus trap and keyboard navigation
@@ -92,12 +92,13 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
   )
 
   return (
+
     <div
       ref={containerRef}
       className="zen-theme-picker-backdrop"
-      role="dialog"
       aria-modal="true"
       aria-label="Select Theme"
+
     >
       <div className="zen-theme-picker">
         <div className="zen-theme-picker-header">
