@@ -70,7 +70,7 @@ export function DebugPanel() {
     [pos]
   )
 
-  const handleHeaderKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleHeaderKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
     const step = e.shiftKey ? 20 : 10
     if (e.key === 'ArrowLeft') {
       e.preventDefault()
@@ -133,15 +133,16 @@ export function DebugPanel() {
         style={{ maxHeight: 'calc(100vh - 100px)' }}
       >
         {/* Header (drag handle) */}
-        <div
-          className="flex items-center justify-between px-3 py-2 cursor-move bg-gray-800/80 border-b border-gray-700/60"
-          onMouseDown={handleMouseDown}
-          onKeyDown={handleHeaderKeyDown}
-          tabIndex={0}
-          role="button"
-          aria-label="Move debug panel"
-        >
-          <span className="text-xs font-semibold text-gray-200">🧪 Debug Bots</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-gray-800/80 border-b border-gray-700/60">
+          <button
+            type="button"
+            className="text-xs font-semibold text-gray-200 cursor-move"
+            onMouseDown={handleMouseDown}
+            onKeyDown={handleHeaderKeyDown}
+            aria-label="Move debug panel"
+          >
+            🧪 Debug Bots
+          </button>
           <div className="flex items-center gap-1.5">
             <span className="text-[9px] text-gray-500 bg-gray-700/60 px-1.5 py-0.5 rounded-full">
               {debugBots.length}

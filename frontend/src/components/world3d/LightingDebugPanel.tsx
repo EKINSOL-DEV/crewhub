@@ -179,7 +179,7 @@ export function LightingDebugPanel() {
     [pos]
   )
 
-  const handleHeaderKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+  const handleHeaderKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
     const step = e.shiftKey ? 20 : 10
     if (e.key === 'ArrowLeft') {
       e.preventDefault()
@@ -318,15 +318,16 @@ export function LightingDebugPanel() {
         style={{ maxHeight: 'calc(100vh - 100px)' }}
       >
         {/* Header (drag handle) */}
-        <div
-          className="flex items-center justify-between px-3 py-2 cursor-move bg-gray-800/80 border-b border-gray-700/60"
-          onMouseDown={handleMouseDown}
-          onKeyDown={handleHeaderKeyDown}
-          tabIndex={0}
-          role="button"
-          aria-label="Move lighting panel"
-        >
-          <span className="text-xs font-semibold text-gray-200">💡 Lighting Editor</span>
+        <div className="flex items-center justify-between px-3 py-2 bg-gray-800/80 border-b border-gray-700/60">
+          <button
+            type="button"
+            className="text-xs font-semibold text-gray-200 cursor-move"
+            onMouseDown={handleMouseDown}
+            onKeyDown={handleHeaderKeyDown}
+            aria-label="Move lighting panel"
+          >
+            💡 Lighting Editor
+          </button>
           <button
             onClick={() => setMinimized((m) => !m)} // NOSONAR: mouse/drag interaction
             className="w-5 h-5 rounded flex items-center justify-center text-gray-400 hover:text-gray-200 hover:bg-gray-700/60 transition-colors text-xs"
