@@ -95,21 +95,13 @@ export function ImageLightbox({ src, alt = 'Image', onClose }: ImageLightboxProp
   }
 
   return (
-    <div style={overlayStyle} role="dialog" aria-modal="true" aria-label="Image viewer">
-      {/* Backdrop (closes lightbox on click / keyboard) */}
-      <div
-        // NOSONAR: non-interactive element used as backdrop; role/tabIndex/keyboard added
-        style={backdropStyle}
-        role="button"
-        tabIndex={0}
+    <div style={overlayStyle} aria-label="Image viewer">
+      {/* Backdrop (closes lightbox on click) */}
+      <button
+        type="button"
+        style={{ ...backdropStyle, border: 'none', padding: 0 }}
         aria-label="Close image viewer"
         onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            onClose()
-          }
-        }}
       />
 
       {/* Close button */}

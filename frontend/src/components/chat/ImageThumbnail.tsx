@@ -56,18 +56,11 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
 
   return (
     <>
-      <div
-        style={containerStyle}
-        role="button"
-        tabIndex={0}
+      <button
+        type="button"
+        style={{ ...containerStyle, border: 'none', padding: 0 }}
         aria-label="Open image viewer"
         onClick={() => setLightboxOpen(true)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setLightboxOpen(true)
-          }
-        }}
         title="Click to view full size"
       >
         {!imageLoaded && (
@@ -88,7 +81,7 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
             e.currentTarget.style.transform = 'scale(1)'
           }}
         />
-      </div>
+      </button>
 
       {lightboxOpen && (
         <ImageLightbox src={mediaUrl} alt="Attached image" onClose={() => setLightboxOpen(false)} />

@@ -43,23 +43,17 @@ export function FolderTreeNode({
   if (node.type === 'file') {
     const isSelected = selectedPath === node.path
     return (
-      <div
-        className={`pl-4 py-1 cursor-pointer rounded text-sm transition-colors ${
+      <button
+        type="button"
+        className={`pl-4 py-1 cursor-pointer rounded text-sm transition-colors text-left w-full ${
           isSelected
             ? 'bg-primary/10 text-primary font-medium'
             : 'hover:bg-muted/50 text-foreground'
         }`}
         onClick={() => node.path && onSelectFile(node.path)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            if (node.path) onSelectFile(node.path)
-          }
-        }}
-        role="button"
-        tabIndex={0}
       >
         📄 {node.name}
-      </div>
+      </button>
     )
   }
 
@@ -68,17 +62,13 @@ export function FolderTreeNode({
 
   return (
     <div>
-      <div
-        className="pl-2 py-1 cursor-pointer hover:bg-muted/30 rounded text-sm font-medium transition-colors"
+      <button
+        type="button"
+        className="pl-2 py-1 cursor-pointer hover:bg-muted/30 rounded text-sm font-medium transition-colors text-left w-full"
         onClick={() => setExpanded(!expanded)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') setExpanded(!expanded)
-        }}
-        role="button"
-        tabIndex={0}
       >
         {isExpanded ? '📂' : '📁'} {node.name}
-      </div>
+      </button>
       {isExpanded &&
         node.children?.map((child) => (
           <div key={child.path} className="pl-4">
