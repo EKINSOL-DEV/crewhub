@@ -3,222 +3,39 @@
  * Fullscreen file tree + markdown viewer with touch-friendly UI
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { ArrowLeft, Search, SortAsc, Clock } from 'lucide-react'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
-import { API_BASE } from '@/lib/api'
+import { DocumentTreeNode } from '@/components/shared/DocumentTreeNode'
+import { formatDocDate, useDocumentPanel } from '@/components/zen/hooks/useDocumentPanel'
 
 const RGBA_255_255_255_0_06 = 'rgba(255,255,255,0.06)'
-
-// ── Types ─────────────────────────────────────────────────────────
-
-interface DocNode {
-  name: string
-  path: string
-  type: 'file' | 'directory'
-  children?: DocNode[]
-  lastModified?: number
-}
-
-type SortKey = 'name' | 'date'
-
-// ── Helpers ───────────────────────────────────────────────────────
-
-function formatDate(ts?: number): string {
-  if (!ts) return ''
-  const d = new Date(ts * 1000)
-  return d.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' })
-}
-
-function sortNodes(nodes: DocNode[], sortKey: SortKey): DocNode[] {
-  return [...nodes].sort((a, b) => {
-    if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
-    if (sortKey === 'date') return (b.lastModified ?? 0) - (a.lastModified ?? 0)
-    return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-  })
-}
-
-function matchesSearch(node: DocNode, q: string): boolean {
-  if (node.type === 'file') {
-    return node.name.toLowerCase().includes(q) || node.path.toLowerCase().includes(q)
-  }
-  return node.children?.some((c) => matchesSearch(c, q)) ?? false
-}
-
-function countFiles(nodes: DocNode[]): number {
-  let count = 0
-  for (const n of nodes) {
-    if (n.type === 'file') count++
-    if (n.children) count += countFiles(n.children)
-  }
-  return count
-}
-
-// ── Tree Node (mobile optimized) ──────────────────────────────────
-
-function isFilteredOut(node: DocNode, searchQuery: string): boolean {
-  if (searchQuery.length < 2) return false
-  const q = searchQuery.toLowerCase()
-  if (node.type === 'directory') {
-    return !node.children?.some((c) => matchesSearch(c, q))
-  }
-  return !node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)
-}
-
-function getNodeIcon(isDir: boolean, isExpanded: boolean): string {
-  if (!isDir) return '📄'
-  return isExpanded ? '📂' : '📁'
-}
-
-function MobileDocTreeNode({
-  node,
-  depth,
-  sortKey,
-  onOpen,
-  searchQuery,
-}: {
-  readonly node: DocNode
-  readonly depth: number
-  readonly sortKey: SortKey
-  readonly onOpen: (path: string) => void
-  readonly searchQuery: string
-}) {
-  const [expanded, setExpanded] = useState(depth === 0)
-  const isDir = node.type === 'directory'
-
-  if (isFilteredOut(node, searchQuery)) return null
-
-  const isExpanded = searchQuery.length >= 2 ? true : expanded
-  const sorted = isDir && node.children ? sortNodes(node.children, sortKey) : []
-  const folderIcon = getNodeIcon(isDir, isExpanded)
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          if (isDir) setExpanded((prev) => !prev)
-          else onOpen(node.path)
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            if (isDir) setExpanded((prev) => !prev)
-            else onOpen(node.path)
-          }
-        }}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          padding: `12px 16px 12px ${16 + depth * 20}px`,
-          cursor: 'pointer',
-          fontSize: 14,
-          color: '#e2e8f0',
-          userSelect: 'none',
-          minHeight: 44, // touch target
-          WebkitTapHighlightColor: 'transparent',
-          background: 'transparent',
-          border: 'none',
-          borderBottom: '1px solid rgba(255,255,255,0.04)',
-          width: '100%',
-          textAlign: 'left',
-        }}
-      >
-        {isDir ? (
-          <span style={{ fontSize: 11, width: 16, textAlign: 'center', color: '#64748b' }}>
-            {isExpanded ? '▼' : '▶'}
-          </span>
-        ) : (
-          <span style={{ width: 16 }} />
-        )}
-
-        <span style={{ fontSize: 16 }}>{folderIcon}</span>
-
-        <span
-          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-        >
-          {isDir ? node.name : node.name.replace(/\.md$/, '')}
-        </span>
-
-        {!isDir && node.lastModified && (
-          <span style={{ fontSize: 11, color: '#475569', whiteSpace: 'nowrap', flexShrink: 0 }}>
-            {formatDate(node.lastModified)}
-          </span>
-        )}
-      </button>
-
-      {isDir &&
-        isExpanded &&
-        sorted.map((child) => (
-          <MobileDocTreeNode
-            key={child.path}
-            node={child}
-            depth={depth + 1}
-            sortKey={sortKey}
-            onOpen={onOpen}
-            searchQuery={searchQuery}
-          />
-        ))}
-    </>
-  )
-}
-
-// ── Main Component ────────────────────────────────────────────────
 
 interface MobileDocsPanelProps {
   readonly onBack: () => void
 }
 
 export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
-  const [tree, setTree] = useState<DocNode[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [content, setContent] = useState('')
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
-  const [contentLoading, setContentLoading] = useState(false)
-  const [fullscreenOpen, setFullscreenOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [showSearch, setShowSearch] = useState(false)
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-
-  useEffect(() => {
-    fetch(`${API_BASE}/docs/tree`)
-      .then((r) => r.json())
-      .then((data) => {
-        setTree(data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setError('Failed to load docs')
-        setLoading(false)
-      })
-  }, [])
-
-  const fileCount = countFiles(tree)
-
-  const openDoc = useCallback((path: string) => {
-    setSelectedPath(path)
-    setContentLoading(true)
-    setFullscreenOpen(true)
-    setError(null)
-
-    fetch(`${API_BASE}/docs/content?path=${encodeURIComponent(path)}`)
-      .then((r) => {
-        if (!r.ok) throw new Error('Not found')
-        return r.json()
-      })
-      .then((data) => {
-        setContent(data.content)
-        setContentLoading(false)
-      })
-      .catch(() => {
-        setError('Failed to load document')
-        setContentLoading(false)
-      })
-  }, [])
-
-  const sorted = sortNodes(tree, sortKey)
+  const {
+    sortedTree,
+    loading,
+    error,
+    content,
+    selectedPath,
+    contentLoading,
+    fullscreenOpen,
+    searchQuery,
+    sortKey,
+    fileCount,
+    setSearchQuery,
+    setSortKey,
+    setFullscreenOpen,
+    openDoc,
+  } = useDocumentPanel({
+    treeErrorMessage: 'Failed to load docs',
+    documentErrorMessage: 'Failed to load document',
+  })
 
   return (
     <div
@@ -342,7 +159,7 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             return <div style={{ padding: 20, color: '#ef4444', fontSize: 14 }}>{error}</div>
           }
 
-          if (sorted.length === 0) {
+          if (sortedTree.length === 0) {
             return (
               <div style={{ padding: 40, textAlign: 'center', fontSize: 14, color: '#64748b' }}>
                 No documents found
@@ -350,20 +167,21 @@ export function MobileDocsPanel({ onBack }: MobileDocsPanelProps) {
             )
           }
 
-          return sorted.map((node) => (
-            <MobileDocTreeNode
+          return sortedTree.map((node) => (
+            <DocumentTreeNode
               key={node.path}
               node={node}
               depth={0}
               sortKey={sortKey}
               onOpen={openDoc}
               searchQuery={searchQuery}
+              variant="mobile"
+              formatDate={(ts) => formatDocDate(ts, false)}
             />
           ))
         })()}
       </div>
 
-      {/* Fullscreen overlay for viewing docs */}
       <FullscreenOverlay
         open={fullscreenOpen}
         onClose={() => setFullscreenOpen(false)}

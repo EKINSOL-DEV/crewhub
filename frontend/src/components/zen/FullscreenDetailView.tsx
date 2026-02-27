@@ -4,12 +4,13 @@
  * Left 30%: Info section, Right 70%: History with sort/filter/auto-scroll controls.
  */
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { api } from '@/lib/api'
-import type { SessionMessage, SessionContentBlock, CrewSession } from '@/lib/api'
+import type { CrewSession } from '@/lib/api'
 import type { ActiveTask } from '@/hooks/useActiveTasks'
-import { formatTimestamp, formatDuration, formatTokens, formatMessageTime } from '@/lib/formatters'
+import { SessionHistoryView } from '@/components/shared/SessionHistoryView'
+import { useSessionHistory } from '@/components/shared/sessionHistoryUtils'
+import { formatTimestamp, formatDuration, formatTokens } from '@/lib/formatters'
 
 // ── Types ─────────────────────────────────────────────────────
 
@@ -45,166 +46,6 @@ function getStatusConfig(status: string): { color: string; label: string; dot: s
   }
 }
 
-// ── Content Block ─────────────────────────────────────────────
-
-function ExpandableBlock({
-  label,
-  className,
-  children,
-}: Readonly<{
-  label: string
-  className: string
-  children: React.ReactNode
-}>) {
-  const [expanded, setExpanded] = useState(false)
-  return (
-    <div className={className}>
-      <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
-        {label} {expanded ? '▾' : '▸'}
-      </button>
-      {expanded && children}
-    </div>
-  )
-}
-
-function highlightMatch(text: string, filterText?: string): React.ReactNode {
-  if (!filterText) return text
-  const idx = text.toLowerCase().indexOf(filterText.toLowerCase())
-  if (idx === -1) return text
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark
-        style={{
-          background: 'var(--zen-warning, #f0c040)',
-          color: '#000',
-          borderRadius: 2,
-          padding: '0 1px',
-        }}
-      >
-        {text.slice(idx, idx + filterText.length)}
-      </mark>
-      {text.slice(idx + filterText.length)}
-    </>
-  )
-}
-
-function ContentBlockView({
-  block,
-  filterText,
-}: Readonly<{
-  readonly block: SessionContentBlock
-  readonly filterText?: string
-}>) {
-  if (block.type === 'text' && block.text) {
-    return <div className="zen-sd-text">{highlightMatch(block.text, filterText)}</div>
-  }
-  if (block.type === 'thinking' && block.thinking) {
-    return (
-      <ExpandableBlock label="💭 Thinking" className="zen-sd-thinking">
-        <pre className="zen-sd-thinking-content">{block.thinking}</pre>
-      </ExpandableBlock>
-    )
-  }
-  if (block.type === 'tool_use') {
-    return (
-      <ExpandableBlock label={`🔧 ${block.name || 'Tool'}`} className="zen-sd-tool-call">
-        {block.arguments && (
-          <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>
-        )}
-      </ExpandableBlock>
-    )
-  }
-  if (block.type === 'tool_result') {
-    const text =
-      block.content
-        ?.map((c) => c.text)
-        .filter(Boolean)
-        .join('\n') || ''
-    if (!text) return null
-    return (
-      <ExpandableBlock
-        label={`${block.isError ? '❌' : '✅'} Result`}
-        className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}
-      >
-        <pre className="zen-sd-tool-result-content">{text}</pre>
-      </ExpandableBlock>
-    )
-  }
-  return null
-}
-
-// ── Message Bubble ────────────────────────────────────────────
-
-function MessageBubble({
-  message,
-  filterText,
-}: Readonly<{ message: SessionMessage; readonly filterText?: string }>) {
-  const isUser = message.role === 'user'
-  const isSystem = message.role === 'system'
-  let messageRole: string
-  if (isUser) {
-    messageRole = 'user'
-  } else if (isSystem) {
-    messageRole = 'system'
-  } else {
-    messageRole = 'assistant'
-  }
-
-  const copyContent = useCallback(() => {
-    const text =
-      message.content
-        ?.filter((b) => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n') || ''
-    navigator.clipboard.writeText(text)
-  }, [message])
-
-  return (
-    <div className={`zen-sd-message zen-sd-message-${messageRole}`}>
-      <div className="zen-sd-message-header">
-        <div className="zen-sd-message-header-top">
-          <span className="zen-sd-message-role">
-            {(() => {
-              if (isUser) return '👤 User'
-              if (isSystem) return '⚙️ System'
-              if (message.role === 'toolResult') return '🔧 Tool'
-              return '🤖 Assistant'
-            })()}
-          </span>
-          {message.timestamp && (
-            <span className="zen-sd-message-timestamp">{formatMessageTime(message.timestamp)}</span>
-          )}
-          <button className="zen-sd-copy-btn" onClick={copyContent} title="Copy">
-            📋
-          </button>
-        </div>
-        {(message.usage || message.model) && (
-          <div className="zen-sd-message-meta-line">
-            {message.usage && (
-              <span className="zen-sd-message-tokens">
-                {formatTokens(message.usage.totalTokens)} tok
-              </span>
-            )}
-            {message.model && (
-              <span className="zen-sd-message-model">{message.model.split('/').pop()}</span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="zen-sd-message-body">
-        {message.content?.map((block, bIdx) => (
-          <ContentBlockView
-            key={`block-${block.type}-${bIdx}`}
-            block={block}
-            filterText={filterText}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ── Main Component ────────────────────────────────────────────
 
 export function FullscreenDetailView({
@@ -214,10 +55,6 @@ export function FullscreenDetailView({
   events: _events,
   onClose,
 }: Readonly<FullscreenDetailViewProps>) {
-  const [messages, setMessages] = useState<SessionMessage[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
   // History controls
   const [sortDesc, setSortDesc] = useState(true) // newest first
   const [autoScroll, setAutoScroll] = useState(true)
@@ -226,50 +63,8 @@ export function FullscreenDetailView({
   const historyRef = useRef<HTMLDivElement>(null)
   const userScrolledRef = useRef(false)
 
-  const sessionKey = type === 'activity' ? task?.sessionKey : session?.key
-
-  // Fetch messages
-  useEffect(() => {
-    if (!sessionKey) return
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-
-    api
-      .getSessionHistory(sessionKey, 500)
-      .then((res) => {
-        if (cancelled) return
-        const raw = res.messages || []
-        const parsed: SessionMessage[] = raw
-          .filter((entry: any) => entry.type === 'message' && entry.message)
-          .map((entry: any) => {
-            const msg = entry.message
-            let content = msg.content
-            if (typeof content === 'string') content = [{ type: 'text', text: content }]
-            if (!Array.isArray(content)) content = []
-            return {
-              role: msg.role || 'unknown',
-              content,
-              model: msg.model || entry.model,
-              usage: msg.usage,
-              stopReason: msg.stopReason,
-              timestamp: entry.timestamp ? new Date(entry.timestamp).getTime() : undefined,
-            } as SessionMessage
-          })
-        setMessages(parsed)
-        setLoading(false)
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.message)
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [sessionKey])
+  const sessionKey = type === 'activity' ? task?.sessionKey || undefined : session?.key || undefined
+  const { messages, loading, error, usageTotals } = useSessionHistory(sessionKey, 500)
 
   // Filtered + sorted messages
   const displayMessages = useMemo(() => {
@@ -349,22 +144,7 @@ export function FullscreenDetailView({
     }
   }, [])
 
-  // Token totals
-  const totalUsage = useMemo(() => {
-    let input = 0,
-      output = 0,
-      total = 0,
-      cost = 0
-    for (const m of messages) {
-      if (m.usage) {
-        input += m.usage.input || 0
-        output += m.usage.output || 0
-        total += m.usage.totalTokens || 0
-        cost += m.usage.cost?.total || 0
-      }
-    }
-    return { input, output, total, cost }
-  }, [messages])
+  // usageTotals comes from useSessionHistory
 
   // Title
   const title =
@@ -479,7 +259,7 @@ export function FullscreenDetailView({
               )}
 
               {/* Token usage */}
-              {(session?.totalTokens || totalUsage.total > 0) && (
+              {(session?.totalTokens || usageTotals.total > 0) && (
                 <>
                   <div className="zen-sd-section-title">Token Usage</div>
                   <div className="zen-sd-meta-grid">
@@ -499,24 +279,26 @@ export function FullscreenDetailView({
                         </div>
                       </>
                     )}
-                    {totalUsage.total > 0 && (
+                    {usageTotals.total > 0 && (
                       <>
                         <div className="zen-sd-meta-item">
                           <span className="zen-sd-meta-label">Input</span>
                           <span className="zen-sd-meta-value">
-                            {formatTokens(totalUsage.input)}
+                            {formatTokens(usageTotals.input)}
                           </span>
                         </div>
                         <div className="zen-sd-meta-item">
                           <span className="zen-sd-meta-label">Output</span>
                           <span className="zen-sd-meta-value">
-                            {formatTokens(totalUsage.output)}
+                            {formatTokens(usageTotals.output)}
                           </span>
                         </div>
-                        {totalUsage.cost > 0 && (
+                        {usageTotals.cost > 0 && (
                           <div className="zen-sd-meta-item">
                             <span className="zen-sd-meta-label">Cost</span>
-                            <span className="zen-sd-meta-value">${totalUsage.cost.toFixed(4)}</span>
+                            <span className="zen-sd-meta-value">
+                              ${usageTotals.cost.toFixed(4)}
+                            </span>
                           </div>
                         )}
                       </>
@@ -572,29 +354,16 @@ export function FullscreenDetailView({
 
           {/* Messages */}
           <div className="zen-fs-messages" ref={historyRef} onScroll={handleHistoryScroll}>
-            {loading && (
-              <div className="zen-sd-loading">
-                <div className="zen-thinking-dots">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                Loading history...
-              </div>
-            )}
-            {error && <div className="zen-sd-error">❌ {error}</div>}
-            {!loading && !error && displayMessages.length === 0 && (
-              <div className="zen-sd-empty">
-                {filterText ? 'No messages match filter' : 'No messages in history'}
-              </div>
-            )}
-            {displayMessages.map((msg) => (
-              <MessageBubble
-                key={`${msg.timestamp || ''}-${msg.role || ''}-${msg.model || ''}-${JSON.stringify(msg.content || [])}`}
-                message={msg}
-                filterText={filterText || undefined}
-              />
-            ))}
+            <SessionHistoryView
+              messages={displayMessages}
+              loading={loading}
+              error={error}
+              emptyText={filterText ? 'No messages match filter' : 'No messages in history'}
+              loadingText="Loading history..."
+              filterText={filterText || undefined}
+              showCopyButton
+              toolRoleLabel="🔧 Tool"
+            />
           </div>
         </div>
       </div>

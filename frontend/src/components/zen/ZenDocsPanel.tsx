@@ -3,242 +3,34 @@
  * Folder tree view with collapsible directories and fullscreen markdown viewer.
  */
 
-import { useState, useEffect, useCallback } from 'react'
 import { FullscreenOverlay } from '../markdown/FullscreenOverlay'
-import { API_BASE } from '@/lib/api'
+import { DocumentTreeNode } from '@/components/shared/DocumentTreeNode'
+import { formatDocDate, useDocumentPanel } from './hooks/useDocumentPanel'
 
 const BORDER_1PX_SOLID_VAR_ZEN_BORDER_HSL_V = '1px solid var(--zen-border, hsl(var(--border)))'
 const VAR_ZEN_FG = 'var(--zen-fg, hsl(var(--foreground)))'
 const VAR_ZEN_FG_DIM = 'var(--zen-fg-dim, hsl(var(--muted-foreground)))'
 
-// ── Types ─────────────────────────────────────────────────────────
-
-interface DocNode {
-  name: string
-  path: string
-  type: 'file' | 'directory'
-  children?: DocNode[]
-  lastModified?: number
-}
-
-type SortKey = 'name' | 'date'
-
-// ── Helpers ───────────────────────────────────────────────────────
-
-function formatDate(ts?: number): string {
-  if (!ts) return ''
-  const d = new Date(ts * 1000)
-  return (
-    d.toLocaleDateString('nl-BE', { day: '2-digit', month: 'short' }) +
-    ' ' +
-    d.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })
-  )
-}
-
-function sortNodes(nodes: DocNode[], sortKey: SortKey): DocNode[] {
-  return [...nodes].sort((a, b) => {
-    // Directories first
-    if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
-    if (sortKey === 'date') {
-      return (b.lastModified ?? 0) - (a.lastModified ?? 0)
-    }
-    return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
-  })
-}
-
-// ── Tree Node ─────────────────────────────────────────────────────
-
-function isFilteredOut(node: DocNode, searchQuery: string): boolean {
-  if (searchQuery.length < 2) return false
-  const q = searchQuery.toLowerCase()
-  if (node.type === 'directory') {
-    return !node.children?.some((c) => matchesSearch(c, q))
-  }
-  return !node.name.toLowerCase().includes(q) && !node.path.toLowerCase().includes(q)
-}
-
-function getNodeIcon(isDir: boolean, isExpanded: boolean): string {
-  if (!isDir) return '📄'
-  return isExpanded ? '📂' : '📁'
-}
-
-function DocTreeNode({
-  node,
-  depth,
-  sortKey,
-  onOpen,
-  searchQuery,
-}: {
-  readonly node: DocNode
-  readonly depth: number
-  readonly sortKey: SortKey
-  readonly onOpen: (path: string) => void
-  readonly searchQuery: string
-}) {
-  const [expanded, setExpanded] = useState(depth === 0)
-  const isDir = node.type === 'directory'
-
-  if (isFilteredOut(node, searchQuery)) return null
-
-  const isExpanded = searchQuery.length >= 2 ? true : expanded
-  const sorted = isDir && node.children ? sortNodes(node.children, sortKey) : []
-  const folderIcon = getNodeIcon(isDir, isExpanded)
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          if (isDir) setExpanded((prev) => !prev)
-          else onOpen(node.path)
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            if (isDir) setExpanded((prev) => !prev)
-            else onOpen(node.path)
-          }
-        }}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: `4px 12px 4px ${12 + depth * 18}px`,
-          cursor: 'pointer',
-          fontSize: 12,
-          fontFamily: 'system-ui, sans-serif',
-          color: VAR_ZEN_FG,
-          userSelect: 'none',
-          borderRadius: 4,
-          transition: 'background 0.1s',
-          background: 'transparent',
-          border: 'none',
-          width: '100%',
-          textAlign: 'left',
-        }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.background = 'var(--zen-bg-hover, hsl(var(--accent)))')
-        }
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-      >
-        {/* Expand/collapse arrow for dirs */}
-        {isDir ? (
-          <span
-            style={{
-              fontSize: 9,
-              width: 12,
-              textAlign: 'center',
-              color: VAR_ZEN_FG_DIM,
-            }}
-          >
-            {isExpanded ? '▼' : '▶'}
-          </span>
-        ) : (
-          <span style={{ width: 12 }} />
-        )}
-
-        {/* Icon */}
-        <span style={{ fontSize: 13 }}>{folderIcon}</span>
-
-        {/* Name */}
-        <span
-          style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-        >
-          {isDir ? node.name : node.name.replace(/\.md$/, '')}
-        </span>
-
-        {/* Date for files */}
-        {!isDir && node.lastModified && (
-          <span
-            style={{
-              fontSize: 10,
-              color: VAR_ZEN_FG_DIM,
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-            }}
-          >
-            {formatDate(node.lastModified)}
-          </span>
-        )}
-      </button>
-
-      {/* Children */}
-      {isDir &&
-        isExpanded &&
-        sorted.map((child) => (
-          <DocTreeNode
-            key={child.path}
-            node={child}
-            depth={depth + 1}
-            sortKey={sortKey}
-            onOpen={onOpen}
-            searchQuery={searchQuery}
-          />
-        ))}
-    </>
-  )
-}
-
-function matchesSearch(node: DocNode, q: string): boolean {
-  if (node.type === 'file') {
-    return node.name.toLowerCase().includes(q) || node.path.toLowerCase().includes(q)
-  }
-  return node.children?.some((c) => matchesSearch(c, q)) ?? false
-}
-
-// ── Component ─────────────────────────────────────────────────────
-
 export function ZenDocsPanel() {
-  const [tree, setTree] = useState<DocNode[]>([])
-  const [loading, setLoading] = useState(true)
-  const [content, setContent] = useState<string>('')
-  const [selectedPath, setSelectedPath] = useState<string | null>(null)
-  const [contentLoading, setContentLoading] = useState(false)
-  const [fullscreenOpen, setFullscreenOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-
-  // Fetch tree on mount
-  useEffect(() => {
-    fetch(`${API_BASE}/docs/tree`)
-      .then((r) => r.json())
-      .then((data) => {
-        setTree(data)
-        setLoading(false)
-      })
-      .catch(() => {
-        setError('Failed to load docs tree')
-        setLoading(false)
-      })
-  }, [])
-
-  // Count total files
-  const fileCount = countFiles(tree)
-
-  // Open file in fullscreen
-  const openDoc = useCallback((path: string) => {
-    setSelectedPath(path)
-    setContentLoading(true)
-    setFullscreenOpen(true)
-    setError(null)
-
-    fetch(`${API_BASE}/docs/content?path=${encodeURIComponent(path)}`)
-      .then((r) => {
-        if (!r.ok) throw new Error('Not found')
-        return r.json()
-      })
-      .then((data) => {
-        setContent(data.content)
-        setContentLoading(false)
-      })
-      .catch(() => {
-        setError('Failed to load document')
-        setContentLoading(false)
-      })
-  }, [])
-
-  const sorted = sortNodes(tree, sortKey)
+  const {
+    sortedTree,
+    loading,
+    error,
+    content,
+    selectedPath,
+    contentLoading,
+    fullscreenOpen,
+    searchQuery,
+    sortKey,
+    fileCount,
+    setSearchQuery,
+    setSortKey,
+    setFullscreenOpen,
+    openDoc,
+  } = useDocumentPanel({
+    treeErrorMessage: 'Failed to load docs tree',
+    documentErrorMessage: 'Failed to load document',
+  })
 
   return (
     <div
@@ -265,7 +57,6 @@ export function ZenDocsPanel() {
         <span style={{ fontSize: 11, color: VAR_ZEN_FG_DIM }}>{fileCount} files</span>
         <div style={{ flex: 1 }} />
 
-        {/* Sort toggle */}
         <button
           onClick={() => setSortKey((k) => (k === 'name' ? 'date' : 'name'))}
           title={`Sort by ${sortKey === 'name' ? 'date' : 'name'}`}
@@ -282,7 +73,6 @@ export function ZenDocsPanel() {
           {sortKey === 'name' ? '🔤 Name' : '🕒 Date'}
         </button>
 
-        {/* Search */}
         <input
           type="text"
           placeholder="Search..."
@@ -327,7 +117,7 @@ export function ZenDocsPanel() {
             )
           }
 
-          if (sorted.length === 0) {
+          if (sortedTree.length === 0) {
             return (
               <div
                 style={{
@@ -342,20 +132,21 @@ export function ZenDocsPanel() {
             )
           }
 
-          return sorted.map((node) => (
-            <DocTreeNode
+          return sortedTree.map((node) => (
+            <DocumentTreeNode
               key={node.path}
               node={node}
               depth={0}
               sortKey={sortKey}
               onOpen={openDoc}
               searchQuery={searchQuery}
+              variant="zen"
+              formatDate={(ts) => formatDocDate(ts, true)}
             />
           ))
         })()}
       </div>
 
-      {/* Fullscreen overlay */}
       <FullscreenOverlay
         open={fullscreenOpen}
         onClose={() => setFullscreenOpen(false)}
@@ -365,13 +156,4 @@ export function ZenDocsPanel() {
       />
     </div>
   )
-}
-
-function countFiles(nodes: DocNode[]): number {
-  let count = 0
-  for (const n of nodes) {
-    if (n.type === 'file') count++
-    if (n.children) count += countFiles(n.children)
-  }
-  return count
 }

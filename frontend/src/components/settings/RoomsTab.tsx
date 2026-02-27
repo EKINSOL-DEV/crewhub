@@ -42,46 +42,12 @@ import { useRooms, type Room } from '@/hooks/useRooms'
 import { useRoomAssignmentRules, type RoomAssignmentRule } from '@/hooks/useRoomAssignmentRules'
 import { useToast } from '@/hooks/use-toast'
 import type { CrewSession } from '@/lib/api'
+import { CreateRoomDialog } from '@/components/shared/CreateRoomDialog'
+import { DeleteRoomDialog } from '@/components/shared/DeleteRoomDialog'
+import { generateRoomId } from '@/components/shared/roomUtils'
 import { CollapsibleSection } from './shared'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const ROOM_ICONS = [
-  '🏛️',
-  '💻',
-  '🎨',
-  '🧠',
-  '⚙️',
-  '📡',
-  '🛠️',
-  '📢',
-  '🚀',
-  '📊',
-  '🔬',
-  '📝',
-  '🎯',
-  '💡',
-  '🔧',
-  '📦',
-]
-const ROOM_COLORS = [
-  '#4f46e5',
-  '#10b981',
-  '#f59e0b',
-  '#8b5cf6',
-  '#06b6d4',
-  '#14b8a6',
-  '#f97316',
-  '#ec4899',
-  '#3b82f6',
-  '#ef4444',
-  '#84cc16',
-  '#a855f7',
-  '#0ea5e9',
-  '#f43f5e',
-  '#22c55e',
-  '#6366f1',
-]
 
 const RULE_TYPES = [
   {
@@ -256,8 +222,6 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
   })
 
   // ─── Native dialog refs ───
-  const createRoomDialogRef = useRef<HTMLDialogElement>(null)
-  const deleteRoomDialogRef = useRef<HTMLDialogElement>(null)
   const createRuleDialogRef = useRef<HTMLDialogElement>(null)
   const deleteRuleDialogRef = useRef<HTMLDialogElement>(null)
   const testRulesDialogRef = useRef<HTMLDialogElement>(null)
@@ -281,22 +245,6 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
   ])
 
   // ─── Sync native dialogs ───
-  useEffect(() => {
-    const dialog = createRoomDialogRef.current
-    if (!dialog) return
-    if (showCreateRoomDialog) {
-      if (!dialog.open) dialog.showModal()
-    } else if (dialog.open) dialog.close()
-  }, [showCreateRoomDialog])
-
-  useEffect(() => {
-    const dialog = deleteRoomDialogRef.current
-    if (!dialog) return
-    if (deleteRoomConfirm) {
-      if (!dialog.open) dialog.showModal()
-    } else if (dialog.open) dialog.close()
-  }, [deleteRoomConfirm])
-
   useEffect(() => {
     const dialog = createRuleDialogRef.current
     if (!dialog) return
@@ -322,12 +270,6 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
   }, [showTestRulesDialog])
 
   // ─── Helpers ───
-  const generateRoomId = (name: string) =>
-    name
-      .toLowerCase()
-      .replaceAll(/[^a-z0-9]+/g, '-')
-      .replaceAll(/(^-|-$)/g, '') + '-room'
-
   const getRuleTypeLabel = (type: string) => RULE_TYPES.find((t) => t.value === type)?.label || type
 
   // ─── Room handlers ───
@@ -733,129 +675,23 @@ export function RoomsTab({ sessions: activeSessions, onModalStateChange }: Rooms
         </CollapsibleSection>
       </div>
 
-      {/* ─── Create Room Dialog ─── */}
-      <dialog // NOSONAR: <dialog> is a native interactive HTML element
-        ref={createRoomDialogRef}
-        onClose={() => setShowCreateRoomDialog(false)}
-        onClick={(e) => e.target === e.currentTarget && setShowCreateRoomDialog(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
-      >
-        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
-          <div className="px-6 pt-6 pb-4">
-            <h2 className="text-lg font-semibold">Create New Room</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Add a new workspace room for organizing your agents and sessions
-            </p>
-          </div>
-          <div className="px-6 pb-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="room-name">Room Name</Label>
-              <Input
-                id="room-name"
-                value={newRoom.name}
-                onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-                placeholder="e.g., Research Lab"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCreateRoom()
-                }}
-              />
-              {newRoom.name && (
-                <p className="text-xs text-muted-foreground">ID: {generateRoomId(newRoom.name)}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>Icon</Label>
-              <div className="flex flex-wrap gap-2">
-                {ROOM_ICONS.map((icon) => (
-                  <button
-                    key={icon}
-                    onClick={() => setNewRoom({ ...newRoom, icon })}
-                    className={`w-10 h-10 rounded-lg text-xl flex items-center justify-center border-2 transition-all ${
-                      newRoom.icon === icon
-                        ? 'border-primary bg-primary/10'
-                        : 'border-border hover:border-muted-foreground'
-                    }`}
-                  >
-                    {icon}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Color</Label>
-              <div className="flex flex-wrap gap-2">
-                {ROOM_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setNewRoom({ ...newRoom, color })}
-                    className={`w-8 h-8 rounded-full transition-all ${
-                      newRoom.color === color
-                        ? 'ring-2 ring-offset-2 ring-primary'
-                        : 'hover:scale-110'
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="p-4 rounded-lg border bg-muted/30">
-              <Label className="text-xs text-muted-foreground mb-2 block">Preview</Label>
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                  style={{
-                    backgroundColor: `${newRoom.color}20`,
-                    border: `2px solid ${newRoom.color}`,
-                  }}
-                >
-                  {newRoom.icon}
-                </div>
-                <div>
-                  <div className="font-semibold">{newRoom.name || 'Room Name'}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {newRoom.name ? generateRoomId(newRoom.name) : 'room-id'}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setShowCreateRoomDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateRoom}>Create Room</Button>
-          </div>
-        </div>
-      </dialog>
+      <CreateRoomDialog
+        open={showCreateRoomDialog}
+        onOpenChange={setShowCreateRoomDialog}
+        value={newRoom}
+        onChange={setNewRoom}
+        onCreate={handleCreateRoom}
+        dialogClassName="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
+      />
 
-      {/* ─── Delete Room Dialog ─── */}
-      <dialog // NOSONAR: <dialog> is a native interactive HTML element
-        ref={deleteRoomDialogRef}
-        onClose={() => setDeleteRoomConfirm(null)}
-        onClick={(e) => e.target === e.currentTarget && setDeleteRoomConfirm(null)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
-      >
-        <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
-          <div className="px-6 pt-6 pb-4">
-            <h2 className="text-lg font-semibold">Delete Room?</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              This will remove the room and unassign any sessions from it. This action cannot be
-              undone.
-            </p>
-          </div>
-          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/30">
-            <Button variant="outline" onClick={() => setDeleteRoomConfirm(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteRoomConfirm && handleDeleteRoom(deleteRoomConfirm)}
-            >
-              Delete Room
-            </Button>
-          </div>
-        </div>
-      </dialog>
+      <DeleteRoomDialog
+        open={!!deleteRoomConfirm}
+        onOpenChange={(open) => {
+          if (!open) setDeleteRoomConfirm(null)
+        }}
+        onConfirm={() => deleteRoomConfirm && handleDeleteRoom(deleteRoomConfirm)}
+        dialogClassName="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0 z-[80]"
+      />
 
       {/* ─── Create Rule Dialog ─── */}
       <dialog // NOSONAR: <dialog> is a native interactive HTML element

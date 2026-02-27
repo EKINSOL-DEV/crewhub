@@ -8,6 +8,7 @@ import { ArrowLeft, Filter } from 'lucide-react'
 import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { useProjects } from '@/hooks/useProjects'
 import { PRIORITY_CONFIG } from '@/lib/taskConstants'
+import { buildKanbanColumns, groupTasksByStatus } from '@/components/shared/kanbanShared'
 
 const BORDER_1PX_SOLID_RGBA_255_255_255_0_0 = '1px solid rgba(255, 255, 255, 0.06)'
 const RGBA_255_255_255_0_03 = 'rgba(255, 255, 255, 0.03)'
@@ -20,20 +21,13 @@ interface MobileKanbanPanelProps {
 
 // ── Column Configuration ─────────────────────────────────────
 
-interface ColumnConfig {
-  status: TaskStatus
-  label: string
-  icon: string
-  color: string
-}
-
-const COLUMNS: ColumnConfig[] = [
-  { status: 'todo', label: 'To Do', icon: '📋', color: '#64748b' },
-  { status: 'in_progress', label: 'In Progress', icon: '🔄', color: '#3b82f6' },
-  { status: 'review', label: 'Review', icon: '👀', color: '#f59e0b' },
-  { status: 'blocked', label: 'Blocked', icon: '⚠️', color: '#ef4444' },
-  { status: 'done', label: 'Done', icon: '✅', color: '#22c55e' },
-]
+const COLUMNS = buildKanbanColumns({
+  todo: '#64748b',
+  in_progress: '#3b82f6',
+  review: '#f59e0b',
+  blocked: '#ef4444',
+  done: '#22c55e',
+})
 
 // ── Task Card (Mobile-Optimized) ─────────────────────────────
 
@@ -389,32 +383,7 @@ export function MobileKanbanPanel({ onBack }: MobileKanbanPanelProps) {
   const { projects } = useProjects()
 
   // Group tasks by status, sorted by priority
-  const tasksByStatus = useMemo(() => {
-    const grouped: Record<TaskStatus, Task[]> = {
-      todo: [],
-      in_progress: [],
-      review: [],
-      blocked: [],
-      done: [],
-    }
-
-    for (const task of tasks) {
-      if (grouped[task.status]) {
-        grouped[task.status].push(task)
-      }
-    }
-
-    // Sort each column by priority
-    for (const status of Object.keys(grouped) as TaskStatus[]) {
-      grouped[status].sort((a, b) => {
-        const priorityDiff = PRIORITY_CONFIG[a.priority].weight - PRIORITY_CONFIG[b.priority].weight
-        if (priorityDiff !== 0) return priorityDiff
-        return b.updated_at - a.updated_at
-      })
-    }
-
-    return grouped
-  }, [tasks])
+  const tasksByStatus = useMemo(() => groupTasksByStatus(tasks), [tasks])
 
   const handleUpdateStatus = useCallback(
     async (taskId: string, newStatus: TaskStatus) => {
