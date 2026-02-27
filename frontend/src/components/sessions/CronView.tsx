@@ -71,48 +71,47 @@ function getDisplayStatus(job: CronJob): DisplayStatus {
 
 // --- Formatting helpers ---
 
+function formatCronSchedule(schedule: CronSchedule): string {
+  const expr = schedule.expr
+  const parts = expr.split(' ')
+  if (parts.length !== 5) return expr
+
+  const [minute, hour, _dom, _month, dayOfWeek] = parts
+  const formatTime = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
+
+  if (expr === '* * * * *') return 'Every minute'
+  if (minute.startsWith('*/') && hour === '*') {
+    const n = Number.parseInt(minute.slice(2), 10)
+    return `Every ${n} min`
+  }
+  if (minute === '0' && hour === '*') return 'Every hour'
+  if (minute === '0' && hour === '0' && dayOfWeek === '*') return 'Daily at midnight'
+  if (minute !== '*' && hour !== '*' && dayOfWeek === '*') return `Daily at ${formatTime}`
+
+  if (minute !== '*' && hour !== '*' && dayOfWeek !== '*') {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const dayName = days[Number.parseInt(dayOfWeek, 10)] ?? dayOfWeek
+    return `${dayName} at ${formatTime}`
+  }
+
+  return expr + (schedule.tz ? ` (${schedule.tz})` : '')
+}
+
+function formatEverySchedule(ms: number): string {
+  if (ms < 60_000) return `Every ${Math.round(ms / 1000)}s`
+  if (ms < 3_600_000) return `Every ${Math.round(ms / 60_000)} min`
+  if (ms < 86_400_000) return `Every ${(ms / 3_600_000).toFixed(1).replace(/\.0$/, '')}h`
+  return `Every ${(ms / 86_400_000).toFixed(1).replace(/\.0$/, '')}d`
+}
+
 function formatSchedule(schedule: Schedule): string {
-  // NOSONAR: cron schedule formatting with multiple format branches
   switch (schedule.kind) {
-    case 'cron': {
-      const expr = schedule.expr
-      const parts = expr.split(' ')
-      if (parts.length !== 5) return expr
-
-      const [minute, hour, _dom, _month, dayOfWeek] = parts
-
-      // Common patterns
-      if (expr === '* * * * *') return 'Every minute'
-      if (minute.startsWith('*/')) {
-        const n = Number.parseInt(minute.slice(2), 10)
-        if (hour === '*') return `Every ${n} min`
-      }
-      if (minute === '0' && hour === '*') return 'Every hour'
-      if (minute === '0' && hour === '0' && dayOfWeek === '*') return 'Daily at midnight'
-      if (minute !== '*' && hour !== '*' && dayOfWeek === '*') {
-        return `Daily at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
-      }
-      if (minute !== '*' && hour !== '*' && dayOfWeek !== '*') {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-        const dayName = days[Number.parseInt(dayOfWeek, 10)] ?? dayOfWeek
-        return `${dayName} at ${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
-      }
-
-      return expr + (schedule.tz ? ` (${schedule.tz})` : '')
-    }
-
-    case 'at': {
-      const date = new Date(schedule.atMs)
-      return `Once at ${date.toLocaleString()}`
-    }
-
-    case 'every': {
-      const ms = schedule.everyMs
-      if (ms < 60_000) return `Every ${Math.round(ms / 1000)}s`
-      if (ms < 3_600_000) return `Every ${Math.round(ms / 60_000)} min`
-      if (ms < 86_400_000) return `Every ${(ms / 3_600_000).toFixed(1).replace(/\.0$/, '')}h`
-      return `Every ${(ms / 86_400_000).toFixed(1).replace(/\.0$/, '')}d`
-    }
+    case 'cron':
+      return formatCronSchedule(schedule)
+    case 'at':
+      return `Once at ${new Date(schedule.atMs).toLocaleString()}`
+    case 'every':
+      return formatEverySchedule(schedule.everyMs)
   }
 }
 

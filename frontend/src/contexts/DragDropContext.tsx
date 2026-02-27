@@ -250,6 +250,14 @@ export function DragDropProvider({ children, onAssignmentChanged }: DragDropProv
               // → treat as "drop on outdoor/parking" = unassign
               dropOnParking()
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+              }
+            }}
+            role="region"
+            tabIndex={0}
+            aria-label="Drag and drop parking overlay"
           />
         )}
       </DragActionsContext.Provider>

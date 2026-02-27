@@ -322,18 +322,18 @@ export function CreatorBottomBar() {
       </div>
 
       {/* Category Bar */}
-      <button type="button" style={categoryBarStyle}>
+      <div style={categoryBarStyle}>
         {/* "All" chip */}
-        <div
+        <button
+          type="button"
           style={chipStyle(activeCategory === 'All')}
           onClick={() => handleCategoryClick('All')}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') handleCategoryClick('All')
           }}
-          tabIndex={0}
         >
           All
-        </div>
+        </button>
 
         {/* One chip per category */}
         {ALL_CATEGORIES.map((cat) => {
@@ -366,7 +366,7 @@ export function CreatorBottomBar() {
         >
           ✨ Generated
         </button>
-      </button>
+      </div>
     </div>
   )
 }

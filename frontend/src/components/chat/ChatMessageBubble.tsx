@@ -415,9 +415,316 @@ function getCodeStyles(variant: string): {
   }
 }
 
+type BubbleMediaAttachment = ReturnType<typeof parseMediaAttachments>['attachments'][number]
+
+interface BubbleRenderProps {
+  readonly msg: ChatMessageData
+  readonly isUser: boolean
+  readonly cleanText: string
+  readonly renderedHtml: string
+  readonly imageAttachments: BubbleMediaAttachment[]
+  readonly videoAttachments: BubbleMediaAttachment[]
+  readonly audioAttachments: BubbleMediaAttachment[]
+  readonly accentColor: string
+  readonly showThinking: boolean
+  readonly showToolDetails: boolean
+}
+
+function ZenMessageContent({
+  msg,
+  isUser,
+  cleanText,
+  renderedHtml,
+  imageAttachments,
+  videoAttachments,
+  audioAttachments,
+  accentColor,
+  showThinking,
+}: BubbleRenderProps) {
+  if (msg.role === 'system') {
+    return (
+      <div
+        className="zen-message zen-message-system zen-fade-in"
+        style={{
+          alignSelf: 'center',
+          color: 'var(--zen-fg-muted)',
+          fontStyle: 'italic',
+          fontSize: '12px',
+          padding: 'var(--zen-space-sm) 0',
+        }}
+      >
+        {cleanText}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`zen-message ${isUser ? 'zen-message-user' : 'zen-message-assistant'} zen-fade-in`}
+    >
+      <div className="zen-message-header">
+        <span
+          className={`zen-message-role ${isUser ? 'zen-message-role-user' : 'zen-message-role-assistant'}`}
+        >
+          {isUser ? 'YOU' : 'ASSISTANT'}
+        </span>
+        <span className="zen-message-time">{formatRelativeTime(msg.timestamp)}</span>
+      </div>
+
+      {imageAttachments.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+          {imageAttachments.map((attachment) => (
+            <ImageThumbnail key={attachment.path} attachment={attachment} maxWidth={200} />
+          ))}
+        </div>
+      )}
+
+      {videoAttachments.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
+          {videoAttachments.map((attachment) => (
+            <VideoThumbnail key={attachment.path} attachment={attachment} maxWidth={300} />
+          ))}
+        </div>
+      )}
+
+      {audioAttachments.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
+          {audioAttachments.map((attachment) => (
+            <AudioMessage
+              key={attachment.path}
+              url={attachment.path}
+              duration={attachment.duration}
+              variant="zen"
+              isUser={isUser}
+              accentColor={accentColor}
+              transcript={attachment.transcript}
+              transcriptError={attachment.transcriptError}
+            />
+          ))}
+        </div>
+      )}
+
+      {showThinking && msg.thinking && msg.thinking.length > 0 && (
+        <div className="zen-thinking-blocks">
+          {msg.thinking.map((thought, i) => (
+            <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} zenMode />
+          ))}
+        </div>
+      )}
+
+      {msg.tools && msg.tools.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}>
+          {msg.tools.map((tool) => (
+            <ToolCallBlock
+              key={`tool-${tool.name}-${tool.status}-${safeJsonKey(tool.input)}`}
+              tool={tool}
+              zenMode
+            />
+          ))}
+        </div>
+      )}
+
+      {(cleanText || msg.isStreaming) && (
+        <div className="zen-message-content">
+          {cleanText && <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />}
+          {msg.isStreaming && (
+            <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>▋</span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function getInlineBubbleStyle(
+  variant: ChatVariant,
+  isUser: boolean,
+  accentColor: string
+): CSSProperties {
+  if (isUser) {
+    return {
+      background: accentColor + (variant === 'mobile' ? 'cc' : 'dd'),
+      color: '#fff',
+      borderRadius: variant === 'mobile' ? '16px 16px 4px 16px' : '14px 14px 4px 14px',
+      marginLeft: 48,
+      alignSelf: 'flex-end',
+    }
+  }
+
+  return {
+    background:
+      variant === 'mobile'
+        ? 'var(--mobile-msg-assistant-bg, rgba(255,255,255,0.07))'
+        : 'rgba(0,0,0,0.05)',
+    color: variant === 'mobile' ? 'var(--mobile-msg-assistant-text, #e2e8f0)' : '#1f2937',
+    borderRadius: variant === 'mobile' ? '16px 16px 16px 4px' : '14px 14px 14px 4px',
+    marginRight: 48,
+    alignSelf: FLEX_START,
+  }
+}
+
+function InlineMessageContent({
+  msg,
+  isUser,
+  cleanText,
+  renderedHtml,
+  imageAttachments,
+  videoAttachments,
+  audioAttachments,
+  accentColor,
+  showThinking,
+  showToolDetails,
+  variant,
+}: BubbleRenderProps & { readonly variant: ChatVariant }) {
+  const isDark = variant === 'mobile'
+
+  if (msg.role === 'system') {
+    return (
+      <div
+        style={{
+          textAlign: 'center',
+          fontSize: 11,
+          color: isDark ? '#64748b' : '#9ca3af',
+          fontStyle: 'italic',
+          padding: '4px 0',
+        }}
+      >
+        {cleanText}
+      </div>
+    )
+  }
+
+  const bubbleStyle = getInlineBubbleStyle(variant, isUser, accentColor)
+  const containerStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: isUser ? 'flex-end' : FLEX_START,
+    gap: 4,
+  }
+  const mediaMargin = isUser ? { marginLeft: 48 } : { marginRight: 48 }
+
+  return (
+    <div style={containerStyle}>
+      {showThinking && msg.thinking && msg.thinking.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
+          {msg.thinking.map((thought, i) => (
+            <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} />
+          ))}
+        </div>
+      )}
+
+      {msg.tools && msg.tools.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '100%' }}>
+          {msg.tools.map((tool) => (
+            <ToolCallBlock
+              key={`tool-${tool.name}-${tool.status}-${safeJsonKey(tool.input)}`}
+              tool={tool}
+              showDetails={showToolDetails}
+            />
+          ))}
+        </div>
+      )}
+
+      {(cleanText || msg.isStreaming) && (
+        <div
+          style={{
+            padding: variant === 'mobile' ? '10px 14px' : '8px 12px',
+            fontSize: variant === 'mobile' ? 14 : 13,
+            lineHeight: 1.5,
+            wordBreak: BREAK_WORD,
+            overflowWrap: BREAK_WORD,
+            maxWidth: '100%',
+            ...bubbleStyle,
+          }}
+        >
+          {cleanText && <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />}
+          {msg.isStreaming && (
+            <span
+              style={{
+                display: 'inline',
+                animation: 'streaming-cursor-blink 0.6s step-end infinite',
+              }}
+            >
+              ▋
+            </span>
+          )}
+        </div>
+      )}
+
+      {imageAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '6px',
+            maxWidth: '100%',
+            ...mediaMargin,
+          }}
+        >
+          {imageAttachments.map((attachment) => (
+            <ImageThumbnail
+              key={attachment.path}
+              attachment={attachment}
+              maxWidth={variant === 'mobile' ? 180 : 200}
+            />
+          ))}
+        </div>
+      )}
+
+      {videoAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            maxWidth: '100%',
+            ...mediaMargin,
+          }}
+        >
+          {videoAttachments.map((attachment) => (
+            <VideoThumbnail
+              key={attachment.path}
+              attachment={attachment}
+              maxWidth={variant === 'mobile' ? 260 : 280}
+            />
+          ))}
+        </div>
+      )}
+
+      {audioAttachments.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '6px',
+            maxWidth: '100%',
+            ...mediaMargin,
+          }}
+        >
+          {audioAttachments.map((attachment) => (
+            <AudioMessage
+              key={attachment.path}
+              url={attachment.path}
+              duration={attachment.duration}
+              variant={variant}
+              isUser={isUser}
+              accentColor={accentColor}
+              transcript={attachment.transcript}
+              transcriptError={attachment.transcriptError}
+            />
+          ))}
+        </div>
+      )}
+
+      <div style={{ fontSize: 10, color: isDark ? '#475569' : '#9ca3af', padding: '0 4px' }}>
+        {formatShortTimestamp(msg.timestamp)}
+      </div>
+    </div>
+  )
+}
+
 const ChatMessageBubbleInner = memo(
   function ChatMessageBubble({
-    // NOSONAR: message rendering with multiple content type branches
     msg,
     variant = 'float',
     accentColor = '#8b5cf6',
@@ -425,9 +732,7 @@ const ChatMessageBubbleInner = memo(
     showToolDetails = false,
   }: ChatMessageBubbleProps) {
     const isUser = msg.role === 'user'
-    const isSystem = msg.role === 'system'
 
-    // Parse media attachments
     const { text, attachments } = parseMediaAttachments(msg.content || '')
     const imageAttachments = attachments.filter((a) => a.type === 'image')
     const videoAttachments = attachments.filter((a) => a.type === 'video')
@@ -440,290 +745,24 @@ const ChatMessageBubbleInner = memo(
       return renderMarkdown(cleanText, codeBlockStyle, inlineCodeStyle)
     }, [cleanText, variant])
 
-    // ── ZEN variant ────────────────────────────────────────────────
+    const sharedProps: BubbleRenderProps = {
+      msg,
+      isUser,
+      cleanText,
+      renderedHtml,
+      imageAttachments,
+      videoAttachments,
+      audioAttachments,
+      accentColor,
+      showThinking,
+      showToolDetails,
+    }
+
     if (variant === 'zen') {
-      if (isSystem) {
-        return (
-          <div
-            className="zen-message zen-message-system zen-fade-in"
-            style={{
-              alignSelf: 'center',
-              color: 'var(--zen-fg-muted)',
-              fontStyle: 'italic',
-              fontSize: '12px',
-              padding: 'var(--zen-space-sm) 0',
-            }}
-          >
-            {cleanText}
-          </div>
-        )
-      }
-
-      return (
-        <div
-          className={`zen-message ${isUser ? 'zen-message-user' : 'zen-message-assistant'} zen-fade-in`}
-        >
-          <div className="zen-message-header">
-            <span
-              className={`zen-message-role ${isUser ? 'zen-message-role-user' : 'zen-message-role-assistant'}`}
-            >
-              {isUser ? 'YOU' : 'ASSISTANT'}
-            </span>
-            <span className="zen-message-time">{formatRelativeTime(msg.timestamp)}</span>
-          </div>
-
-          {/* Image attachments */}
-          {imageAttachments.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-              {imageAttachments.map((attachment) => (
-                <ImageThumbnail key={attachment.path} attachment={attachment} maxWidth={200} />
-              ))}
-            </div>
-          )}
-
-          {/* Video attachments */}
-          {videoAttachments.length > 0 && (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}
-            >
-              {videoAttachments.map((attachment) => (
-                <VideoThumbnail key={attachment.path} attachment={attachment} maxWidth={300} />
-              ))}
-            </div>
-          )}
-
-          {/* Audio attachments */}
-          {audioAttachments.length > 0 && (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}
-            >
-              {audioAttachments.map((attachment) => (
-                <AudioMessage
-                  key={attachment.path}
-                  url={attachment.path}
-                  duration={attachment.duration}
-                  variant="zen"
-                  isUser={isUser}
-                  accentColor={accentColor}
-                  transcript={attachment.transcript}
-                  transcriptError={attachment.transcriptError}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Thinking blocks */}
-          {showThinking && msg.thinking && msg.thinking.length > 0 && (
-            <div className="zen-thinking-blocks">
-              {msg.thinking.map((thought, i) => (
-                <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} zenMode />
-              ))}
-            </div>
-          )}
-
-          {/* Tool calls */}
-          {msg.tools && msg.tools.length > 0 && (
-            <div
-              style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '4px' }}
-            >
-              {msg.tools.map((tool) => (
-                <ToolCallBlock
-                  key={`tool-${tool.name}-${tool.status}-${safeJsonKey(tool.input)}`}
-                  tool={tool}
-                  zenMode
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Message content */}
-          {(cleanText || msg.isStreaming) && (
-            <div className="zen-message-content">
-              {cleanText && <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />}
-              {msg.isStreaming && (
-                <span style={{ animation: 'streaming-cursor-blink 0.6s step-end infinite' }}>
-                  ▋
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      )
+      return <ZenMessageContent {...sharedProps} />
     }
 
-    // ── FLOAT / MOBILE variants (inline-styles) ────────────────────
-
-    const isDark = variant === 'mobile'
-
-    if (isSystem) {
-      return (
-        <div
-          style={{
-            textAlign: 'center',
-            fontSize: 11,
-            color: isDark ? '#64748b' : '#9ca3af',
-            fontStyle: 'italic',
-            padding: '4px 0',
-          }}
-        >
-          {cleanText}
-        </div>
-      )
-    }
-
-    const bubbleStyle: CSSProperties = isUser
-      ? {
-          background: accentColor + (isDark ? 'cc' : 'dd'),
-          color: '#fff',
-          borderRadius: variant === 'mobile' ? '16px 16px 4px 16px' : '14px 14px 4px 14px',
-          marginLeft: 48,
-          alignSelf: 'flex-end',
-        }
-      : {
-          background:
-            variant === 'mobile'
-              ? 'var(--mobile-msg-assistant-bg, rgba(255,255,255,0.07))'
-              : 'rgba(0,0,0,0.05)',
-          color: variant === 'mobile' ? 'var(--mobile-msg-assistant-text, #e2e8f0)' : '#1f2937',
-          borderRadius: variant === 'mobile' ? '16px 16px 16px 4px' : '14px 14px 14px 4px',
-          marginRight: 48,
-          alignSelf: FLEX_START,
-        }
-
-    const containerStyle: CSSProperties = {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: isUser ? 'flex-end' : FLEX_START,
-      gap: 4,
-    }
-
-    const mediaMargin = isUser ? { marginLeft: 48 } : { marginRight: 48 }
-
-    return (
-      <div style={containerStyle}>
-        {/* Thinking blocks */}
-        {showThinking && msg.thinking && msg.thinking.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
-            {msg.thinking.map((thought, i) => (
-              <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} />
-            ))}
-          </div>
-        )}
-
-        {/* Tool calls */}
-        {msg.tools && msg.tools.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '100%' }}>
-            {msg.tools.map((tool) => (
-              <ToolCallBlock
-                key={`tool-${tool.name}-${tool.status}-${safeJsonKey(tool.input)}`}
-                tool={tool}
-                showDetails={showToolDetails}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Text content */}
-        {(cleanText || msg.isStreaming) && (
-          <div
-            style={{
-              padding: variant === 'mobile' ? '10px 14px' : '8px 12px',
-              fontSize: variant === 'mobile' ? 14 : 13,
-              lineHeight: 1.5,
-              wordBreak: BREAK_WORD,
-              overflowWrap: BREAK_WORD,
-              maxWidth: '100%',
-              ...bubbleStyle,
-            }}
-          >
-            {cleanText && <span dangerouslySetInnerHTML={{ __html: renderedHtml }} />}
-            {msg.isStreaming && (
-              <span
-                style={{
-                  display: 'inline',
-                  animation: 'streaming-cursor-blink 0.6s step-end infinite',
-                }}
-              >
-                ▋
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Image attachments */}
-        {imageAttachments.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '6px',
-              maxWidth: '100%',
-              ...mediaMargin,
-            }}
-          >
-            {imageAttachments.map((attachment) => (
-              <ImageThumbnail
-                key={attachment.path}
-                attachment={attachment}
-                maxWidth={variant === 'mobile' ? 180 : 200}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Video attachments */}
-        {videoAttachments.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              maxWidth: '100%',
-              ...mediaMargin,
-            }}
-          >
-            {videoAttachments.map((attachment) => (
-              <VideoThumbnail
-                key={attachment.path}
-                attachment={attachment}
-                maxWidth={variant === 'mobile' ? 260 : 280}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Audio attachments */}
-        {audioAttachments.length > 0 && (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '6px',
-              maxWidth: '100%',
-              ...mediaMargin,
-            }}
-          >
-            {audioAttachments.map((attachment) => (
-              <AudioMessage
-                key={attachment.path}
-                url={attachment.path}
-                duration={attachment.duration}
-                variant={variant}
-                isUser={isUser}
-                accentColor={accentColor}
-                transcript={attachment.transcript}
-                transcriptError={attachment.transcriptError}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Timestamp */}
-        <div style={{ fontSize: 10, color: isDark ? '#475569' : '#9ca3af', padding: '0 4px' }}>
-          {formatShortTimestamp(msg.timestamp)}
-        </div>
-      </div>
-    )
+    return <InlineMessageContent {...sharedProps} variant={variant} />
   },
   (prev, next) => {
     return (

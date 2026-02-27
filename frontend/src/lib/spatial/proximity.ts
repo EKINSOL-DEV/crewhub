@@ -139,50 +139,57 @@ export class ProximityGrid {
     }
   }
 
+  private shouldIncludeEntity(entity: ProximityEntity, query: ProximityQuery): boolean {
+    if (query.excludeId && entity.id === query.excludeId) return false
+    if (query.type && entity.type !== query.type) return false
+    return true
+  }
+
+  private collectCellMatches(
+    bucket: ProximityEntity[] | undefined,
+    query: ProximityQuery,
+    radiusSq: number,
+    results: QueryResult[]
+  ): void {
+    if (!bucket) return
+
+    for (const entity of bucket) {
+      if (!this.shouldIncludeEntity(entity, query)) continue
+
+      const dx = entity.x - query.x
+      const dz = entity.z - query.z
+      const distSq = dx * dx + dz * dz
+      if (distSq > radiusSq) continue
+
+      results.push({
+        ...entity,
+        distance: Math.sqrt(distSq),
+      })
+    }
+  }
+
   /**
    * Query entities within a radius of a point.
    * Returns results sorted by distance (closest first).
    */
   queryRadius(query: ProximityQuery): QueryResult[] {
-    // NOSONAR: spatial grid query with filtering
-    const { x, z, radius, type, excludeId, limit } = query
+    const { x, z, radius, limit } = query
     const results: QueryResult[] = []
 
-    // Determine which hash cells to check
     const minCX = Math.floor((x - radius) / this.cellSize)
     const maxCX = Math.floor((x + radius) / this.cellSize)
     const minCZ = Math.floor((z - radius) / this.cellSize)
     const maxCZ = Math.floor((z + radius) / this.cellSize)
-
     const radiusSq = radius * radius
 
     for (let cx = minCX; cx <= maxCX; cx++) {
       for (let cz = minCZ; cz <= maxCZ; cz++) {
         const key = `${cx},${cz}`
-        const bucket = this.cells.get(key)
-        if (!bucket) continue
-
-        for (const entity of bucket) {
-          if (excludeId && entity.id === excludeId) continue
-          if (type && entity.type !== type) continue
-
-          const dx = entity.x - x
-          const dz = entity.z - z
-          const distSq = dx * dx + dz * dz
-
-          if (distSq <= radiusSq) {
-            results.push({
-              ...entity,
-              distance: Math.sqrt(distSq),
-            })
-          }
-        }
+        this.collectCellMatches(this.cells.get(key), query, radiusSq, results)
       }
     }
 
-    // Sort by distance
     results.sort((a, b) => a.distance - b.distance)
-
     return limit ? results.slice(0, limit) : results
   }
 

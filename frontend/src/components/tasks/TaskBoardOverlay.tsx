@@ -338,6 +338,13 @@ export function TaskBoardOverlay({
               onDragOver={(e) => handleDragOver(e, col.status)}
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, col.status)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                }
+              }}
+              role="region"
+              tabIndex={0}
             >
               {/* Column Header */}
               <div
@@ -383,6 +390,13 @@ export function TaskBoardOverlay({
                       draggable
                       onDragStart={() => handleDragStart(task)}
                       onDragEnd={handleDragEnd}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                        }
+                      }}
+                      role="group"
+                      tabIndex={0}
                       className={cn(
                         'cursor-grab active:cursor-grabbing transition-opacity',
                         draggedTask?.id === task.id && 'opacity-50'

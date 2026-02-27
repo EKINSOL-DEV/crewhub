@@ -179,6 +179,23 @@ export function LightingDebugPanel() {
     [pos]
   )
 
+  const handleHeaderKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 20 : 10
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      setPos((prev) => ({ ...prev, x: prev.x - step }))
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      setPos((prev) => ({ ...prev, x: prev.x + step }))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setPos((prev) => ({ ...prev, y: prev.y - step }))
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setPos((prev) => ({ ...prev, y: prev.y + step }))
+    }
+  }, [])
+
   useEffect(() => {
     const handleMove = (e: MouseEvent) => {
       if (!dragRef.current) return
@@ -304,6 +321,10 @@ export function LightingDebugPanel() {
         <div
           className="flex items-center justify-between px-3 py-2 cursor-move bg-gray-800/80 border-b border-gray-700/60"
           onMouseDown={handleMouseDown}
+          onKeyDown={handleHeaderKeyDown}
+          tabIndex={0}
+          role="button"
+          aria-label="Move lighting panel"
         >
           <span className="text-xs font-semibold text-gray-200">💡 Lighting Editor</span>
           <button

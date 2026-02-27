@@ -48,6 +48,7 @@ const FIXED_AGENT_IDS = new Set([
 ])
 
 export function MobileLayout() {
+  // NOSONAR: navigation container orchestrating many panel branches
   // NOSONAR: React component with multiple hooks and state
   const { sessions: realSessions, loading, connected, refresh } = useSessionsStream(true)
   const { isDemoMode, demoSessions } = useDemoMode()
@@ -161,53 +162,55 @@ export function MobileLayout() {
 
   // Drawer navigation
   const handleDrawerNavigate = useCallback((panel: MobilePanel) => {
-    switch (panel) {
-      case 'chat':
-        setView({ type: 'list' })
-        break
-      case 'docs':
-        setView({ type: 'docs' })
-        break
-      case 'kanban':
-        setView({ type: 'kanban' })
-        break
-      case 'activity':
-        setView({ type: 'activity' })
-        break
-      case 'projects':
-        setView({ type: 'projects' })
-        break
-      case 'creator':
-        setView({ type: 'creator' })
-        break
-      case 'settings':
-        setSettingsOpen(true)
-        break
-      default:
-        break
+    if (panel === 'settings') {
+      setSettingsOpen(true)
+      return
     }
+
+    const viewByPanel: Partial<Record<MobilePanel, View>> = {
+      chat: { type: 'list' },
+      docs: { type: 'docs' },
+      kanban: { type: 'kanban' },
+      activity: { type: 'activity' },
+      projects: { type: 'projects' },
+      creator: { type: 'creator' },
+    }
+
+    const nextView = viewByPanel[panel]
+    if (nextView) setView(nextView)
   }, [])
 
-  // Determine current panel for drawer highlight
-  let currentPanel: MobilePanel
-  if (view.type === 'docs') {
-    currentPanel = 'docs'
-  } else if (view.type === 'kanban') {
-    currentPanel = 'kanban'
-  } else if (view.type === 'activity') {
-    currentPanel = 'activity'
-  } else if (view.type === 'projects') {
-    currentPanel = 'projects'
-  } else if (view.type === 'creator') {
-    currentPanel = 'creator'
-  } else {
-    currentPanel = 'chat'
+  const currentPanel: MobilePanel =
+    view.type === 'docs' ||
+    view.type === 'kanban' ||
+    view.type === 'activity' ||
+    view.type === 'projects' ||
+    view.type === 'creator'
+      ? view.type
+      : 'chat'
+
+  const panelView =
+    view.type === 'docs' ||
+    view.type === 'kanban' ||
+    view.type === 'activity' ||
+    view.type === 'projects' ||
+    view.type === 'creator'
+      ? view.type
+      : null
+
+  const panelComponents: Record<
+    'docs' | 'kanban' | 'activity' | 'projects' | 'creator',
+    React.ReactNode
+  > = {
+    docs: <MobileDocsPanel onBack={handleBack} />,
+    kanban: <MobileKanbanPanel onBack={handleBack} />,
+    activity: <MobileActivityPanel onBack={handleBack} />,
+    projects: <MobileProjectsPanel onBack={handleBack} />,
+    creator: <MobileCreatorView onBack={handleBack} />,
   }
 
-  // Resolve main view without nested ternaries (S3358)
-  let currentView: React.ReactNode
-  if (view.type === 'chat') {
-    currentView = (
+  const currentView: React.ReactNode =
+    view.type === 'chat' ? (
       <MobileAgentChat
         sessionKey={view.sessionKey}
         agentName={view.agentName}
@@ -217,17 +220,13 @@ export function MobileLayout() {
         onBack={handleBack}
         onOpenSettings={() => setSettingsOpen(true)}
       />
-    )
-  } else if (view.type === 'new-group') {
-    currentView = (
+    ) : view.type === 'new-group' ? (
       <AgentMultiSelectSheet
         agents={fixedAgents}
         onConfirm={handleCreateGroup}
         onClose={handleBack}
       />
-    )
-  } else if (view.type === GROUP_CHAT) {
-    currentView = (
+    ) : view.type === GROUP_CHAT ? (
       <GroupThreadChat
         thread={view.thread}
         onBack={handleBack}
@@ -239,19 +238,9 @@ export function MobileLayout() {
           /* Phase 2: group management — rename flow */
         }}
       />
-    )
-  } else if (view.type === 'docs') {
-    currentView = <MobileDocsPanel onBack={handleBack} />
-  } else if (view.type === 'kanban') {
-    currentView = <MobileKanbanPanel onBack={handleBack} />
-  } else if (view.type === 'activity') {
-    currentView = <MobileActivityPanel onBack={handleBack} />
-  } else if (view.type === 'projects') {
-    currentView = <MobileProjectsPanel onBack={handleBack} />
-  } else if (view.type === 'creator') {
-    currentView = <MobileCreatorView onBack={handleBack} />
-  } else {
-    currentView = (
+    ) : panelView ? (
+      panelComponents[panelView]
+    ) : (
       <MobileAgentList
         agents={fixedAgents}
         loading={loading}
@@ -264,7 +253,6 @@ export function MobileLayout() {
         onOpenDrawer={() => setDrawerOpen(true)}
       />
     )
-  }
 
   return (
     <div

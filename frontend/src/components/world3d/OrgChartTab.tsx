@@ -52,6 +52,14 @@ function OrgNode({ name, depth = 0 }: Readonly<{ name: string; readonly depth?: 
         onMouseLeave={(e) => {
           e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)'
         }}
+        onFocus={(e) => {
+          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.15)' : 'rgba(0,0,0,0.06)'
+        }}
+        onBlur={(e) => {
+          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)'
+        }}
+        tabIndex={0}
+        role="listitem"
       >
         <span style={{ fontSize: 18 }}>{node.icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>

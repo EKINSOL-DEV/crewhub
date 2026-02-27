@@ -529,6 +529,11 @@ function PropCard({ name, Component, color, index }: {
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onFocus={() => setHovered(true)}
+      onBlur={() => setHovered(false)}
+      role="button"
+      tabIndex={0}
+      aria-label={`Preview ${name}`}
     >
       <Canvas>
         <PerspectiveCamera makeDefault position={[0, 0.5, 3]} fov={35} />
