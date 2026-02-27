@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo } from 'react'
+import React, { useRef, useEffect, useCallback, useMemo } from 'react'
 import { useThree, useFrame } from '@react-three/fiber'
 import { PointerLockControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -59,6 +59,83 @@ const keys = {
 
 // ─── Component ─────────────────────────────────────────────────
 
+interface CollisionRoom {
+  centerX: number
+  centerZ: number
+  halfSize: number
+  cellSize: number
+  gridWidth: number
+  gridDepth: number
+  walkableMask: boolean[][]
+  roomName: string
+}
+
+function isWalkableNearby(mask: boolean[][], gz: number, gx: number): boolean {
+  if (mask[gz]?.[gx]) return true
+  for (let oz = -1; oz <= 1; oz++) {
+    for (let ox = -1; ox <= 1; ox++) {
+      if (mask[gz + oz]?.[gx + ox]) return true
+    }
+  }
+  return false
+}
+
+function applyFPMovement(
+  camera: THREE.Camera,
+  direction: THREE.Vector3,
+  isRunning: boolean,
+  delta: number,
+  canMoveTo: (x: number, z: number) => boolean
+): void {
+  direction.normalize()
+  direction.applyQuaternion(camera.quaternion)
+  direction.y = 0
+  direction.normalize()
+
+  const speed = (isRunning ? RUN_SPEED : WALK_SPEED) * delta
+  const newX = camera.position.x + direction.x * speed
+  const newZ = camera.position.z + direction.z * speed
+
+  if (canMoveTo(newX, newZ)) {
+    camera.position.x = newX
+    camera.position.z = newZ
+  } else if (canMoveTo(newX, camera.position.z)) {
+    camera.position.x = newX
+  } else if (canMoveTo(camera.position.x, newZ)) {
+    camera.position.z = newZ
+  }
+
+  camera.position.y = EYE_HEIGHT
+}
+
+function updateRoomDetection(
+  camera: THREE.Camera,
+  detectRoom: (x: number, z: number) => string | null,
+  currentRoomRef: React.MutableRefObject<string | null>,
+  onEnterRoom?: (name: string) => void,
+  onLeaveRoom?: () => void
+): void {
+  const roomName = detectRoom(camera.position.x, camera.position.z)
+  if (roomName !== currentRoomRef.current) {
+    currentRoomRef.current = roomName
+    if (roomName) onEnterRoom?.(roomName)
+    else onLeaveRoom?.()
+  }
+}
+
+function checkRoomWalkability(worldX: number, worldZ: number, rooms: CollisionRoom[]): boolean | null {
+  for (const room of rooms) {
+    const dx = worldX - room.centerX
+    const dz = worldZ - room.centerZ
+    const hs = room.halfSize
+    if (dx >= -hs && dx <= hs && dz >= -hs && dz <= hs) {
+      const gridPos = worldToGrid(dx, dz, room.cellSize, room.gridWidth, room.gridDepth)
+      return isWalkableNearby(room.walkableMask, gridPos.z, gridPos.x)
+    }
+  }
+  return null // Not inside any room
+}
+
 export function FirstPersonController({
   roomPositions,
   roomSize = 12,
@@ -100,31 +177,9 @@ export function FirstPersonController({
 
   const canMoveTo = useCallback(
     (worldX: number, worldZ: number): boolean => {
-      // NOSONAR
-      // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
-      // Check if inside any room
-      for (const room of collisionRooms) {
-        const dx = worldX - room.centerX
-        const dz = worldZ - room.centerZ
-        const hs = room.halfSize
+      const roomResult = checkRoomWalkability(worldX, worldZ, collisionRooms)
+      if (roomResult !== null) return roomResult
 
-        if (dx >= -hs && dx <= hs && dz >= -hs && dz <= hs) {
-          // Inside this room's bounds — use walkable mask
-          const gridPos = worldToGrid(dx, dz, room.cellSize, room.gridWidth, room.gridDepth)
-          const isWalkable = room.walkableMask[gridPos.z]?.[gridPos.x] ?? false
-          if (isWalkable) return true
-          // Check nearby cells (3x3) — makes doors easier to find
-          for (let oz = -1; oz <= 1; oz++) {
-            for (let ox = -1; ox <= 1; ox++) {
-              if (room.walkableMask[gridPos.z + oz]?.[gridPos.x + ox]) return true
-            }
-          }
-          return false
-        }
-      }
-
-      // Outside all rooms — hallway/exterior
-      // Allow movement within building perimeter with some margin
       const halfBW = buildingWidth / 2 - 0.5
       const halfBD = buildingDepth / 2 - 0.5
       return worldX >= -halfBW && worldX <= halfBW && worldZ >= -halfBD && worldZ <= halfBD
@@ -259,64 +314,19 @@ export function FirstPersonController({
   const _direction = useMemo(() => new THREE.Vector3(), [])
 
   useFrame((_, delta) => {
-    // NOSONAR
-    // NOSONAR: complexity from legitimate 3D rendering pipeline; extracting would hurt readability
     if (!enabled || !isLocked.current) return
 
     _direction.set(0, 0, 0)
-
     if (keys.forward) _direction.z -= 1
     if (keys.backward) _direction.z += 1
     if (keys.left) _direction.x -= 1
     if (keys.right) _direction.x += 1
 
-    if (_direction.lengthSq() === 0) {
-      // Still detect room even when standing still
-      const roomName = detectRoom(camera.position.x, camera.position.z)
-      if (roomName !== currentRoomRef.current) {
-        currentRoomRef.current = roomName
-        if (roomName) onEnterRoom?.(roomName)
-        else onLeaveRoom?.()
-      }
-      return
+    if (_direction.lengthSq() > 0) {
+      applyFPMovement(camera, _direction, keys.shift, delta, canMoveTo)
     }
 
-    _direction.normalize()
-
-    // Apply camera rotation to movement direction
-    _direction.applyQuaternion(camera.quaternion)
-    _direction.y = 0 // Stay on ground plane
-    _direction.normalize()
-
-    const speed = (keys.shift ? RUN_SPEED : WALK_SPEED) * delta
-    const newX = camera.position.x + _direction.x * speed
-    const newZ = camera.position.z + _direction.z * speed
-
-    // Try full movement first
-    if (canMoveTo(newX, newZ)) {
-      camera.position.x = newX
-      camera.position.z = newZ
-    } else {
-      // Wall sliding: try X only, then Z only
-      if (canMoveTo(newX, camera.position.z)) {
-        // NOSONAR
-        camera.position.x = newX
-      } else if (canMoveTo(camera.position.x, newZ)) {
-        camera.position.z = newZ
-      }
-      // If neither works, don't move (hit a corner)
-    }
-
-    // Lock Y to eye height
-    camera.position.y = EYE_HEIGHT
-
-    // Detect room transitions
-    const roomName = detectRoom(camera.position.x, camera.position.z)
-    if (roomName !== currentRoomRef.current) {
-      currentRoomRef.current = roomName
-      if (roomName) onEnterRoom?.(roomName)
-      else onLeaveRoom?.()
-    }
+    updateRoomDetection(camera, detectRoom, currentRoomRef, onEnterRoom, onLeaveRoom)
   })
 
   if (!enabled) return null
