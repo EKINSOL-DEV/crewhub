@@ -503,9 +503,7 @@ class ConnectionManager:
                 return conn
         return None
 
-    async def _send_via_conn(
-        self, conn, session_key: str, message: str, timeout: float
-    ) -> Optional[str]:  # NOSONAR[python:S7483]
+    async def _send_via_conn(self, conn, session_key: str, message: str, timeout: float) -> Optional[str]:  # NOSONAR
         if not conn or not conn.is_connected():
             return None
         return await conn.send_message(session_key, message, timeout)
@@ -515,7 +513,7 @@ class ConnectionManager:
         session_key: str,
         message: str,
         connection_id: Optional[str] = None,
-        timeout: float = 120.0,  # NOSONAR[python:S7483]
+        timeout: float = 120.0,  # NOSONAR
     ) -> Optional[str]:
         """Send a message to a session, routing to the correct connection."""
         if connection_id:
