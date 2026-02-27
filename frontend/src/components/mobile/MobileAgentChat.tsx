@@ -65,6 +65,56 @@ async function uploadFile(file: File): Promise<{ path: string; url: string }> {
   return { path: data.path, url: data.url }
 }
 
+function createPendingFile(file: File): PendingFile {
+  const tooLarge = file.size > MAX_FILE_SIZE
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    file,
+    previewUrl: isImageFile(file) ? URL.createObjectURL(file) : null,
+    uploading: false,
+    progress: 0,
+    error: tooLarge ? 'Too large' : null,
+    uploadedPath: null,
+  }
+}
+
+function getPastedImages(items: DataTransferItemList | undefined): File[] {
+  if (!items) return []
+  const imageFiles: File[] = []
+  for (const item of items) {
+    if (!item.type.startsWith('image/')) continue
+    const file = item.getAsFile()
+    if (file) imageFiles.push(file)
+  }
+  return imageFiles
+}
+
+async function uploadPendingFiles(filesToUpload: PendingFile[]) {
+  const results = await Promise.all(
+    filesToUpload.map(async (pf) => {
+      try {
+        const result = await uploadFile(pf.file)
+        return { id: pf.id, path: result.path, error: null }
+      } catch (err: any) {
+        return { id: pf.id, path: null, error: err.message }
+      }
+    })
+  )
+
+  const errors = results.filter((r) => r.error)
+  const mediaPaths = results.filter((r) => r.path).map((r) => r.path as string)
+  return { results, errors, mediaPaths }
+}
+
+function buildMessagePayload(text: string, mediaPaths: string[]) {
+  const parts: string[] = []
+  if (text) parts.push(text)
+  for (const path of mediaPaths) {
+    parts.push(`MEDIA: ${path}`)
+  }
+  return parts.join('\n')
+}
+
 // (renderMarkdown, escapeHtml, formatTimestamp, ChatBubble moved to ChatMessageBubble.tsx)
 
 // Deterministic color
@@ -234,8 +284,7 @@ interface MobileAgentChatProps {
 }
 
 export function MobileAgentChat({
-  // NOSONAR: UI container with many conditional render branches
-  // NOSONAR: React component with multiple state interactions
+  // NOSONAR: mobile chat container with broad UI branching
   sessionKey,
   agentName,
   agentIcon,
@@ -312,19 +361,7 @@ export function MobileAgentChat({
   // ── File handling ──
 
   const addFiles = useCallback((files: FileList | File[]) => {
-    const newFiles: PendingFile[] = Array.from(files).map((file) => {
-      const tooLarge = file.size > MAX_FILE_SIZE
-      const previewUrl = isImageFile(file) ? URL.createObjectURL(file) : null
-      return {
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        file,
-        previewUrl,
-        uploading: false,
-        progress: 0,
-        error: tooLarge ? 'Too large' : null,
-        uploadedPath: null,
-      }
-    })
+    const newFiles = Array.from(files).map(createPendingFile)
     setPendingFiles((prev) => [...prev, ...newFiles])
   }, [])
 
@@ -352,19 +389,10 @@ export function MobileAgentChat({
 
   const handlePaste = useCallback(
     (e: ClipboardEvent<HTMLTextAreaElement>) => {
-      const items = e.clipboardData?.items
-      if (!items) return
-      const imageFiles: File[] = []
-      for (const item of items) {
-        if (item.type.startsWith('image/')) {
-          const file = item.getAsFile()
-          if (file) imageFiles.push(file)
-        }
-      }
-      if (imageFiles.length > 0) {
-        e.preventDefault()
-        addFiles(imageFiles)
-      }
+      const imageFiles = getPastedImages(e.clipboardData?.items)
+      if (imageFiles.length === 0) return
+      e.preventDefault()
+      addFiles(imageFiles)
     },
     [addFiles]
   )
@@ -385,57 +413,41 @@ export function MobileAgentChat({
   const handleSend = useCallback(async () => {
     const text = inputValue.trim()
     const filesToUpload = pendingFiles.filter((f) => !f.error)
-    if ((!text && filesToUpload.length === 0) || isSending || isUploading) return
+    const hasNothingToSend = !text && filesToUpload.length === 0
+    if (hasNothingToSend || isSending || isUploading) return
 
     setInputValue('')
     if (inputRef.current) inputRef.current.style.height = 'auto'
 
-    // Upload files first
     let mediaPaths: string[] = []
     if (filesToUpload.length > 0) {
       setIsUploading(true)
       setPendingFiles((prev) => prev.map((f) => (f.error ? f : { ...f, uploading: true })))
 
       try {
-        const results = await Promise.all(
-          filesToUpload.map(async (pf) => {
-            try {
-              const result = await uploadFile(pf.file)
-              return { id: pf.id, path: result.path, error: null }
-            } catch (err: any) {
-              return { id: pf.id, path: null, error: err.message }
-            }
-          })
-        )
-
-        const errors = results.filter((r) => r.error)
+        const {
+          results,
+          errors,
+          mediaPaths: uploadedPaths,
+        } = await uploadPendingFiles(filesToUpload)
         if (errors.length > 0) {
           setPendingFiles((prev) => prev.map(mapUploadResult(results)))
-          setIsUploading(false)
-          return // Don't send if uploads failed
+          return
         }
-
-        mediaPaths = results.filter((r) => r.path).map((r) => r.path!)
+        mediaPaths = uploadedPaths
       } catch {
-        setIsUploading(false)
         return
+      } finally {
+        setIsUploading(false)
       }
-      setIsUploading(false)
     }
 
-    // Clear pending files
     pendingFiles.forEach((f) => {
       if (f.previewUrl) URL.revokeObjectURL(f.previewUrl)
     })
     setPendingFiles([])
 
-    // Build message with media references
-    const parts: string[] = []
-    if (text) parts.push(text)
-    for (const path of mediaPaths) {
-      parts.push(`MEDIA: ${path}`)
-    }
-    const fullMessage = parts.join('\n')
+    const fullMessage = buildMessagePayload(text, mediaPaths)
     if (fullMessage) sendMessage(fullMessage)
   }, [inputValue, pendingFiles, isSending, isUploading, sendMessage])
 
