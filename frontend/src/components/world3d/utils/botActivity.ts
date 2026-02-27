@@ -100,24 +100,38 @@ export function humanizeLabel(label: string): string {
 /**
  * Extract a short task summary from the last few messages.
  */
+function getContentFlags(content: unknown): { toolCall: string | null; thinking: boolean } {
+  if (!Array.isArray(content)) return { toolCall: null, thinking: false }
+
+  let toolCall: string | null = null
+  let thinking = false
+
+  for (const block of content) {
+    if (
+      !toolCall &&
+      (block.type === 'toolCall' || block.type === 'tool_use') &&
+      typeof block.name === 'string'
+    ) {
+      toolCall = block.name
+    }
+    if (!thinking && block.type === 'thinking') {
+      thinking = true
+    }
+    if (toolCall && thinking) break
+  }
+
+  return { toolCall, thinking }
+}
+
 function getRecentActivityFlags(messages: CrewSession['messages'] = []) {
-  const recent = messages.slice(-5)
+  const recent = messages.slice(-5).reverse()
   let lastToolCall: string | null = null
   let isThinking = false
 
-  for (let i = recent.length - 1; i >= 0; i--) {
-    const content = recent[i]?.content
-    if (!Array.isArray(content)) continue
-
-    for (const block of content) {
-      if (!lastToolCall && (block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
-        lastToolCall = block.name
-      }
-      if (!isThinking && block.type === 'thinking') {
-        isThinking = true
-      }
-    }
-
+  for (const msg of recent) {
+    const { toolCall, thinking } = getContentFlags(msg?.content)
+    if (!lastToolCall && toolCall) lastToolCall = toolCall
+    if (!isThinking && thinking) isThinking = true
     if (lastToolCall && isThinking) break
   }
 

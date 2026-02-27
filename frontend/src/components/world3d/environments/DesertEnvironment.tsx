@@ -79,6 +79,349 @@ function InstancedDecoration({
   )
 }
 
+type DesertMatrices = {
+  groundMatrices: THREE.Matrix4[]
+  groundColors: THREE.Color[]
+  saguaroTrunk: THREE.Matrix4[]
+  saguaroTrunkCap: THREE.Matrix4[]
+  saguaroRightHoriz: THREE.Matrix4[]
+  saguaroRightVert: THREE.Matrix4[]
+  saguaroRightCap: THREE.Matrix4[]
+  saguaroLeftHoriz: THREE.Matrix4[]
+  saguaroLeftVert: THREE.Matrix4[]
+  saguaroLeftCap: THREE.Matrix4[]
+  barrelBody: THREE.Matrix4[]
+  barrelFlower: THREE.Matrix4[]
+  pricklyBase: THREE.Matrix4[]
+  pricklyLeft: THREE.Matrix4[]
+  pricklyRight: THREE.Matrix4[]
+  rocks: THREE.Matrix4[]
+  dunes: THREE.Matrix4[]
+  tumbleweeds: { pos: [number, number, number]; phase: number }[]
+}
+
+type DesertTransforms = {
+  mat4: THREE.Matrix4
+  groundQuat: THREE.Quaternion
+  identityQuat: THREE.Quaternion
+  rotZ90: THREE.Quaternion
+  pricklyLeftQuat: THREE.Quaternion
+  pricklyRightQuat: THREE.Quaternion
+  tmpVec: THREE.Vector3
+  tmpQuat: THREE.Quaternion
+}
+
+function createDesertMatrices(): DesertMatrices {
+  return {
+    groundMatrices: [],
+    groundColors: [],
+    saguaroTrunk: [],
+    saguaroTrunkCap: [],
+    saguaroRightHoriz: [],
+    saguaroRightVert: [],
+    saguaroRightCap: [],
+    saguaroLeftHoriz: [],
+    saguaroLeftVert: [],
+    saguaroLeftCap: [],
+    barrelBody: [],
+    barrelFlower: [],
+    pricklyBase: [],
+    pricklyLeft: [],
+    pricklyRight: [],
+    rocks: [],
+    dunes: [],
+    tumbleweeds: [],
+  }
+}
+
+function createDesertTransforms(): DesertTransforms {
+  return {
+    mat4: new THREE.Matrix4(),
+    groundQuat: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2),
+    identityQuat: new THREE.Quaternion(),
+    rotZ90: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2),
+    pricklyLeftQuat: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.2),
+    pricklyRightQuat: new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), -0.15),
+    tmpVec: new THREE.Vector3(),
+    tmpQuat: new THREE.Quaternion(),
+  }
+}
+
+function pushMatrix(
+  target: THREE.Matrix4[],
+  transforms: DesertTransforms,
+  position: THREE.Vector3,
+  quaternion: THREE.Quaternion,
+  scale: THREE.Vector3
+) {
+  transforms.mat4.compose(position, quaternion, scale)
+  target.push(transforms.mat4.clone())
+}
+
+function addGroundTile(
+  matrices: DesertMatrices,
+  transforms: DesertTransforms,
+  wx: number,
+  wz: number,
+  seed: number
+) {
+  const thickness = 0.08 + seed * 0.04
+  pushMatrix(
+    matrices.groundMatrices,
+    transforms,
+    transforms.tmpVec.set(wx, -0.08, wz),
+    transforms.groundQuat,
+    new THREE.Vector3(1, 1, thickness / 0.1)
+  )
+  matrices.groundColors.push(
+    new THREE.Color(0.75 + seed * 0.12, 0.62 + seed * 0.1, 0.42 + seed * 0.08)
+  )
+}
+
+function isDecorationCell(
+  wx: number,
+  wz: number,
+  buildingWidth: number,
+  buildingDepth: number,
+  dist: number
+) {
+  if (dist > DECORATION_MAX_DIST) return false
+  return !(Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2)
+}
+
+function addSaguaro(
+  matrices: DesertMatrices,
+  transforms: DesertTransforms,
+  wx: number,
+  wz: number,
+  seed: number,
+  dist: number
+) {
+  if (!(seed > 0.92 && dist > 15)) return
+
+  const px = wx + seed * 2 - 1
+  const py = -0.1
+  const pz = wz + (1 - seed) * 2 - 1
+  const sc = 0.7 + seed * 0.5
+  const sv = new THREE.Vector3(sc, sc, sc)
+
+  pushMatrix(
+    matrices.saguaroTrunk,
+    transforms,
+    transforms.tmpVec.set(px, py + 1.2 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+  pushMatrix(
+    matrices.saguaroTrunkCap,
+    transforms,
+    transforms.tmpVec.set(px, py + 2.4 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+
+  const lx = px - 0.18 * sc
+  const ly = py + 1.4 * sc
+  pushMatrix(
+    matrices.saguaroLeftHoriz,
+    transforms,
+    transforms.tmpVec.set(lx - 0.25 * sc, ly, pz),
+    transforms.rotZ90,
+    sv
+  )
+  pushMatrix(
+    matrices.saguaroLeftVert,
+    transforms,
+    transforms.tmpVec.set(lx - 0.5 * sc, ly + 0.45 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+  pushMatrix(
+    matrices.saguaroLeftCap,
+    transforms,
+    transforms.tmpVec.set(lx - 0.5 * sc, ly + 0.9 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+
+  const rx = px + 0.18 * sc
+  const ry = py + 1.8 * sc
+  pushMatrix(
+    matrices.saguaroRightHoriz,
+    transforms,
+    transforms.tmpVec.set(rx + 0.2 * sc, ry, pz),
+    transforms.rotZ90,
+    sv
+  )
+  pushMatrix(
+    matrices.saguaroRightVert,
+    transforms,
+    transforms.tmpVec.set(rx + 0.4 * sc, ry + 0.3 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+  pushMatrix(
+    matrices.saguaroRightCap,
+    transforms,
+    transforms.tmpVec.set(rx + 0.4 * sc, ry + 0.6 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+}
+
+function addBarrel(
+  matrices: DesertMatrices,
+  transforms: DesertTransforms,
+  wx: number,
+  wz: number,
+  seed: number,
+  dist: number
+) {
+  if (!(seed > 0.82 && seed <= 0.92 && dist > 10)) return
+  const px = wx + seed * 1.5 - 0.75
+  const py = -0.1
+  const pz = wz - seed * 1.2 + 0.6
+  const sc = 0.6 + seed * 0.6
+  const sv = new THREE.Vector3(sc, sc, sc)
+
+  pushMatrix(
+    matrices.barrelBody,
+    transforms,
+    transforms.tmpVec.set(px, py + 0.22 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+  pushMatrix(
+    matrices.barrelFlower,
+    transforms,
+    transforms.tmpVec.set(px, py + 0.48 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+}
+
+function addPricklyPear(
+  matrices: DesertMatrices,
+  transforms: DesertTransforms,
+  wx: number,
+  wz: number,
+  seed: number,
+  dist: number
+) {
+  if (!(seed > 0.76 && seed <= 0.82 && dist > 12)) return
+  const px = wx + (1 - seed) * 2
+  const py = -0.1
+  const pz = wz + seed * 1.8 - 0.9
+  const sc = 0.7 + seed * 0.4
+  const sv = new THREE.Vector3(sc, sc, sc)
+
+  pushMatrix(
+    matrices.pricklyBase,
+    transforms,
+    transforms.tmpVec.set(px, py + 0.35 * sc, pz),
+    transforms.identityQuat,
+    sv
+  )
+  pushMatrix(
+    matrices.pricklyLeft,
+    transforms,
+    transforms.tmpVec.set(px - 0.15 * sc, py + 0.75 * sc, pz),
+    transforms.pricklyLeftQuat,
+    sv
+  )
+  pushMatrix(
+    matrices.pricklyRight,
+    transforms,
+    transforms.tmpVec.set(px + 0.18 * sc, py + 0.82 * sc, pz),
+    transforms.pricklyRightQuat,
+    sv
+  )
+}
+
+function addRock(
+  matrices: DesertMatrices,
+  transforms: DesertTransforms,
+  wx: number,
+  wz: number,
+  seed: number
+) {
+  if (!(seed > 0.68 && seed <= 0.76)) return
+  const sc = 0.4 + seed
+  const variant = Math.floor(seed * 100) % 4
+  transforms.tmpQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), variant * 1.3)
+  pushMatrix(
+    matrices.rocks,
+    transforms,
+    transforms.tmpVec.set(wx + seed * 2 - 1, -0.05, wz - seed * 1.5 + 0.75),
+    transforms.tmpQuat,
+    new THREE.Vector3(sc, sc, sc)
+  )
+}
+
+function addDune(
+  matrices: DesertMatrices,
+  transforms: DesertTransforms,
+  wx: number,
+  wz: number,
+  seed: number,
+  dist: number
+) {
+  if (!(seed > 0.95 && dist > 25)) return
+  const scaleXZ = 3 + seed * 4
+  const height = 0.5 + seed * 1.2
+  pushMatrix(
+    matrices.dunes,
+    transforms,
+    transforms.tmpVec.set(wx, -0.15, wz),
+    transforms.identityQuat,
+    new THREE.Vector3(scaleXZ, height, scaleXZ * 0.7)
+  )
+}
+
+function addTumbleweed(
+  matrices: DesertMatrices,
+  wx: number,
+  wz: number,
+  seed: number,
+  dist: number
+) {
+  if (!(seed > 0.97 && dist > 12 && matrices.tumbleweeds.length < 6)) return
+  matrices.tumbleweeds.push({
+    pos: [wx + seed * 3, 0.15, wz - seed * 2],
+    phase: seed * Math.PI * 4,
+  })
+}
+
+function generateDesertData(buildingWidth: number, buildingDepth: number) {
+  const matrices = createDesertMatrices()
+  const transforms = createDesertTransforms()
+
+  for (let gx = -GRID_RANGE; gx <= GRID_RANGE; gx++) {
+    for (let gz = -GRID_RANGE; gz <= GRID_RANGE; gz++) {
+      const wx = gx * TILE_SIZE
+      const wz = gz * TILE_SIZE
+      const seed = seedFn(gx, gz)
+
+      addGroundTile(matrices, transforms, wx, wz, seed)
+
+      const dist = Math.hypot(wx, wz)
+      if (!isDecorationCell(wx, wz, buildingWidth, buildingDepth, dist)) continue
+
+      addSaguaro(matrices, transforms, wx, wz, seed, dist)
+      addBarrel(matrices, transforms, wx, wz, seed, dist)
+      addPricklyPear(matrices, transforms, wx, wz, seed, dist)
+      addRock(matrices, transforms, wx, wz, seed)
+      addDune(matrices, transforms, wx, wz, seed, dist)
+      addTumbleweed(matrices, wx, wz, seed, dist)
+    }
+  }
+
+  return {
+    groundCount: matrices.groundMatrices.length,
+    ...matrices,
+  }
+}
+
 // ─── Desert Environment ──────────────────────────────────────────
 
 interface DesertEnvironmentProps {
@@ -94,211 +437,10 @@ export function DesertEnvironment({
   const groundRef = useRef<THREE.InstancedMesh>(null)
   const sunLightRef = useRef<THREE.DirectionalLight>(null)
 
-  const data = useMemo(() => {
-    // NOSONAR: deterministic decoration generation pipeline
-    // NOSONAR: 3D rendering pipeline
-    const groundMatrices: THREE.Matrix4[] = []
-    const groundColors: THREE.Color[] = []
-
-    // Saguaro sub-parts (green: #3B7A3B)
-    const saguaroTrunk: THREE.Matrix4[] = []
-    const saguaroTrunkCap: THREE.Matrix4[] = []
-    const saguaroRightHoriz: THREE.Matrix4[] = []
-    const saguaroRightVert: THREE.Matrix4[] = []
-    const saguaroRightCap: THREE.Matrix4[] = []
-    // Saguaro sub-parts (dark green: #2D5E2D)
-    const saguaroLeftHoriz: THREE.Matrix4[] = []
-    const saguaroLeftVert: THREE.Matrix4[] = []
-    const saguaroLeftCap: THREE.Matrix4[] = []
-
-    // Barrel cactus
-    const barrelBody: THREE.Matrix4[] = []
-    const barrelFlower: THREE.Matrix4[] = []
-
-    // Prickly pear
-    const pricklyBase: THREE.Matrix4[] = []
-    const pricklyLeft: THREE.Matrix4[] = []
-    const pricklyRight: THREE.Matrix4[] = []
-
-    // Rocks & dunes
-    const rocks: THREE.Matrix4[] = []
-    const dunes: THREE.Matrix4[] = []
-
-    // Tumbleweeds (animated individually)
-    const tumbleweeds: { pos: [number, number, number]; phase: number }[] = []
-
-    // Reusable temporaries
-    const mat4 = new THREE.Matrix4()
-    const groundQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(1, 0, 0),
-      -Math.PI / 2
-    )
-    const identityQuat = new THREE.Quaternion()
-    const rotZ90 = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2)
-    const pricklyLeftQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.2)
-    const pricklyRightQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 0, 1),
-      -0.15
-    )
-    const tmpVec = new THREE.Vector3()
-    const tmpQuat = new THREE.Quaternion()
-
-    for (let gx = -GRID_RANGE; gx <= GRID_RANGE; gx++) {
-      for (let gz = -GRID_RANGE; gz <= GRID_RANGE; gz++) {
-        const wx = gx * TILE_SIZE
-        const wz = gz * TILE_SIZE
-        const s = seedFn(gx, gz)
-
-        // ── Ground tile ─────────────────────────────
-        const thickness = 0.08 + s * 0.04
-        mat4.compose(
-          tmpVec.set(wx, -0.08, wz),
-          groundQuat,
-          new THREE.Vector3(1, 1, thickness / 0.1)
-        )
-        groundMatrices.push(mat4.clone())
-        groundColors.push(new THREE.Color(0.75 + s * 0.12, 0.62 + s * 0.1, 0.42 + s * 0.08))
-
-        // ── Distance + building-zone gating ─────────
-        const dist = Math.hypot(wx, wz)
-        if (dist > DECORATION_MAX_DIST) continue
-        const inBuilding =
-          Math.abs(wx) < buildingWidth / 2 + 2 && Math.abs(wz) < buildingDepth / 2 + 2
-        if (inBuilding) continue
-
-        // ── Saguaro cactus (s > 0.92, dist > 15) ───
-        if (s > 0.92 && dist > 15) {
-          const px = wx + s * 2 - 1
-          const py = -0.1
-          const pz = wz + (1 - s) * 2 - 1
-          const sc = 0.7 + s * 0.5
-          const sv = new THREE.Vector3(sc, sc, sc)
-
-          // Trunk
-          mat4.compose(tmpVec.set(px, py + 1.2 * sc, pz), identityQuat, sv)
-          saguaroTrunk.push(mat4.clone())
-
-          // Trunk cap
-          mat4.compose(tmpVec.set(px, py + 2.4 * sc, pz), identityQuat, sv)
-          saguaroTrunkCap.push(mat4.clone())
-
-          // Left arm group origin
-          const lx = px - 0.18 * sc
-          const ly = py + 1.4 * sc
-
-          mat4.compose(tmpVec.set(lx - 0.25 * sc, ly, pz), rotZ90, sv)
-          saguaroLeftHoriz.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(lx - 0.5 * sc, ly + 0.45 * sc, pz), identityQuat, sv)
-          saguaroLeftVert.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(lx - 0.5 * sc, ly + 0.9 * sc, pz), identityQuat, sv)
-          saguaroLeftCap.push(mat4.clone())
-
-          // Right arm group origin
-          const rx = px + 0.18 * sc
-          const ry = py + 1.8 * sc
-
-          mat4.compose(tmpVec.set(rx + 0.2 * sc, ry, pz), rotZ90, sv)
-          saguaroRightHoriz.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(rx + 0.4 * sc, ry + 0.3 * sc, pz), identityQuat, sv)
-          saguaroRightVert.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(rx + 0.4 * sc, ry + 0.6 * sc, pz), identityQuat, sv)
-          saguaroRightCap.push(mat4.clone())
-        }
-
-        // ── Barrel cactus (0.82 < s ≤ 0.92, dist > 10)
-        if (s > 0.82 && s <= 0.92 && dist > 10) {
-          const px = wx + s * 1.5 - 0.75
-          const py = -0.1
-          const pz = wz - s * 1.2 + 0.6
-          const sc = 0.6 + s * 0.6
-          const sv = new THREE.Vector3(sc, sc, sc)
-
-          mat4.compose(tmpVec.set(px, py + 0.22 * sc, pz), identityQuat, sv)
-          barrelBody.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(px, py + 0.48 * sc, pz), identityQuat, sv)
-          barrelFlower.push(mat4.clone())
-        }
-
-        // ── Prickly pear (0.76 < s ≤ 0.82, dist > 12)
-        if (s > 0.76 && s <= 0.82 && dist > 12) {
-          const px = wx + (1 - s) * 2
-          const py = -0.1
-          const pz = wz + s * 1.8 - 0.9
-          const sc = 0.7 + s * 0.4
-          const sv = new THREE.Vector3(sc, sc, sc)
-
-          mat4.compose(tmpVec.set(px, py + 0.35 * sc, pz), identityQuat, sv)
-          pricklyBase.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(px - 0.15 * sc, py + 0.75 * sc, pz), pricklyLeftQuat, sv)
-          pricklyLeft.push(mat4.clone())
-
-          mat4.compose(tmpVec.set(px + 0.18 * sc, py + 0.82 * sc, pz), pricklyRightQuat, sv)
-          pricklyRight.push(mat4.clone())
-        }
-
-        // ── Rocks (0.68 < s ≤ 0.76) ────────────────
-        if (s > 0.68 && s <= 0.76) {
-          const sc = 0.4 + s * 1
-          const variant = Math.floor(s * 100) % 4
-          tmpQuat.setFromAxisAngle(new THREE.Vector3(0, 1, 0), variant * 1.3)
-          mat4.compose(
-            tmpVec.set(wx + s * 2 - 1, -0.05, wz - s * 1.5 + 0.75),
-            tmpQuat,
-            new THREE.Vector3(sc, sc, sc)
-          )
-          rocks.push(mat4.clone())
-        }
-
-        // ── Sand dunes (s > 0.95, dist > 25) ───────
-        if (s > 0.95 && dist > 25) {
-          const scaleXZ = 3 + s * 4
-          const height = 0.5 + s * 1.2
-          mat4.compose(
-            tmpVec.set(wx, -0.15, wz),
-            identityQuat,
-            new THREE.Vector3(scaleXZ, height, scaleXZ * 0.7)
-          )
-          dunes.push(mat4.clone())
-        }
-
-        // ── Tumbleweeds (s > 0.97, max 6) ──────────
-        if (s > 0.97 && dist > 12 && tumbleweeds.length < 6) {
-          tumbleweeds.push({
-            pos: [wx + s * 3, 0.15, wz - s * 2],
-            phase: s * Math.PI * 4,
-          })
-        }
-      }
-    }
-
-    return {
-      groundCount: groundMatrices.length,
-      groundMatrices,
-      groundColors,
-      saguaroTrunk,
-      saguaroTrunkCap,
-      saguaroLeftHoriz,
-      saguaroLeftVert,
-      saguaroLeftCap,
-      saguaroRightHoriz,
-      saguaroRightVert,
-      saguaroRightCap,
-      barrelBody,
-      barrelFlower,
-      pricklyBase,
-      pricklyLeft,
-      pricklyRight,
-      rocks,
-      dunes,
-      tumbleweeds,
-    }
-  }, [buildingWidth, buildingDepth])
+  const data = useMemo(
+    () => generateDesertData(buildingWidth, buildingDepth),
+    [buildingWidth, buildingDepth]
+  )
 
   // Apply ground instances
   useEffect(() => {

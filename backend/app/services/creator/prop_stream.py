@@ -100,6 +100,36 @@ def _extract_final_raw_text(final_result: Any) -> Optional[str]:
     return None
 
 
+def _prepare_template_fallback(
+    gen_id: str,
+    prompt: str,
+    name: str,
+    model_key: str,
+    model_label: str,
+    full_prompt: str,
+    error: str,
+    *,
+    extra_diags: list[str] | None = None,
+    tool_calls: list[dict] | None = None,
+) -> tuple[str, list[dict], dict]:
+    code = generate_template_code(name, prompt)
+    parts = extract_parts(prompt)
+    record = _template_record(
+        gen_id,
+        prompt,
+        name,
+        model_key,
+        model_label,
+        full_prompt,
+        parts,
+        code,
+        error,
+        extra_diags=extra_diags,
+        extra_tool_calls=tool_calls,
+    )
+    return code, parts, record
+
+
 async def stream_prop_generation(  # noqa: C901, NOSONAR
     # noqa: C901 — async generator state machine: multi-phase SSE streaming
     # orchestrator (connect→send→accept→poll→post-process). Splitting across
@@ -193,35 +223,33 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
             err_msg = error_info.get("message", str(error_info)) if isinstance(error_info, dict) else str(error_info)
             logger.error(f"[PropGen:{gen_id}] Agent rejected: {err_msg}")
             conn._response_queues.pop(req_id, None)
-            code = generate_template_code(name, prompt)
-            parts = extract_parts(prompt)
-            add_generation_record(
-                _template_record(
-                    gen_id, prompt, name, model_key, model_label, full_prompt, parts, code, f"Agent error: {err_msg}"
-                )
-            )
-            yield _sse_event("error", {"message": f"Agent error: {err_msg}"})
-            yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
-            return
-    except TimeoutError:
-        logger.warning(f"[PropGen:{gen_id}] Timeout waiting for accepted response (15s)")
-        conn._response_queues.pop(req_id, None)
-        code = generate_template_code(name, prompt)
-        parts = extract_parts(prompt)
-        add_generation_record(
-            _template_record(
+            code, parts, record = _prepare_template_fallback(
                 gen_id,
                 prompt,
                 name,
                 model_key,
                 model_label,
                 full_prompt,
-                parts,
-                code,
-                "Agent acceptance timeout",
-                extra_diags=["Timeout waiting for agent acceptance"],
+                f"Agent error: {err_msg}",
             )
+            add_generation_record(record)
+            yield _sse_event("error", {"message": f"Agent error: {err_msg}"})
+            yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
+            return
+    except TimeoutError:
+        logger.warning(f"[PropGen:{gen_id}] Timeout waiting for accepted response (15s)")
+        conn._response_queues.pop(req_id, None)
+        code, parts, record = _prepare_template_fallback(
+            gen_id,
+            prompt,
+            name,
+            model_key,
+            model_label,
+            full_prompt,
+            "Agent acceptance timeout",
+            extra_diags=["Timeout waiting for agent acceptance"],
         )
+        add_generation_record(record)
         yield _sse_event("error", {"message": "Agent did not respond in time"})
         yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
         return
@@ -451,45 +479,35 @@ async def stream_prop_generation(  # noqa: C901, NOSONAR
 
         # AI output invalid → template fallback
         logger.warning(f"AI output invalid for {name}, using template fallback")
-        code = generate_template_code(name, prompt)
-        parts = extract_parts(prompt)
-        add_generation_record(
-            _template_record(
-                gen_id,
-                prompt,
-                name,
-                model_key,
-                model_label,
-                full_prompt,
-                parts,
-                code,
-                "AI output validation failed",
-                extra_diags=["AI output invalid, used template"],
-                extra_tool_calls=tool_calls_collected,
-            )
-        )
-        yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
-        return
-
-    # No AI result at all → template fallback
-    logger.warning(f"No AI result for {name}, using template fallback")
-    code = generate_template_code(name, prompt)
-    parts = extract_parts(prompt)
-    add_generation_record(
-        _template_record(
+        code, parts, record = _prepare_template_fallback(
             gen_id,
             prompt,
             name,
             model_key,
             model_label,
             full_prompt,
-            parts,
-            code,
-            "No AI response received",
-            extra_diags=["No AI result, used template"],
-            extra_tool_calls=tool_calls_collected,
+            "AI output validation failed",
+            extra_diags=["AI output invalid, used template"],
+            tool_calls=tool_calls_collected,
         )
+        add_generation_record(record)
+        yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
+        return
+
+    # No AI result at all → template fallback
+    logger.warning(f"No AI result for {name}, using template fallback")
+    code, parts, record = _prepare_template_fallback(
+        gen_id,
+        prompt,
+        name,
+        model_key,
+        model_label,
+        full_prompt,
+        "No AI response received",
+        extra_diags=["No AI result, used template"],
+        tool_calls=tool_calls_collected,
     )
+    add_generation_record(record)
     yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
 
 
