@@ -6,6 +6,7 @@
 import { useCallback, useState, useMemo } from 'react'
 import { useTasks, type Task, type TaskStatus } from '@/hooks/useTasks'
 import { PRIORITY_CONFIG } from '@/lib/taskConstants'
+import { buildKanbanColumns, groupTasksByStatus } from '@/components/shared/kanbanShared'
 import { ProjectFilterSelect } from './ProjectFilterSelect'
 
 interface ZenKanbanPanelProps {
@@ -22,20 +23,13 @@ interface ZenKanbanPanelProps {
 
 // ── Column Configuration ─────────────────────────────────────────
 
-interface ColumnConfig {
-  status: TaskStatus
-  label: string
-  icon: string
-  color: string
-}
-
-const COLUMNS: ColumnConfig[] = [
-  { status: 'todo', label: 'To Do', icon: '📋', color: 'var(--zen-fg-muted)' },
-  { status: 'in_progress', label: 'In Progress', icon: '🔄', color: 'var(--zen-info)' },
-  { status: 'review', label: 'Review', icon: '👀', color: 'var(--zen-warning)' },
-  { status: 'blocked', label: 'Blocked', icon: '⚠️', color: 'var(--zen-error)' },
-  { status: 'done', label: 'Done', icon: '✅', color: 'var(--zen-success)' },
-]
+const COLUMNS = buildKanbanColumns({
+  todo: 'var(--zen-fg-muted)',
+  in_progress: 'var(--zen-info)',
+  review: 'var(--zen-warning)',
+  blocked: 'var(--zen-error)',
+  done: 'var(--zen-success)',
+})
 
 // ── Kanban Card Component ────────────────────────────────────────
 
@@ -143,7 +137,7 @@ function KanbanCard({
 // ── Kanban Column Component ──────────────────────────────────────
 
 interface KanbanColumnProps {
-  readonly config: ColumnConfig
+  readonly config: (typeof COLUMNS)[number]
   readonly tasks: Task[]
   readonly onMoveTask: (taskId: string, newStatus: TaskStatus) => void
   readonly onExpandTask: (task: Task) => void
@@ -329,32 +323,7 @@ export function ZenKanbanPanel({
   const [expandedTask, setExpandedTask] = useState<Task | null>(null)
 
   // Group tasks by status, sorted by priority
-  const tasksByStatus = useMemo(() => {
-    const grouped: Record<TaskStatus, Task[]> = {
-      todo: [],
-      in_progress: [],
-      review: [],
-      blocked: [],
-      done: [],
-    }
-
-    for (const task of tasks) {
-      if (grouped[task.status]) {
-        grouped[task.status].push(task)
-      }
-    }
-
-    // Sort each column by priority
-    for (const status of Object.keys(grouped) as TaskStatus[]) {
-      grouped[status].sort((a, b) => {
-        const priorityDiff = PRIORITY_CONFIG[a.priority].weight - PRIORITY_CONFIG[b.priority].weight
-        if (priorityDiff !== 0) return priorityDiff
-        return b.updated_at - a.updated_at
-      })
-    }
-
-    return grouped
-  }, [tasks])
+  const tasksByStatus = useMemo(() => groupTasksByStatus(tasks), [tasks])
 
   const handleMoveTask = useCallback(
     async (taskId: string, newStatus: TaskStatus) => {

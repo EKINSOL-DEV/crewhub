@@ -3,288 +3,51 @@
  * Shows session metadata, history/transcript, and actions
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { api } from '@/lib/api'
-import type { SessionMessage, SessionContentBlock, CrewSession } from '@/lib/api'
+import { useState } from 'react'
+import type { CrewSession } from '@/lib/api'
 import { FullscreenDetailView } from './FullscreenDetailView'
-import { formatTimestamp, formatTokens, formatMessageTime } from '@/lib/formatters'
+import { DetailPanelShell } from './DetailPanelShell'
+import { SessionHistoryView } from '@/components/shared/SessionHistoryView'
+import { useSessionHistory } from '@/components/shared/sessionHistoryUtils'
+import { formatTimestamp, formatTokens, formatDuration } from '@/lib/formatters'
 
 interface ZenSessionDetailPanelProps {
   readonly session: CrewSession
   readonly onClose: () => void
 }
 
-// ── Format helpers (local) ────────────────────────────────────────
-
-function formatDuration(startTs: number): string {
-  const diff = Date.now() - startTs
-  const hours = Math.floor(diff / 3600000)
-  const mins = Math.floor((diff % 3600000) / 60000)
-  if (hours > 0) return `${hours}h ${mins}m`
-  return `${mins}m`
-}
-
-// ── Content Block Renderer ────────────────────────────────────────
-
-function ExpandableBlock({
-  label,
-  className,
-  children,
-}: Readonly<{
-  label: string
-  className: string
-  children: React.ReactNode
-}>) {
-  const [expanded, setExpanded] = useState(false)
-  return (
-    <div className={className}>
-      <button className="zen-sd-tool-toggle" onClick={() => setExpanded(!expanded)}>
-        {label} {expanded ? '▾' : '▸'}
-      </button>
-      {expanded && children}
-    </div>
-  )
-}
-
-function ContentBlockView({ block }: Readonly<{ block: SessionContentBlock }>) {
-  if (block.type === 'text' && block.text) {
-    return <div className="zen-sd-text">{block.text}</div>
-  }
-
-  if (block.type === 'thinking' && block.thinking) {
-    return (
-      <ExpandableBlock label="💭 Thinking" className="zen-sd-thinking">
-        <pre className="zen-sd-thinking-content">{block.thinking}</pre>
-      </ExpandableBlock>
-    )
-  }
-
-  if (block.type === 'tool_use') {
-    return (
-      <ExpandableBlock label={`🔧 ${block.name || 'Tool'}`} className="zen-sd-tool-call">
-        {block.arguments && (
-          <pre className="zen-sd-tool-args">{JSON.stringify(block.arguments, null, 2)}</pre>
-        )}
-      </ExpandableBlock>
-    )
-  }
-
-  if (block.type === 'tool_result') {
-    const text =
-      block.content
-        ?.map((c) => c.text)
-        .filter(Boolean)
-        .join('\n') || ''
-    if (!text) return null
-    return (
-      <ExpandableBlock
-        label={`${block.isError ? '❌' : '✅'} Result`}
-        className={`zen-sd-tool-result ${block.isError ? 'zen-sd-tool-error' : ''}`}
-      >
-        <pre className="zen-sd-tool-result-content">{text}</pre>
-      </ExpandableBlock>
-    )
-  }
-
-  return null
-}
-
-// ── Message Bubble ────────────────────────────────────────────────
-
-function MessageBubble({ message }: Readonly<{ message: SessionMessage }>) {
-  const isUser = message.role === 'user'
-  const isSystem = message.role === 'system'
-  let messageRole: string
-  if (isUser) {
-    messageRole = 'user'
-  } else if (isSystem) {
-    messageRole = 'system'
-  } else {
-    messageRole = 'assistant'
-  }
-
-  const copyContent = useCallback(() => {
-    const text =
-      message.content
-        ?.filter((b) => b.type === 'text')
-        .map((b) => b.text)
-        .join('\n') || ''
-    navigator.clipboard.writeText(text)
-  }, [message])
-
-  return (
-    <div className={`zen-sd-message zen-sd-message-${messageRole}`}>
-      <div className="zen-sd-message-header">
-        <div className="zen-sd-message-header-top">
-          <span className="zen-sd-message-role">
-            {(() => {
-              if (isUser) return '👤 User'
-              if (isSystem) return '⚙️ System'
-              if (message.role === 'toolResult') return '🔧 Tool Result'
-              return '🤖 Assistant'
-            })()}
-          </span>
-          {message.timestamp && (
-            <span className="zen-sd-message-timestamp">{formatMessageTime(message.timestamp)}</span>
-          )}
-          <button className="zen-sd-copy-btn" onClick={copyContent} title="Copy">
-            📋
-          </button>
-        </div>
-        {(message.usage || message.model) && (
-          <div className="zen-sd-message-meta-line">
-            {message.usage && (
-              <span className="zen-sd-message-tokens" title="Tokens used">
-                {formatTokens(message.usage.totalTokens)} tok
-              </span>
-            )}
-            {message.model && (
-              <span className="zen-sd-message-model">{message.model.split('/').pop()}</span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="zen-sd-message-body">
-        {message.content?.map((block) => (
-          <ContentBlockView key={`${block.type}-${JSON.stringify(block)}`} block={block} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ── Main Component ────────────────────────────────────────────────
-
 export function ZenSessionDetailPanel({ session, onClose }: Readonly<ZenSessionDetailPanelProps>) {
-  const [messages, setMessages] = useState<SessionMessage[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'meta' | 'history'>('meta')
   const [fullscreen, setFullscreen] = useState(false)
 
-  // Fetch history
-  useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
-
-    api
-      .getSessionHistory(session.key, 200)
-      .then((res) => {
-        if (!cancelled) {
-          // Raw JSONL entries have shape {type:"message", message:{role,content,...}}
-          // Extract the inner message object and filter to actual messages
-          const raw = res.messages || []
-          const parsed: SessionMessage[] = raw
-            .filter((entry: any) => entry.type === 'message' && entry.message)
-            .map((entry: any) => {
-              const msg = entry.message
-              // Normalize content: if string, wrap in text block
-              let content = msg.content
-              if (typeof content === 'string') {
-                content = [{ type: 'text', text: content }]
-              }
-              if (!Array.isArray(content)) {
-                content = []
-              }
-              return {
-                role: msg.role || 'unknown',
-                content,
-                model: msg.model || entry.model,
-                usage: msg.usage,
-                stopReason: msg.stopReason,
-                timestamp: entry.timestamp ? new Date(entry.timestamp).getTime() : undefined,
-              } as SessionMessage
-            })
-          setMessages(parsed)
-          setLoading(false)
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err.message)
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [session.key])
-
-  // Aggregate token usage from messages
-  const totalUsage = useMemo(() => {
-    let input = 0,
-      output = 0,
-      total = 0
-    let cost = 0
-    for (const m of messages) {
-      if (m.usage) {
-        input += m.usage.input || 0
-        output += m.usage.output || 0
-        total += m.usage.totalTokens || 0
-        cost += m.usage.cost?.total || 0
-      }
-    }
-    return { input, output, total, cost }
-  }, [messages])
+  const { messages, loading, error, usageTotals } = useSessionHistory(session.key, 200)
 
   const displayName =
     session.displayName || session.label || session.key.split(':').pop() || 'Agent'
 
   return (
-    <div className="zen-sd-panel">
-      {/* Header */}
-      <div className="zen-sd-header">
-        <div className="zen-sd-header-info">
-          <span className="zen-sd-header-name">{displayName}</span>
-          <span className="zen-sd-header-key">{session.key}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button
-            className="zen-sd-close"
-            onClick={() => setFullscreen(true)}
-            title="Fullscreen"
-            style={{ fontSize: 13 }}
-          >
-            ⛶
-          </button>
-          <button className="zen-sd-close" onClick={onClose} title="Close">
-            ✕
-          </button>
-        </div>
-      </div>
-
-      {/* Fullscreen overlay */}
-      {fullscreen && (
-        <FullscreenDetailView
-          type="session"
-          session={session}
-          onClose={() => setFullscreen(false)}
-        />
-      )}
-
-      {/* Tab bar */}
-      <div className="zen-sd-tabs">
-        <button
-          className={`zen-sd-tab ${activeTab === 'meta' ? 'zen-sd-tab-active' : ''}`}
-          onClick={() => setActiveTab('meta')}
-        >
-          Info
-        </button>
-        <button
-          className={`zen-sd-tab ${activeTab === 'history' ? 'zen-sd-tab-active' : ''}`}
-          onClick={() => setActiveTab('history')}
-        >
-          History ({messages.length})
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="zen-sd-content">
+    <>
+      <DetailPanelShell
+        panelClassName="zen-sd-panel"
+        headerClassName="zen-sd-header"
+        headerInfoClassName="zen-sd-header-info"
+        headerInfo={
+          <>
+            <span className="zen-sd-header-name">{displayName}</span>
+            <span className="zen-sd-header-key">{session.key}</span>
+          </>
+        }
+        tabs={[
+          { key: 'meta', label: 'Info' },
+          { key: 'history', label: `History (${messages.length})` },
+        ]}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as 'meta' | 'history')}
+        onFullscreen={() => setFullscreen(true)}
+        onClose={onClose}
+      >
         {activeTab === 'meta' && (
           <div className="zen-sd-meta">
-            {/* Metadata grid */}
             <div className="zen-sd-meta-grid">
               <div className="zen-sd-meta-item">
                 <span className="zen-sd-meta-label">Session Key</span>
@@ -312,7 +75,6 @@ export function ZenSessionDetailPanel({ session, onClose }: Readonly<ZenSessionD
               </div>
             </div>
 
-            {/* Token usage */}
             <div className="zen-sd-section-title">Token Usage</div>
             <div className="zen-sd-meta-grid">
               <div className="zen-sd-meta-item">
@@ -325,16 +87,16 @@ export function ZenSessionDetailPanel({ session, onClose }: Readonly<ZenSessionD
               </div>
               <div className="zen-sd-meta-item">
                 <span className="zen-sd-meta-label">Input (history)</span>
-                <span className="zen-sd-meta-value">{formatTokens(totalUsage.input)}</span>
+                <span className="zen-sd-meta-value">{formatTokens(usageTotals.input)}</span>
               </div>
               <div className="zen-sd-meta-item">
                 <span className="zen-sd-meta-label">Output (history)</span>
-                <span className="zen-sd-meta-value">{formatTokens(totalUsage.output)}</span>
+                <span className="zen-sd-meta-value">{formatTokens(usageTotals.output)}</span>
               </div>
-              {totalUsage.cost > 0 && (
+              {usageTotals.cost > 0 && (
                 <div className="zen-sd-meta-item">
                   <span className="zen-sd-meta-label">Cost</span>
-                  <span className="zen-sd-meta-value">${totalUsage.cost.toFixed(4)}</span>
+                  <span className="zen-sd-meta-value">${usageTotals.cost.toFixed(4)}</span>
                 </div>
               )}
             </div>
@@ -343,29 +105,25 @@ export function ZenSessionDetailPanel({ session, onClose }: Readonly<ZenSessionD
 
         {activeTab === 'history' && (
           <div className="zen-sd-history">
-            {loading && (
-              <div className="zen-sd-loading">
-                <div className="zen-thinking-dots">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                Loading history...
-              </div>
-            )}
-            {error && <div className="zen-sd-error">❌ {error}</div>}
-            {!loading && !error && messages.length === 0 && (
-              <div className="zen-sd-empty">No messages in history</div>
-            )}
-            {[...messages].reverse().map((msg) => (
-              <MessageBubble
-                key={`${msg.timestamp || ''}-${msg.role || ''}-${msg.model || ''}-${JSON.stringify(msg.content || [])}`}
-                message={msg}
-              />
-            ))}
+            <SessionHistoryView
+              messages={messages}
+              loading={loading}
+              error={error}
+              reverseOrder
+              showCopyButton
+              toolRoleLabel="🔧 Tool Result"
+            />
           </div>
         )}
-      </div>
-    </div>
+      </DetailPanelShell>
+
+      {fullscreen && (
+        <FullscreenDetailView
+          type="session"
+          session={session}
+          onClose={() => setFullscreen(false)}
+        />
+      )}
+    </>
   )
 }
