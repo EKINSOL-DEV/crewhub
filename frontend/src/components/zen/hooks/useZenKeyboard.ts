@@ -254,7 +254,6 @@ export function useZenKeyboard({ enabled = true, actions }: UseZenKeyboardOption
           a.onResizeDown?.()
           break
       }
-      return
     }
   }, [])
 

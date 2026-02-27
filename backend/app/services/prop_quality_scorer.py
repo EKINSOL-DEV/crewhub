@@ -185,7 +185,7 @@ class QualityScorer:
         geo_types = _count_geometry_types(code)
 
         comp, comp_suggestions = _score_composition(code, mesh_count, geo_types)
-        color, color_suggestions, has_emissive, has_emissive_intensity = _score_color(code)
+        color, color_suggestions, _has_emissive, has_emissive_intensity = _score_color(code)
         anim, anim_suggestions = _score_animation(code)
         detail, detail_suggestions = _score_detail(code, mesh_count, has_emissive_intensity)
         style, style_suggestions = _score_style(code)
@@ -207,8 +207,8 @@ class QualityScorer:
         """Score from parts data (no code available)."""
         suggestions: list[str] = []
         mesh_count = len(parts)
-        geo_types = set(p.get("type", "") for p in parts)
-        colors = set(p.get("color", "") for p in parts)
+        geo_types = {p.get("type", "") for p in parts}
+        colors = {p.get("color", "") for p in parts}
         has_emissive = any(p.get("emissive", False) for p in parts)
 
         comp = min(100, int(min(mesh_count / 8.0, 1.0) * 60 + min(len(geo_types) / 4.0, 1.0) * 40))

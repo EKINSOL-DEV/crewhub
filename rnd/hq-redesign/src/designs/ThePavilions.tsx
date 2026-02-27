@@ -61,7 +61,7 @@ function Pavilion({
       {Array.from({ length: floors }).map((_, fi) => {
         const y = fi * floorH
         return (
-          <group key={`floor-${fi}`} position={[0, y, 0]}>
+          <group key={`floor-${y}`} position={[0, y, 0]}>
             {/* Floor */}
             <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
               <planeGeometry args={[w, d]} />
@@ -109,7 +109,7 @@ function Pavilion({
         [-w / 2 + 0.3, d / 2 - 0.3], [w / 2 - 0.3, d / 2 - 0.3],
         [-w / 2 + 0.3, -d / 2 + 0.3], [w / 2 - 0.3, -d / 2 + 0.3]
       ].map(([px, pz], i) => (
-        <Pillar key={`pillar-${x}-${z}`} position={[px, 0, pz]} height={floors * floorH} radius={0.1} />
+        <Pillar key={`pillar-${px}-${pz}`} position={[px, 0, pz]} height={floors * floorH} radius={0.1} />
       ))}
 
       {children}

@@ -22,7 +22,7 @@ import { EditableSessionName } from './EditableSessionName'
 
 interface SessionCardProps {
   readonly session: CrewSession
-  readonly onViewLogs?: () => void
+  readonly onViewLogs?: (session: CrewSession) => void
 }
 
 const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
@@ -138,7 +138,12 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
               Chat
             </Button>
           )}
-          <Button size="sm" variant="outline" className="flex-1 h-8 text-xs" onClick={onViewLogs}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 h-8 text-xs"
+            onClick={() => onViewLogs?.(session)}
+          >
             <FileText className="h-3.5 w-3.5 mr-1.5" />
             Logs
           </Button>

@@ -129,7 +129,7 @@ export function useCrewWindows() {
   const getZIndex = useCallback(
     (windowId: string) => {
       const index = focusOrder.indexOf(windowId)
-      return 100 + (index >= 0 ? index : 0)
+      return 100 + Math.max(index, 0)
     },
     [focusOrder]
   )

@@ -121,13 +121,13 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  color: #6b7280;
+  color: #4b5563;
   transition: all 0.15s;
 }
 
 .zen-panel-header-close:hover {
   background: rgba(0, 0, 0, 0.08);
-  color: #111827;
+  color: #0f172a;
 }
 
 /* Shared kbd style for Zen Mode panels */
@@ -140,7 +140,7 @@
   font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 10px;
   font-weight: 600;
-  color: #6b7280;
+  color: #4b5563;
   text-transform: uppercase;
   white-space: nowrap;
 }

@@ -189,9 +189,14 @@ export function TaskBoardOverlay({
   }
 
   // Drag & Drop handlers
-  const handleDragStart = (task: Task) => {
+  const handleDragStart = useCallback((task: Task) => {
     setDraggedTask(task)
-  }
+  }, [])
+
+  const handleTaskDragStart = useCallback(
+    (task: Task) => () => handleDragStart(task),
+    [handleDragStart]
+  )
 
   const handleDragOver = (e: React.DragEvent, status: TaskStatus) => {
     e.preventDefault()
@@ -381,7 +386,7 @@ export function TaskBoardOverlay({
                     <div
                       key={task.id}
                       draggable
-                      onDragStart={() => handleDragStart(task)}
+                      onDragStart={handleTaskDragStart(task)}
                       onDragEnd={handleDragEnd}
                       className={cn(
                         'cursor-grab active:cursor-grabbing transition-opacity',

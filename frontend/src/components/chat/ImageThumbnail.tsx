@@ -70,7 +70,7 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
         )}
         <img
           src={mediaUrl}
-          alt="Attached image"
+          alt="Attachment"
           style={imageStyle}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
@@ -84,7 +84,7 @@ export function ImageThumbnail({ attachment, maxWidth = 200 }: ImageThumbnailPro
       </button>
 
       {lightboxOpen && (
-        <ImageLightbox src={mediaUrl} alt="Attached image" onClose={() => setLightboxOpen(false)} />
+        <ImageLightbox src={mediaUrl} alt="Attachment" onClose={() => setLightboxOpen(false)} />
       )}
     </>
   )

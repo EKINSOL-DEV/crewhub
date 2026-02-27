@@ -354,9 +354,9 @@ export function MobileAgentChat({
       const items = e.clipboardData?.items
       if (!items) return
       const imageFiles: File[] = []
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.startsWith('image/')) {
-          const file = items[i].getAsFile()
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
           if (file) imageFiles.push(file)
         }
       }
@@ -494,6 +494,8 @@ export function MobileAgentChat({
   const botConfig = getBotConfigFromSession(sessionKey, agentName, agentColor)
   const agentStatus: AgentStatus = isSending ? 'active' : 'idle'
   const avatarAnimation: AvatarAnimation = agentStatus === 'active' ? 'thinking' : 'idle'
+
+  const hasPendingFiles = pendingFiles.some((f) => !f.error)
 
   return (
     <>
@@ -853,35 +855,25 @@ export function MobileAgentChat({
               )}
 
               {/* Send button — only show when there's text or files */}
-              {(inputValue.trim() || pendingFiles.filter((f) => !f.error).length > 0) && (
+              {(inputValue.trim() || hasPendingFiles) && (
                 <button
                   onClick={handleSend}
-                  disabled={
-                    isSending ||
-                    isUploading ||
-                    (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
-                  }
+                  disabled={isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)}
                   style={{
                     width: 44,
                     height: 44,
                     borderRadius: 14,
                     border: 'none',
                     background:
-                      isSending ||
-                      isUploading ||
-                      (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                      isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
                         ? 'var(--mobile-msg-assistant-bg)'
                         : accentColor,
                     color:
-                      isSending ||
-                      isUploading ||
-                      (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                      isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
                         ? VAR_MOBILE_TEXT_MUTED
                         : '#fff',
                     cursor:
-                      isSending ||
-                      isUploading ||
-                      (!inputValue.trim() && pendingFiles.filter((f) => !f.error).length === 0)
+                      isSending || isUploading || (!inputValue.trim() && !hasPendingFiles)
                         ? 'default'
                         : 'pointer',
                     display: 'flex',

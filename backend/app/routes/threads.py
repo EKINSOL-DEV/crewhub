@@ -50,7 +50,7 @@ def _generate_auto_title(agent_names: list[str]) -> str:
     return f"Crew with {len(agent_names)} agents"
 
 
-async def _get_thread_response(db: aiosqlite.Connection, thread_id: str) -> dict:
+async def _get_thread_response(db: aiosqlite.Connection, thread_id: str) -> Optional[dict]:
     """Build full thread response with participants."""
     cursor = await db.execute(SQL_GET_THREAD, (thread_id,))
     row = await cursor.fetchone()

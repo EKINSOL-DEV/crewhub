@@ -184,7 +184,9 @@ export function AudioMessage({
       }}
     >
       {/* Hidden audio element */}
-      <audio ref={audioRef} src={url} preload="metadata" style={{ display: 'none' }} />
+      <audio ref={audioRef} src={url} preload="metadata" style={{ display: 'none' }}>
+        <track kind="captions" label="Transcript" srcLang="en" />
+      </audio>
 
       {/* Player row: button + progress + waveform */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

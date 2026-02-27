@@ -49,6 +49,7 @@ interface GenerationRecord {
 }
 
 interface ThinkingLine {
+  id: string
   text: string
   type:
     | 'status'
@@ -319,6 +320,7 @@ function PropGeneratorTab() {
   const [isSaved, setIsSaved] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
   const thinkingScrollRef = useRef<HTMLDivElement>(null)
+  const lineCounterRef = useRef(0)
 
   const examplePrompts = [
     'A glowing mushroom lamp',
@@ -353,9 +355,11 @@ function PropGeneratorTab() {
     setResult(null)
     setIsSaved(false)
     setThinkingLines([])
+    lineCounterRef.current = 0
     setShowThinking(true)
 
-    const addLine = (line: ThinkingLine) => setThinkingLines((prev) => [...prev, line])
+    const addLine = (line: Omit<ThinkingLine, 'id'>) =>
+      setThinkingLines((prev) => [...prev, { ...line, id: `line-${lineCounterRef.current++}` }])
 
     const parseEventData = (evt: Event): any => {
       if (!(evt instanceof MessageEvent)) return null
@@ -744,7 +748,7 @@ function PropGeneratorTab() {
             >
               {thinkingLines.map((line, i) => (
                 <div
-                  key={`line-${i}`}
+                  key={line.id}
                   style={{
                     color: getLineColor(line, i === thinkingLines.length - 1),
                     paddingLeft: line.type === 'thinking' ? 12 : 0,

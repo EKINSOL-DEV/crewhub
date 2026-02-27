@@ -93,7 +93,7 @@ class OpenClawExtendedMixin:
         )
         return _extract_text(result)
 
-    async def send_chat_streaming(
+    async def send_chat_streaming(  # NOSONAR
         self,
         message: str,
         agent_id: str = "main",

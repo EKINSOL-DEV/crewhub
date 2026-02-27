@@ -24,7 +24,7 @@ echo ""
 
 # Check if matrix.md exists
 if [[ ! -f "$MATRIX_FILE" ]]; then
-    echo "❌ Error: matrix.md not found at $MATRIX_FILE"
+    echo "❌ Error: matrix.md not found at $MATRIX_FILE" >&2
     exit 1
 fi
 

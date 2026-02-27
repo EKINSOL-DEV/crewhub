@@ -239,11 +239,13 @@ do_start() {
         log "Restart attempt $restart_count/$MAX_RESTARTS in ${backoff}s..."
         sleep "$backoff"
     done
+
+    return 0
 }
 
 case "${1:-start}" in
     start)  do_start ;;
     stop)   do_stop ;;
     status) do_status ;;
-    *)      echo "Usage: $0 {start|stop|status}" ;;
+    *)      echo "Usage: $0 {start|stop|status}" >&2 ;;
 esac

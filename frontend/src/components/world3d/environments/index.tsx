@@ -10,12 +10,10 @@ const KEY_CREWHUB_ENVIRONMENT_CHANGE = 'crewhub-environment-change'
 // ─── Environment Types ───────────────────────────────────────────
 // EnvironmentType is now a plain string — any registered id is valid.
 
-export type EnvironmentType = string
-
 const STORAGE_KEY = 'crewhub-environment'
 const DEFAULT_ENVIRONMENT = 'desert'
 
-export function getStoredEnvironment(): EnvironmentType {
+export function getStoredEnvironment(): string {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored && environmentRegistry.has(stored)) return stored
@@ -25,7 +23,7 @@ export function getStoredEnvironment(): EnvironmentType {
   return DEFAULT_ENVIRONMENT
 }
 
-export function setStoredEnvironment(env: EnvironmentType): void {
+export function setStoredEnvironment(env: string): void {
   try {
     localStorage.setItem(STORAGE_KEY, env)
   } catch {
@@ -37,10 +35,10 @@ export function setStoredEnvironment(env: EnvironmentType): void {
 
 // ─── Hook for environment state ──────────────────────────────────
 
-export function useEnvironment(): [EnvironmentType, (env: EnvironmentType) => void] {
-  const [environment, setEnvironment] = useState<EnvironmentType>(getStoredEnvironment)
+export function useEnvironment(): [string, (env: string) => void] {
+  const [environment, setEnvironment] = useState<string>(getStoredEnvironment)
 
-  const handleChange = useCallback((env: EnvironmentType) => {
+  const handleChange = useCallback((env: string) => {
     setEnvironment(env)
     setStoredEnvironment(env)
   }, [])
@@ -48,7 +46,7 @@ export function useEnvironment(): [EnvironmentType, (env: EnvironmentType) => vo
   // Listen for changes from other components (e.g., settings panel)
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent<EnvironmentType>).detail
+      const detail = (e as CustomEvent<string>).detail
       setEnvironment(detail)
     }
     globalThis.addEventListener(KEY_CREWHUB_ENVIRONMENT_CHANGE, handler)

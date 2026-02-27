@@ -807,8 +807,6 @@ export function createMockSessionHistory(sessionKey: string) {
 
 // ─── SSE Mock ──────────────────────────────────────────────────
 
-const sseTimers: ReturnType<typeof setInterval>[] = []
-
 export function createMockEventSource() {
   class MockEventSource extends EventTarget {
     static readonly CONNECTING = 0
@@ -860,8 +858,6 @@ export function createMockEventSource() {
         incrementLabelRotationIndex()
         this._emitSessionsRefresh()
       }, 15000)
-
-      sseTimers.push(updateInterval, labelInterval)
     }
 
     private _emitSessionUpdate() {

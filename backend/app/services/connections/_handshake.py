@@ -26,6 +26,10 @@ from .base import ConnectionStatus
 logger = logging.getLogger(__name__)
 
 
+class HandshakeError(RuntimeError):
+    """Raised when gateway handshake fails validation."""
+
+
 async def _reset_existing_connection(conn: OpenClawConnection) -> None:
     if conn.ws:
         try:
@@ -38,7 +42,7 @@ async def _reset_existing_connection(conn: OpenClawConnection) -> None:
         try:
             await conn._listen_task
         except asyncio.CancelledError:
-            pass
+            raise
 
 
 def _choose_auth(identity, conn: OpenClawConnection) -> tuple[bool, str]:
@@ -53,7 +57,7 @@ def _choose_auth(identity, conn: OpenClawConnection) -> tuple[bool, str]:
     return use_device_token, auth_token
 
 
-async def perform_handshake(conn: OpenClawConnection) -> bool:
+async def perform_handshake(conn: OpenClawConnection) -> bool:  # NOSONAR
     """Perform the OpenClaw v2 device-identity WebSocket handshake."""
     try:
         logger.info(f"Connecting to Gateway at {conn.uri}...")
@@ -72,7 +76,7 @@ async def perform_handshake(conn: OpenClawConnection) -> bool:
         conn.ws = await asyncio.wait_for(websockets.connect(conn.uri, ping_interval=20, ping_timeout=20), timeout=10.0)
         challenge = json.loads(await asyncio.wait_for(conn.ws.recv(), timeout=5.0))
         if challenge.get("type") != "event" or challenge.get("event") != "connect.challenge":
-            raise Exception(f"Expected connect.challenge, got: {challenge}")
+            raise HandshakeError(f"Expected connect.challenge, got: {challenge}")
 
         nonce = challenge.get("payload", {}).get("nonce", "")
         logger.debug(f"Received challenge nonce: {nonce[:16]}...")
@@ -115,7 +119,7 @@ async def perform_handshake(conn: OpenClawConnection) -> bool:
                 logger.warning(f"Device token rejected ({error_code}) — clearing; will re-register")
                 identity.device_token = None
                 await identity_manager.clear_device_token(identity.device_id)
-            raise Exception(f"Connect rejected: {error.get('message', error)}")
+            raise HandshakeError(f"Connect rejected: {error.get('message', error)}")
 
         response_auth = (response.get("payload", {}) or {}).get("auth") or {}
         new_device_token = response_auth.get("deviceToken") or response_auth.get("token")
@@ -132,6 +136,8 @@ async def perform_handshake(conn: OpenClawConnection) -> bool:
         logger.info(f"Gateway '{conn.name}' connected [{auth_mode}]{got_token}")
         conn._listen_task = asyncio.create_task(conn._listen_loop())
         return True
+    except asyncio.CancelledError:
+        raise
     except TimeoutError:
         conn._set_error("Connection timed out")
         return False

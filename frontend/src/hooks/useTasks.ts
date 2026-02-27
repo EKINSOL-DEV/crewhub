@@ -122,35 +122,25 @@ export function useTasks(options: UseTasksOptions = {}) {
 
   // Listen for SSE task events
   useEffect(() => {
-    const handleTaskCreated = (event: MessageEvent) => {
+    const shouldRefreshForEvent = (event: MessageEvent): boolean => {
       try {
         const data = JSON.parse(event.data) as { project_id?: string; room_id?: string }
-        // Refresh if this task belongs to our filtered project/room
-        if (
+        return (
           (projectId && data.project_id === projectId) ||
           (roomId && data.room_id === roomId) ||
           (!projectId && !roomId)
-        ) {
-          fetchTasks()
-        }
+        )
       } catch {
-        fetchTasks() // Fallback: always refresh on error
+        return true
       }
     }
 
+    const handleTaskCreated = (event: MessageEvent) => {
+      if (shouldRefreshForEvent(event)) fetchTasks()
+    }
+
     const handleTaskUpdated = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data) as { project_id?: string; room_id?: string }
-        if (
-          (projectId && data.project_id === projectId) ||
-          (roomId && data.room_id === roomId) ||
-          (!projectId && !roomId)
-        ) {
-          fetchTasks()
-        }
-      } catch {
-        fetchTasks()
-      }
+      if (shouldRefreshForEvent(event)) fetchTasks()
     }
 
     const handleTaskDeleted = () => {

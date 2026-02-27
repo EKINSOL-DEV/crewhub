@@ -13,6 +13,7 @@
  */
 
 type EventHandler = (event: MessageEvent) => void
+type ConnectionState = 'disconnected' | 'connecting' | 'connected'
 
 const getAuthToken = (): string => localStorage.getItem('openclaw_token') || ''
 
@@ -50,7 +51,7 @@ class SSEManager {
   private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null
   private reconnectAttempts = 0
   private isConnecting = false
-  private connectionState: 'disconnected' | 'connecting' | 'connected' = 'disconnected'
+  private connectionState: ConnectionState = 'disconnected'
   private readonly stateListeners: Set<(state: typeof this.connectionState) => void> = new Set()
 
   // Track which event types have dispatchers registered

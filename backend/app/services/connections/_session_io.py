@@ -12,12 +12,9 @@ import logging
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any, Optional
 
 import aiofiles
-
-if TYPE_CHECKING:
-    pass
 
 from .base import HistoryMessage
 

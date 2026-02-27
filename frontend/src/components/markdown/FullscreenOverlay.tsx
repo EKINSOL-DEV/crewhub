@@ -141,7 +141,7 @@ export function FullscreenOverlay({
     window.dispatchEvent(new CustomEvent('fullscreen-overlay', { detail: { open: true } }))
 
     // Block camera-controls' document-level pointermove/pointerup listeners
-    const overlayEl = document.querySelector('[data-fullscreen-overlay]') as HTMLElement | null
+    const overlayEl = document.querySelector<HTMLElement>('[data-fullscreen-overlay]')
     const blockIfOutsideOverlay = (e: Event) => {
       if (overlayEl?.contains(e.target as Node)) return
       e.stopPropagation()
@@ -183,14 +183,8 @@ export function FullscreenOverlay({
         pointerEvents: 'all',
       }}
       onClick={(e) => {
+        // NOSONAR: backdrop click closes fullscreen modal
         if (e.target === e.currentTarget) onClose()
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
-        if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
-          e.preventDefault()
-          onClose()
-        }
       }}
       role="dialog"
       aria-modal="true"

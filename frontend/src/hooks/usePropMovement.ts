@@ -201,14 +201,10 @@ export function usePropMovement({
   // Check if a position is valid (within bounds and not overlapping)
   // Uses selectedProp.key to uniquely identify the prop being moved (handles duplicate propIds)
   const isValidPosition = useCallback(
-    (
-      x: number,
-      z: number,
-      span: { w: number; d: number } = { w: 1, d: 1 },
-      excludeKey?: string
-    ): boolean => {
-      if (!isWithinBounds(x, z, span, gridWidth, gridDepth)) return false
-      return !hasOverlap(x, z, span, placements, excludeKey)
+    (x: number, z: number, span?: { w: number; d: number }, excludeKey?: string): boolean => {
+      const resolvedSpan = span ?? { w: 1, d: 1 }
+      if (!isWithinBounds(x, z, resolvedSpan, gridWidth, gridDepth)) return false
+      return !hasOverlap(x, z, resolvedSpan, placements, excludeKey)
     },
     [gridWidth, gridDepth, placements]
   )

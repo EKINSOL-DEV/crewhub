@@ -30,7 +30,7 @@ Object.defineProperty(window, 'matchMedia', {
 })
 
 // Mock EventSource (SSE) which is not available in jsdom/node
-if (typeof (globalThis as any).EventSource === 'undefined') {
+if ((globalThis as any).EventSource === undefined) {
   class MockEventSource {
     static readonly CONNECTING = 0
     static readonly OPEN = 1

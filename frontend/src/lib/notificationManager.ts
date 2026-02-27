@@ -22,9 +22,11 @@ let _notify: TauriNotifyFn | null = null
 let _invoke: TauriInvokeFn | null = null
 
 function isInTauri(): boolean {
-  return (
-    (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
-  )
+  const host = globalThis as typeof globalThis & {
+    __TAURI_INTERNALS__?: unknown
+    __TAURI__?: unknown
+  }
+  return host.__TAURI_INTERNALS__ !== undefined || host.__TAURI__ !== undefined
 }
 
 async function getTauriApis(): Promise<boolean> {
