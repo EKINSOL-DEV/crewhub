@@ -191,20 +191,13 @@ export function ImageDropZone({ children, onImagesChange, images, disabled }: Im
   )
 
   return (
-    <div
+    <section
       className={`zen-image-drop-zone ${isDragOver ? 'zen-image-drop-zone-active' : ''}`}
       onPaste={handlePaste}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-        }
-      }}
-      role="region"
-      tabIndex={0}
       aria-label="Image drop zone"
     >
       {children}
@@ -218,7 +211,7 @@ export function ImageDropZone({ children, onImagesChange, images, disabled }: Im
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }
 

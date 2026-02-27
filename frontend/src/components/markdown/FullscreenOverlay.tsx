@@ -169,7 +169,8 @@ export function FullscreenOverlay({
   const hasTOC = headings.length > 0 && !editing
 
   const overlay = (
-    <div
+    <dialog
+      open
       data-fullscreen-overlay
       style={{
         position: 'fixed',
@@ -181,13 +182,14 @@ export function FullscreenOverlay({
         backdropFilter: 'blur(4px)',
         animation: 'fadeIn 0.2s ease-out',
         pointerEvents: 'all',
+        border: 'none',
+        padding: 0,
+        margin: 0,
       }}
       onClick={(e) => {
         // NOSONAR: backdrop click closes fullscreen modal
         if (e.target === e.currentTarget) onClose()
       }}
-      role="dialog"
-      aria-modal="true"
       aria-label="Fullscreen overlay"
     >
       {/* Header */}
@@ -502,7 +504,7 @@ export function FullscreenOverlay({
           to { transform: translateX(0); }
         }
       `}</style>
-    </div>
+    </dialog>
   )
 
   return createPortal(overlay, document.body)

@@ -33,7 +33,7 @@ function OrgNode({ name, depth = 0 }: Readonly<{ name: string; readonly depth?: 
   const isHuman = !node.model
 
   return (
-    <div style={{ paddingLeft: depth > 0 ? 20 : 0 }}>
+    <li style={{ listStyle: 'none', paddingLeft: depth > 0 ? 20 : 0 }}>
       <div
         style={{
           display: 'flex',
@@ -44,22 +44,7 @@ function OrgNode({ name, depth = 0 }: Readonly<{ name: string; readonly depth?: 
           borderRadius: 10,
           background: isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)',
           borderLeft: depth > 0 ? `3px solid ${modelColor(node.model)}` : 'none',
-          transition: 'background 0.15s',
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.15)' : 'rgba(0,0,0,0.06)'
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)'
-        }}
-        onFocus={(e) => {
-          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.15)' : 'rgba(0,0,0,0.06)'
-        }}
-        onBlur={(e) => {
-          e.currentTarget.style.background = isHuman ? 'rgba(245,158,11,0.08)' : 'rgba(0,0,0,0.03)'
-        }}
-        tabIndex={0}
-        role="listitem"
       >
         <span style={{ fontSize: 18 }}>{node.icon}</span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -85,13 +70,21 @@ function OrgNode({ name, depth = 0 }: Readonly<{ name: string; readonly depth?: 
       </div>
 
       {node.children.length > 0 && (
-        <div style={{ marginLeft: 8, borderLeft: '1px solid rgba(0,0,0,0.06)', paddingLeft: 0 }}>
+        <ul
+          style={{
+            marginLeft: 8,
+            borderLeft: '1px solid rgba(0,0,0,0.06)',
+            paddingLeft: 0,
+            marginTop: 0,
+            marginBottom: 0,
+          }}
+        >
           {node.children.map((child) => (
             <OrgNode key={child} name={child} depth={depth + 1} />
           ))}
-        </div>
+        </ul>
       )}
-    </div>
+    </li>
   )
 }
 
@@ -110,7 +103,9 @@ export function OrgChartTab() {
       >
         🏢 Team Hierarchy
       </div>
-      <OrgNode name="Nicky" depth={0} />
+      <ul style={{ margin: 0, padding: 0 }}>
+        <OrgNode name="Nicky" depth={0} />
+      </ul>
     </div>
   )
 }
