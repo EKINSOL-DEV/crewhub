@@ -19,7 +19,7 @@ export function ZenThemePicker({ currentThemeId, onSelectTheme, onClose }: ZenTh
       themeInfo.findIndex((t) => t.id === currentThemeId)
     )
   )
-  const containerRef = useRef<HTMLDialogElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   // Focus trap and keyboard navigation
