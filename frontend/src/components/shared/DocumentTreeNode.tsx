@@ -101,6 +101,11 @@ function handleFileAction(nodePath: string, onOpen: (path: string) => void): voi
   onOpen(nodePath)
 }
 
+function getArrowSymbol(isDirectory: boolean, isExpanded: boolean): string | null {
+  if (!isDirectory) return null
+  return isExpanded ? '▼' : '▶'
+}
+
 export function DocumentTreeNode({
   node,
   depth,
@@ -121,7 +126,7 @@ export function DocumentTreeNode({
   const buttonStyles = getButtonStyles(variant, depth)
   const arrowStyle = getArrowStyle(variant)
   const dateStyle = getDateStyle(variant)
-  const arrow: string | null = isDirectory ? (isExpanded ? '▼' : '▶') : null
+  const arrow = getArrowSymbol(isDirectory, isExpanded)
 
   const spacerWidth = variant === 'zen' ? 12 : 16
   const iconFontSize = variant === 'zen' ? 13 : 16
