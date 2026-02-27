@@ -127,30 +127,3 @@ export function Spaceship({ position = [0, 0, 0], scale = 1 }: SpaceshipProps) {
     </group>
   )
 }
-
-/* PARTS_DATA
-[
-  {"type": "cylinder", "position": [0, 0.35, 0], "args": [0.08, 0.18, 0.9, 12], "color": "#B8B8B8", "emissive": false},
-  {"type": "cone", "position": [0, 0.35, -0.55], "args": [0.08, 0.3, 12], "color": "#B8B8B8", "emissive": false},
-  {"type": "sphere", "position": [0, 0.44, -0.25], "args": [0.07, 10, 10], "color": "#66BBAA", "emissive": true},
-  {"type": "box", "position": [-0.3, 0.3, 0.1], "args": [0.4, 0.03, 0.35], "color": "#777777", "emissive": false},
-  {"type": "box", "position": [0.3, 0.3, 0.1], "args": [0.4, 0.03, 0.35], "color": "#777777", "emissive": false},
-  {"type": "box", "position": [-0.48, 0.27, 0.05], "args": [0.04, 0.08, 0.15], "color": "#4488CC", "emissive": false},
-  {"type": "box", "position": [0.48, 0.27, 0.05], "args": [0.04, 0.08, 0.15], "color": "#4488CC", "emissive": false},
-  {"type": "box", "position": [0, 0.5, 0.2], "args": [0.03, 0.18, 0.2], "color": "#555555", "emissive": false},
-  {"type": "cylinder", "position": [0, 0.35, 0.45], "args": [0.2, 0.18, 0.15, 12], "color": "#555555", "emissive": false},
-  {"type": "cylinder", "position": [0, 0.35, 0.55], "args": [0.12, 0.18, 0.1, 12], "color": "#333333", "emissive": false},
-  {"type": "cylinder", "position": [0, 0.35, 0.58], "args": [0.06, 0.1, 0.04, 12], "color": "#FF8C00", "emissive": true},
-  {"type": "cylinder", "position": [-0.22, 0.28, 0.3], "args": [0.04, 0.06, 0.2, 8], "color": "#555555", "emissive": false},
-  {"type": "sphere", "position": [-0.22, 0.28, 0.42], "args": [0.035, 8, 8], "color": "#FF8C00", "emissive": true},
-  {"type": "cylinder", "position": [0.22, 0.28, 0.3], "args": [0.04, 0.06, 0.2, 8], "color": "#555555", "emissive": false},
-  {"type": "sphere", "position": [0.22, 0.28, 0.42], "args": [0.035, 8, 8], "color": "#FF8C00", "emissive": true},
-  {"type": "cylinder", "position": [0, 0.44, 0], "args": [0.085, 0.185, 0.02, 12], "color": "#4488CC", "emissive": false},
-  {"type": "cylinder", "position": [0, 0.08, -0.25], "args": [0.015, 0.015, 0.16, 6], "color": "#555555", "emissive": false},
-  {"type": "torus", "position": [0, 0.01, -0.25], "args": [0.025, 0.01, 6, 10], "color": "#333333", "emissive": false},
-  {"type": "cylinder", "position": [-0.12, 0.08, 0.25], "args": [0.015, 0.015, 0.16, 6], "color": "#555555", "emissive": false},
-  {"type": "cylinder", "position": [0.12, 0.08, 0.25], "args": [0.015, 0.015, 0.16, 6], "color": "#555555", "emissive": false},
-  {"type": "sphere", "position": [-0.5, 0.28, 0.1], "args": [0.02, 6, 6], "color": "#CC4444", "emissive": true},
-  {"type": "sphere", "position": [0.5, 0.28, 0.1], "args": [0.02, 6, 6], "color": "#39FF14", "emissive": true}
-]
-PARTS_DATA */

@@ -52,7 +52,7 @@ async def broadcast(event_type: str, data: dict):
     event = {"type": event_type, "data": data}
     dead_clients: list[asyncio.Queue] = []
 
-    for q in list(_sse_clients):
+    for q in _sse_clients:
         try:
             q.put_nowait(event)
         except asyncio.QueueFull:

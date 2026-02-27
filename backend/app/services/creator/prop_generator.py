@@ -467,7 +467,7 @@ def parse_ai_parts(raw: str) -> list[dict] | None:
                 if "rotation" not in p:
                     p["rotation"] = [0, 0, 0]
             return parts
-    except (json.JSONDecodeError, ValueError):
+    except ValueError:
         pass
     return None
 

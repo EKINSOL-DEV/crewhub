@@ -417,8 +417,7 @@ export function ZenLayoutPicker({
       <div className="zen-layout-picker-modal">
         <header className="zen-layout-picker-header">
           <h2 className="zen-layout-picker-title">
-            <span className="zen-layout-picker-icon">📐</span>
-            Choose Layout
+            <span className="zen-layout-picker-icon">📐</span> Choose Layout
           </h2>
           <button className="zen-btn zen-btn-icon zen-btn-close" onClick={onClose} title="Close">
             ✕

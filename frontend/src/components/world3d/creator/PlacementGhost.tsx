@@ -73,7 +73,7 @@ export function PlacementGhost({
     const sx = snapToGrid(intersectPoint.current.x)
     const sz = snapToGrid(intersectPoint.current.z)
 
-    if (!lastEmitted.current || lastEmitted.current.x !== sx || lastEmitted.current.z !== sz) {
+    if (lastEmitted.current?.x !== sx || lastEmitted.current?.z !== sz) {
       lastEmitted.current = { x: sx, z: sz }
       onPositionChange({ x: sx, y: 0, z: sz })
     }

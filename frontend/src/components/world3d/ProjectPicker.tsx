@@ -141,9 +141,7 @@ export function ProjectPicker({
     let list = projects.filter((p) => p.status === 'active' || p.status === 'paused')
     if (q) {
       list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.description && p.description.toLowerCase().includes(q))
+        (p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
       )
     }
     // Sort: recently updated first, current project excluded

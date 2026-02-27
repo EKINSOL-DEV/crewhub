@@ -185,7 +185,7 @@ export function ZenSessionsPanel({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const list = listRef.current
-      if (!list || !list.contains(document.activeElement)) return
+      if (!list?.contains(document.activeElement)) return
 
       if (e.key === 'ArrowDown' || e.key === 'j') {
         e.preventDefault()

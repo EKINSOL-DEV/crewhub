@@ -330,7 +330,7 @@ export function RoomWalls({
     const segs: WallSegment[] = []
     const capPositions: Array<{ key: string; position: [number, number, number] }> = []
 
-    // Back wall (full width, at +Z)
+    // Back/left/right walls
     segs.push(
       {
         key: 'back-wall',
@@ -342,11 +342,7 @@ export function RoomWalls({
         position: [0, floorTop + wallHeight + accentHeight / 2, halfSize - wallThickness / 2],
         size: [size, accentHeight, wallThickness + 0.02],
         isAccent: true,
-      }
-    )
-
-    // Left wall (full depth, at -X)
-    segs.push(
+      },
       {
         key: 'left-wall',
         position: [-halfSize + wallThickness / 2, floorTop + wallHeight / 2, 0],
@@ -357,11 +353,7 @@ export function RoomWalls({
         position: [-halfSize + wallThickness / 2, floorTop + wallHeight + accentHeight / 2, 0],
         size: [wallThickness + 0.02, accentHeight, size],
         isAccent: true,
-      }
-    )
-
-    // Right wall (full depth, at +X)
-    segs.push(
+      },
       {
         key: 'right-wall',
         position: [halfSize - wallThickness / 2, floorTop + wallHeight / 2, 0],
@@ -377,7 +369,7 @@ export function RoomWalls({
 
     // Front wall (at -Z) — TWO segments with a gap in the middle
     const sideWidth = (size - gapWidth) / 2
-    // Front-left segment
+    // Front-left and front-right segments
     segs.push(
       {
         key: 'front-left-wall',
@@ -397,10 +389,7 @@ export function RoomWalls({
         ],
         size: [sideWidth, accentHeight, wallThickness + 0.02],
         isAccent: true,
-      }
-    )
-    // Front-right segment
-    segs.push(
+      },
       {
         key: 'front-right-wall',
         position: [

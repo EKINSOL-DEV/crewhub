@@ -229,7 +229,7 @@ class RunResponse(BaseModel):
     agent_id: str
 
 
-async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest", task_id) -> str:
+async def _build_task_context_prompt(task: dict, agent: dict, body: "RunRequest") -> str:
     """Build a task prompt with optional CrewHub context envelope prepended."""
     from app.services.context_envelope import build_crewhub_context, format_context_block
 
@@ -277,7 +277,7 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
         if not agent:
             raise HTTPException(status_code=404, detail="Agent not found")
 
-        prompt = await _build_task_context_prompt(task, agent, body, task_id)
+        prompt = await _build_task_context_prompt(task, agent, body)
 
         # 4. Send to agent's main session via OpenClaw
         manager = await get_connection_manager()
@@ -303,7 +303,6 @@ async def run_task_with_agent(task_id: str, body: RunRequest):
         await task_service.set_task_running(
             task_id=task_id,
             project_id=task["project_id"],
-            previous_status=task["status"],
             agent_id=body.agent_id,
             agent_name=agent["name"],
             session_key=session_key,

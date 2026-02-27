@@ -220,13 +220,13 @@ class OpenClawConnection(
                 "ok": False,
                 "error": {"code": "DISCONNECTED", "message": "Gateway disconnected"},
             }
-            for req_id, q in list(self._response_queues.items()):
+            for req_id, q in self._response_queues.items():
                 try:
                     q.put_nowait({**disconnect_err, "id": req_id})
                 except asyncio.QueueFull:
                     pass
             self._response_queues.clear()
-            for sq in list(self._stream_queues.values()):
+            for sq in self._stream_queues.values():
                 try:
                     sq.put_nowait(("error", "DISCONNECTED"))
                 except Exception:

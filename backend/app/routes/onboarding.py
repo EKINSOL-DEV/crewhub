@@ -118,7 +118,7 @@ def _check_host_docker_internal() -> bool:
     try:
         socket.getaddrinfo("host.docker.internal", 18789, socket.AF_INET)
         return True
-    except (socket.gaierror, OSError):
+    except OSError:
         return False
 
 
@@ -214,7 +214,7 @@ async def _check_tcp(host: str, port: int) -> Optional[TestOpenClawResponse]:
                 "If in Docker, make sure the gateway binds to 0.0.0.0.",
             ],
         )
-    except (ConnectionRefusedError, OSError) as e:
+    except OSError as e:
         return TestOpenClawResponse(
             ok=False,
             category="tcp",

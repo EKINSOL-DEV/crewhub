@@ -335,7 +335,6 @@ async def delete_task(task_id: str) -> Optional[dict]:
 async def set_task_running(
     task_id: str,
     project_id: str,
-    previous_status: str,
     agent_id: str,
     agent_name: str,
     session_key: str,
