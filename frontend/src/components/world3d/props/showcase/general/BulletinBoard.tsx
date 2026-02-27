@@ -24,7 +24,7 @@ export function BulletinBoard() {
         ['#88ff88', 0.2, -0.05],
       ].map(([c, x, y], i) => (
         <mesh
-          key={`item-${i}`}
+          key={`note-${String(c)}-${x}-${y}`}
           position={[x as number, (y as number) + 0.05, 0.025]}
           rotation={[0, 0, (i - 1.5) * 0.15]}
         >
@@ -38,7 +38,7 @@ export function BulletinBoard() {
         [-0.05, -0.05],
         [0.2, 0],
       ].map(([x, y], i) => (
-        <mesh key={`item-${i}`} position={[x, y + 0.05, 0.03]}>
+        <mesh key={`pin-${x}-${y}`} position={[x, y + 0.05, 0.03]}>
           <sphereGeometry args={[0.015, 6, 6]} />
           <meshStandardMaterial
             color={['#ff2222', '#2222ff', '#22cc22', '#ff8800'][i]}

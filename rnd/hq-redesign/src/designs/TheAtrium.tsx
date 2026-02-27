@@ -33,7 +33,7 @@ export function TheAtrium() {
         const y = fi * floorH
 
         return (
-          <group key={JSON.stringify(_)} position={[0, y, 0]}>
+          <group key={`floor-${fi}`} position={[0, y, 0]}>
             {/* Floor slab with central void */}
             {/* Left wing */}
             <mesh position={[-(atriumW / 2 + (buildW / 2 - atriumW / 2) / 2), 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -174,7 +174,7 @@ export function TheAtrium() {
         [-atriumW / 2, atriumD / 2],
         [atriumW / 2, atriumD / 2],
       ].map(([x, z], i) => (
-        <Pillar key={`item-${i}`} position={[x, 0, z]} height={floors * floorH} radius={0.15} color="#556" />
+        <Pillar key={`pillar-${x}-${z}`} position={[x, 0, z]} height={floors * floorH} radius={0.15} color="#556" />
       ))}
     </group>
   )

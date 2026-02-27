@@ -20,8 +20,8 @@ export function Workbench() {
         [0.6, -0.2],
         [-0.6, 0.2],
         [0.6, 0.2],
-      ].map(([x, z], i) => (
-        <mesh key={`item-${i}`} position={[x, -0.35, z]}>
+      ].map(([x, z]) => (
+        <mesh key={`leg-${x}-${z}`} position={[x, -0.35, z]}>
           <boxGeometry args={[0.06, 0.8, 0.06]} />
           <meshStandardMaterial color="#886633" flatShading />
         </mesh>

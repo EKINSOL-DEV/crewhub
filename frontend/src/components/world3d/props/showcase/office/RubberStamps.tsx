@@ -13,8 +13,8 @@ export function RubberStamps() {
         ['#ff4444', -0.1],
         ['#4488ff', 0.05],
         ['#44cc44', 0.2],
-      ].map(([c, x], i) => (
-        <group key={`item-${i}`} position={[(x as number) - 0.05, -0.18, 0]}>
+      ].map(([c, x]) => (
+        <group key={`stamp-${String(c)}`} position={[(x as number) - 0.05, -0.18, 0]}>
           <mesh position={[0, 0.04, 0]}>
             <boxGeometry args={[0.08, 0.06, 0.04]} />
             <meshStandardMaterial color="#aa7744" flatShading />

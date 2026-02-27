@@ -54,7 +54,7 @@ export function VRHeadset() {
       </mesh>
       {/* Cameras */}
       {[[-0.3, 0.1], [0.3, 0.1], [-0.3, -0.1], [0.3, -0.1]].map(([x, y], i) => (
-        <mesh key={`item-${i}`} position={[x, y, 0.19]}>
+        <mesh key={`cam-${x}-${y}`} position={[x, y, 0.19]}>
           <cylinderGeometry args={[0.02, 0.02, 0.01, 6]} />
           <meshStandardMaterial color="#111111" />
         </mesh>

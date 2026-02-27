@@ -30,7 +30,7 @@ export function GameController() {
       </mesh>
       {/* Face buttons */}
       {[[0.1, 0.05], [0.15, 0], [0.2, 0.05], [0.15, 0.1]].map(([x, z], i) => (
-        <mesh key={`item-${i}`} position={[x, 0.08, z]}>
+        <mesh key={`btn-${x}-${z}`} position={[x, 0.08, z]}>
           <cylinderGeometry args={[0.02, 0.02, 0.02, 8]} />
           <meshStandardMaterial color={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]} emissive={['#44ff44', '#ff4444', '#4488ff', '#ffcc44'][i]} emissiveIntensity={0.5} />
         </mesh>

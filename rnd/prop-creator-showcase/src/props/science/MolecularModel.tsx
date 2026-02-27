@@ -26,7 +26,7 @@ export function MolecularModel() {
         </mesh>
       ))}
       {/* Bonds */}
-      {bonds.map(([a, b], i) => {
+      {bonds.map(([a, b]) => {
         const p1 = new THREE.Vector3(...atoms[a].pos);
         const p2 = new THREE.Vector3(...atoms[b].pos);
         const mid = p1.clone().add(p2).multiplyScalar(0.5);
@@ -34,7 +34,7 @@ export function MolecularModel() {
         const len = dir.length();
         const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
         return (
-          <mesh key={`item-${i}`} position={[mid.x, mid.y, mid.z]} quaternion={q}>
+          <mesh key={`bond-${a}-${b}`} position={[mid.x, mid.y, mid.z]} quaternion={q}>
             <cylinderGeometry args={[0.02, 0.02, len, 6]} />
             <meshStandardMaterial color="#888899" />
           </mesh>

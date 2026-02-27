@@ -34,8 +34,8 @@ export function MiniFridge() {
         [0.1, -0.1],
         [-0.1, 0.1],
         [0.1, 0.1],
-      ].map(([x, z], i) => (
-        <mesh key={`item-${i}`} position={[x, -0.27, z]}>
+      ].map(([x, z]) => (
+        <mesh key={`foot-${x}-${z}`} position={[x, -0.27, z]}>
           <cylinderGeometry args={[0.015, 0.015, 0.02, 4]} />
           <meshStandardMaterial color="#444455" flatShading />
         </mesh>

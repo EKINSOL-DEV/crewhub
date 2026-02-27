@@ -9,7 +9,7 @@ export function RubberStamps() {
     <group ref={groupRef}>
 
       {[['#ff4444',-0.1],['#4488ff',0.05],['#44cc44',0.2]].map(([c,x],i) => (
-        <group key={`item-${i}`} position={[(x as number)-0.05, -0.18, 0]}>
+        <group key={`stamp-${String(c)}`} position={[(x as number)-0.05, -0.18, 0]}>
           <mesh position={[0, 0.04, 0]}><boxGeometry args={[0.08, 0.06, 0.04]} /><meshStandardMaterial color="#aa7744" flatShading /></mesh>
           <mesh position={[0, -0.01, 0]}><boxGeometry args={[0.07, 0.02, 0.035]} /><meshStandardMaterial color={c as string} flatShading /></mesh>
         </group>
