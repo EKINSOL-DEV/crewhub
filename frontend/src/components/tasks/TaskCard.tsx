@@ -141,7 +141,7 @@ interface TaskStatusDropdownProps {
   readonly showDropdown: boolean
   readonly setShowDropdown: Dispatch<SetStateAction<boolean>>
   readonly onStatusChange?: (task: Task, newStatus: TaskStatus) => void
-  readonly dropdownRef: RefObject<HTMLDivElement>
+  readonly dropdownRef: RefObject<HTMLDivElement | null>
 }
 
 function TaskStatusDropdown({
@@ -155,7 +155,7 @@ function TaskStatusDropdown({
   const moveOptions = getMoveStatusOptions(task)
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0 }}>
+    <div ref={dropdownRef} style={{ position: 'relative', flexShrink: 0, zIndex: 3 }}>
       <button
         type="button"
         onClick={(e) => {
@@ -253,6 +253,8 @@ function TaskQuickActions({
             background: '#f0fdf4',
             color: '#15803d',
             cursor: 'pointer',
+            position: 'relative',
+            zIndex: 3,
           }}
           title="Mark as done"
         >
@@ -274,6 +276,8 @@ function TaskQuickActions({
             background: '#fef2f2',
             color: '#dc2626',
             cursor: 'pointer',
+            position: 'relative',
+            zIndex: 3,
           }}
           title="Mark as blocked"
         >
@@ -336,7 +340,6 @@ export const TaskCard = memo(function TaskCard({
   return (
     <>
       <div
-        onClick={onClick ? () => onClick(task) : undefined}
         style={{
           background: '#ffffff',
           borderRadius: 8,
@@ -358,6 +361,24 @@ export const TaskCard = memo(function TaskCard({
           e.currentTarget.style.transform = 'translateY(0)'
         }}
       >
+        {onClick && (
+          <button
+            type="button"
+            aria-label={`Open task ${task.title}`}
+            onClick={() => onClick(task)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              border: 'none',
+              background: 'transparent',
+              borderRadius: 8,
+              cursor: 'pointer',
+              zIndex: 1,
+              padding: 0,
+            }}
+          />
+        )}
+
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
           <span
             style={{
