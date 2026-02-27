@@ -98,7 +98,7 @@ export function installGlobalErrorCapture() {
   window.onerror = (message, source, lineno, colno, error) => {
     addError({
       type: 'unhandled-exception',
-      message: String(message),
+      message: typeof message === 'string' ? message : '[unhandled error]',
       stack: error?.stack,
       source: source || undefined,
       lineno: lineno || undefined,

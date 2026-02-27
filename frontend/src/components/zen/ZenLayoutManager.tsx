@@ -90,7 +90,7 @@ export function loadCurrentLayout(): LayoutNode | null {
   }
 }
 
-export function addRecentLayout(presetOrId: LayoutPreset | string): void {
+export function addRecentLayout(presetOrId: string): void {
   try {
     const recent = getRecentLayouts()
     const filtered = recent.filter((id) => id !== presetOrId)

@@ -193,8 +193,12 @@ function MessageBubble({
         )}
       </div>
       <div className="zen-sd-message-body">
-        {message.content?.map((block) => (
-          <ContentBlockView key={`block-${block}`} block={block} filterText={filterText} />
+        {message.content?.map((block, bIdx) => (
+          <ContentBlockView
+            key={`block-${block.type}-${bIdx}`}
+            block={block}
+            filterText={filterText}
+          />
         ))}
       </div>
     </div>

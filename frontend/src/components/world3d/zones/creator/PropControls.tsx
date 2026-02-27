@@ -79,7 +79,7 @@ export interface PropControlsProps {
   readonly onApplyPartEdits: () => void
 
   // Quality score
-  readonly qualityScore: any | null
+  readonly qualityScore: any
 
   // Iteration
   readonly iterationFeedback: string
@@ -91,7 +91,7 @@ export interface PropControlsProps {
 
   // Refinement (Phase 2)
   readonly generationId: string
-  readonly refinementOptions: any | null
+  readonly refinementOptions: any
   readonly isRefining: boolean
   readonly onRefine: (changes: RefineChanges) => void
   readonly onRefineReset: () => void
@@ -268,7 +268,7 @@ export function PropControls({
 
             {/* Generation mode & template */}
             <div className={FPM_MODEL_ROW}>
-              <label className="fpm-label">Mode:</label>
+              <span className="fpm-label">Mode:</span>
               <select
                 value={generationMode}
                 onChange={(e) => onGenerationModeChange(e.target.value as GenerationMode)}
@@ -281,7 +281,7 @@ export function PropControls({
             </div>
             {generationMode === 'hybrid' && (
               <div className={FPM_MODEL_ROW}>
-                <label className="fpm-label">Base:</label>
+                <span className="fpm-label">Base:</span>
                 <select
                   value={templateBase}
                   onChange={(e) => onTemplateBaseChange(e.target.value)}
@@ -538,7 +538,7 @@ export function PropControls({
                 Apply a showcase prop's visual style to your current prop.
               </p>
               <div className={FPM_MODEL_ROW}>
-                <label className="fpm-label">Style:</label>
+                <span className="fpm-label">Style:</span>
                 <select
                   value={selectedStyle}
                   onChange={(e) => onStyleChange(e.target.value)}

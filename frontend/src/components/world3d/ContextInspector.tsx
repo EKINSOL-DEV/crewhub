@@ -480,7 +480,7 @@ function TreeView({
     )
   }
 
-  return <span style={{ color: '#94a3b8' }}>{String(data)}</span>
+  return <span style={{ color: '#94a3b8' }}>{String(data as number | bigint | symbol)}</span>
 }
 
 function ObjectView({

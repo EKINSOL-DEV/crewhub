@@ -237,6 +237,7 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
                   return (
                     <button
                       key={cmd.id}
+                      role="option"
                       className={`zen-command-item ${isSelected ? 'zen-command-item-selected' : ''}`}
                       onClick={() => executeCommand(cmd)}
                       onMouseEnter={() => setSelectedIndex(currentIndex)}

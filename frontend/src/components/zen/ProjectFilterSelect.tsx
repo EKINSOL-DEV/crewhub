@@ -2,7 +2,7 @@
  * ProjectFilterSelect — Shared dropdown for filtering by project in Zen Mode panels.
  * Used in Tasks, Kanban, and Projects panels.
  */
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type ReactNode } from 'react'
 import { useProjects, type Project } from '@/hooks/useProjects'
 import { ProjectManagerModal } from './ProjectManagerModal'
 
@@ -88,6 +88,91 @@ export function ProjectFilterSelect({
     : 'All Projects'
 
   const currentProject = currentProjectId ? projects.find((p) => p.id === currentProjectId) : null
+
+  let projectListContent: ReactNode
+  if (isLoading) {
+    projectListContent = (
+      <div
+        style={{
+          padding: '12px',
+          fontSize: 12,
+          color: VAR_ZEN_FG_MUTED,
+          textAlign: 'center',
+        }}
+      >
+        Loading...
+      </div>
+    )
+  } else if (filteredProjects.length === 0) {
+    projectListContent = (
+      <div
+        style={{
+          padding: '12px',
+          fontSize: 12,
+          color: VAR_ZEN_FG_MUTED,
+          textAlign: 'center',
+        }}
+      >
+        {search ? 'No projects match' : 'No active projects'}
+      </div>
+    )
+  } else {
+    projectListContent = filteredProjects.map((project) => {
+      const isSelected = project.id === currentProjectId
+      return (
+        <button
+          key={project.id}
+          role="option"
+          aria-selected={isSelected}
+          onClick={() => handleSelect(project)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            width: '100%',
+            padding: '8px 10px',
+            borderRadius: 6,
+            border: 'none',
+            background: isSelected ? 'var(--zen-bg-active, rgba(59,130,246,0.1))' : TRANSPARENT,
+            color: VAR_ZEN_FG,
+            fontSize: 12,
+            fontWeight: isSelected ? 700 : 500,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            textAlign: 'left',
+            transition: CLS_BACKGROUND_01S,
+          }}
+          onMouseEnter={(e) => {
+            if (!isSelected) e.currentTarget.style.background = VAR_ZEN_BG_HOVER
+          }}
+          onMouseLeave={(e) => {
+            if (!isSelected) e.currentTarget.style.background = TRANSPARENT
+          }}
+        >
+          <span
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: project.color || '#6b7280',
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ fontSize: 14, flexShrink: 0 }}>{project.icon || '📋'}</span>
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+            }}
+          >
+            {project.name}
+          </span>
+        </button>
+      )
+    })
+  }
 
   return (
     <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -186,6 +271,7 @@ export function ProjectFilterSelect({
           <div style={{ overflow: 'auto', padding: '4px 4px 8px' }}>
             {/* All Projects option */}
             <button
+              role="option"
               aria-selected={!currentProjectId}
               onClick={() => handleSelect(null)}
               style={{
@@ -226,86 +312,7 @@ export function ProjectFilterSelect({
               }}
             />
 
-            {isLoading ? (
-              <div
-                style={{
-                  padding: '12px',
-                  fontSize: 12,
-                  color: VAR_ZEN_FG_MUTED,
-                  textAlign: 'center',
-                }}
-              >
-                Loading...
-              </div>
-            ) : filteredProjects.length === 0 ? (
-              <div
-                style={{
-                  padding: '12px',
-                  fontSize: 12,
-                  color: VAR_ZEN_FG_MUTED,
-                  textAlign: 'center',
-                }}
-              >
-                {search ? 'No projects match' : 'No active projects'}
-              </div>
-            ) : (
-              filteredProjects.map((project) => {
-                const isSelected = project.id === currentProjectId
-                return (
-                  <button
-                    key={project.id}
-                    aria-selected={isSelected}
-                    onClick={() => handleSelect(project)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      width: '100%',
-                      padding: '8px 10px',
-                      borderRadius: 6,
-                      border: 'none',
-                      background: isSelected
-                        ? 'var(--zen-bg-active, rgba(59,130,246,0.1))'
-                        : TRANSPARENT,
-                      color: VAR_ZEN_FG,
-                      fontSize: 12,
-                      fontWeight: isSelected ? 700 : 500,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textAlign: 'left',
-                      transition: CLS_BACKGROUND_01S,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = VAR_ZEN_BG_HOVER
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) e.currentTarget.style.background = TRANSPARENT
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        background: project.color || '#6b7280',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <span style={{ fontSize: 14, flexShrink: 0 }}>{project.icon || '📋'}</span>
-                    <span
-                      style={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        flex: 1,
-                      }}
-                    >
-                      {project.name}
-                    </span>
-                  </button>
-                )
-              })
-            )}
+            {projectListContent}
           </div>
 
           {/* Manage Projects button */}

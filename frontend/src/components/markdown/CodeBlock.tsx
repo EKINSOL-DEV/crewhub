@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 interface CodeBlockProps {
   readonly className?: string
-  readonly children: React.ReactNode
+  readonly children: string | number | boolean | null | undefined
 }
 
 export function CodeBlock({ className, children }: CodeBlockProps) {

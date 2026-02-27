@@ -357,7 +357,7 @@ function PropGeneratorTab() {
 
     const addLine = (line: ThinkingLine) => setThinkingLines((prev) => [...prev, line])
 
-    const parseEventData = (evt: Event): any | null => {
+    const parseEventData = (evt: Event): any => {
       if (!(evt instanceof MessageEvent)) return null
       if (typeof evt.data !== 'string') return null
       try {

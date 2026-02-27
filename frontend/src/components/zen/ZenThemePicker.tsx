@@ -175,6 +175,7 @@ interface ThemeOptionProps {
 function ThemeOption({ theme, isSelected, isCurrent, onClick }: ThemeOptionProps) {
   return (
     <button
+      role="option"
       className={`zen-theme-option ${isSelected ? 'zen-theme-option-selected' : ''} ${isCurrent ? 'zen-theme-option-current' : ''}`}
       onClick={onClick}
       aria-selected={isSelected}

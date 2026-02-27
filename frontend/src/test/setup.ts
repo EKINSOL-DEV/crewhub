@@ -70,8 +70,14 @@ if (typeof (globalThis as any).EventSource === 'undefined') {
 const __originalFetch = globalThis.fetch
 if (typeof __originalFetch === 'function') {
   globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url =
-      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+    let url: string
+    if (typeof input === 'string') {
+      url = input
+    } else if (input instanceof URL) {
+      url = input.toString()
+    } else {
+      url = input.url
+    }
 
     if (typeof url === 'string' && url.startsWith('/api')) {
       const pathname = url.split('?')[0]

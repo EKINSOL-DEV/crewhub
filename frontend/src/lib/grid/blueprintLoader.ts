@@ -77,7 +77,8 @@ export function loadBlueprintFromJSON(json: BlueprintJSON): RoomBlueprint {
 export function validateAndLoadBlueprint(raw: unknown): RoomBlueprint | null {
   const result = blueprintJSONSchema.safeParse(raw)
   if (!result.success) {
-    const id = (raw as Record<string, unknown>)?.id ?? 'unknown'
+    const rawId = (raw as Record<string, unknown>)?.id
+    const id = typeof rawId === 'string' ? rawId : 'unknown'
     console.warn(
       `[blueprintLoader] Skipping invalid blueprint "${id}":`,
       result.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')

@@ -208,10 +208,10 @@ export function IdentityTab() {
         <>
           {/* Identity Anchor */}
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
+            <p className="text-sm font-medium flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Identity Anchor
-            </label>
+            </p>
             <p className="text-xs text-muted-foreground">
               The core &quot;who am I&quot; statement. This is injected into every conversation,
               anchoring the agent&apos;s identity regardless of which surface they&apos;re accessed
@@ -234,10 +234,10 @@ export function IdentityTab() {
 
           {/* Global Surface Rules */}
           <div className="space-y-2">
-            <label className="text-sm font-medium flex items-center gap-2">
+            <p className="text-sm font-medium flex items-center gap-2">
               <Globe className="h-4 w-4" />
               Global Surface Rules
-            </label>
+            </p>
             <p className="text-xs text-muted-foreground">
               Rules that apply to all surfaces. These are combined with per-surface format rules
               below.
