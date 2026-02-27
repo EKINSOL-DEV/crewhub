@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import {
   Sheet,
   SheetContent,
@@ -22,6 +22,11 @@ import { useRoomAssignmentRules, type RoomAssignmentRule } from '@/hooks/useRoom
 import { useRooms } from '@/hooks/useRooms'
 import { useToast } from '@/hooks/use-toast'
 import { Plus, Trash2, ChevronUp, ChevronDown, Eye, AlertCircle } from 'lucide-react'
+import {
+  NATIVE_DIALOG_CLASSNAME,
+  closeOnDialogBackdropClick,
+  useNativeDialogSync,
+} from '@/components/shared/nativeDialog'
 
 interface RoomRoutingRulesPanelProps {
   readonly open: boolean
@@ -77,32 +82,9 @@ export function RoomRoutingRulesPanel({
     priority: 50,
   })
 
-  // Sync create dialog
-  useEffect(() => {
-    const dialog = createDialogRef.current
-    if (!dialog) return
-    if (showCreateDialog) {
-      if (!dialog.open) dialog.showModal()
-    } else if (dialog.open) dialog.close()
-  }, [showCreateDialog])
-
-  // Sync preview dialog
-  useEffect(() => {
-    const dialog = previewDialogRef.current
-    if (!dialog) return
-    if (showPreviewDialog) {
-      if (!dialog.open) dialog.showModal()
-    } else if (dialog.open) dialog.close()
-  }, [showPreviewDialog])
-
-  // Sync delete dialog
-  useEffect(() => {
-    const dialog = deleteDialogRef.current
-    if (!dialog) return
-    if (deleteConfirm) {
-      if (!dialog.open) dialog.showModal()
-    } else if (dialog.open) dialog.close()
-  }, [deleteConfirm])
+  useNativeDialogSync(createDialogRef, showCreateDialog)
+  useNativeDialogSync(previewDialogRef, showPreviewDialog)
+  useNativeDialogSync(deleteDialogRef, Boolean(deleteConfirm))
 
   const handleCreateRule = async () => {
     if (!newRule.rule_value.trim()) {
@@ -354,8 +336,8 @@ export function RoomRoutingRulesPanel({
       <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={createDialogRef}
         onClose={() => setShowCreateDialog(false)}
-        onClick={(e) => e.target === e.currentTarget && setShowCreateDialog(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+        onClick={(e) => closeOnDialogBackdropClick(e, () => setShowCreateDialog(false))}
+        className={NATIVE_DIALOG_CLASSNAME}
       >
         <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           {/* Header */}
@@ -487,8 +469,8 @@ export function RoomRoutingRulesPanel({
       <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={previewDialogRef}
         onClose={() => setShowPreviewDialog(false)}
-        onClick={(e) => e.target === e.currentTarget && setShowPreviewDialog(false)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+        onClick={(e) => closeOnDialogBackdropClick(e, () => setShowPreviewDialog(false))}
+        className={NATIVE_DIALOG_CLASSNAME}
       >
         <div className="bg-background border rounded-lg shadow-lg w-full max-w-2xl mx-4 overflow-hidden">
           {/* Header */}
@@ -537,8 +519,8 @@ export function RoomRoutingRulesPanel({
       <dialog // NOSONAR: <dialog> is a native interactive HTML element
         ref={deleteDialogRef}
         onClose={() => setDeleteConfirm(null)}
-        onClick={(e) => e.target === e.currentTarget && setDeleteConfirm(null)}
-        className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
+        onClick={(e) => closeOnDialogBackdropClick(e, () => setDeleteConfirm(null))}
+        className={NATIVE_DIALOG_CLASSNAME}
       >
         <div className="bg-background border rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden">
           {/* Header */}

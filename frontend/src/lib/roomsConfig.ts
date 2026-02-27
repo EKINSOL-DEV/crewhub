@@ -1,3 +1,9 @@
+import {
+  SHARED_ROOM_KEYWORDS,
+  containsAnyKeyword,
+  detectLegacyRoomByModel,
+} from './roomRoutingShared'
+
 const COMMS_ROOM = 'comms-room'
 const HEADQUARTERS = 'headquarters'
 
@@ -149,54 +155,21 @@ function autoAssignRoom(
   config: RoomsConfig
 ): string {
   const label = (sessionData.label || '').toLowerCase()
-  const model = sessionData.model || ''
 
   if (sessionKey.includes(':cron:')) return 'automation-room'
-  if (model.includes('opus') || model.includes('claude-opus')) return 'dev-room'
-  if (model.includes('gpt5') || model.includes('gpt-5')) return 'thinking-room'
 
-  const thinkingKeywords = [
-    'analyse',
-    'analysis',
-    'review',
-    'design doc',
-    'architecture',
-    'research',
-    'evaluate',
-  ]
-  const devKeywords = [
-    'implement',
-    'fix',
-    'bug',
-    'refactor',
-    'build',
-    'deploy',
-    'code',
-    'api',
-    'feature',
-  ]
-  const marketingKeywords = ['copy', 'seo', 'newsletter', 'landing page', 'content', 'marketing']
-  const creativeKeywords = [
-    'experiment',
-    'poc',
-    'brainstorm',
-    'try',
-    'explore',
-    'design',
-    'creative',
-    'art',
-  ]
-  const automationKeywords = ['cron', 'schedule', 'reminder', 'timer', 'job']
-  const commsKeywords = ['email', 'slack', 'whatsapp', 'message', 'notify', 'send']
-  const opsKeywords = ['deploy', 'docker', 'monitor', 'server', 'devops', 'infrastructure']
+  const modelRoom = detectLegacyRoomByModel(sessionData.model || '')
+  if (modelRoom) return modelRoom
 
-  if (thinkingKeywords.some((kw) => label.includes(kw))) return 'thinking-room'
-  if (devKeywords.some((kw) => label.includes(kw)) && !label.includes('review')) return 'dev-room'
-  if (marketingKeywords.some((kw) => label.includes(kw))) return 'marketing-room'
-  if (creativeKeywords.some((kw) => label.includes(kw))) return 'creative-room'
-  if (automationKeywords.some((kw) => label.includes(kw))) return 'automation-room'
-  if (commsKeywords.some((kw) => label.includes(kw))) return COMMS_ROOM
-  if (opsKeywords.some((kw) => label.includes(kw))) return 'ops-room'
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.thinking)) return 'thinking-room'
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.dev) && !label.includes('review')) {
+    return 'dev-room'
+  }
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.marketing)) return 'marketing-room'
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.creative)) return 'creative-room'
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.automation)) return 'automation-room'
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.comms)) return COMMS_ROOM
+  if (containsAnyKeyword(label, SHARED_ROOM_KEYWORDS.ops)) return 'ops-room'
 
   return config.unassignedRoomId || HEADQUARTERS
 }

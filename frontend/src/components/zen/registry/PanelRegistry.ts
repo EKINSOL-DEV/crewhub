@@ -11,23 +11,11 @@
  * That's it. Everything else auto-populates.
  */
 
+import type { PanelType } from '../types/layout'
+
 // ── Panel IDs (type-safe) ─────────────────────────────────────────
 
-export type PanelId =
-  | 'chat'
-  | 'sessions'
-  | 'activity'
-  | 'rooms'
-  | 'tasks'
-  | 'kanban'
-  | 'cron'
-  | 'logs'
-  | 'projects'
-  | 'docs' // Documentation browser
-  | 'documents' // Legacy alias for projects
-  | 'details' // Future
-  | 'browser' // Embedded browser panel
-  | 'empty'
+export type PanelId = PanelType
 
 export type UserPanelId = Exclude<PanelId, 'empty' | 'details' | 'documents' | 'browser'>
 
@@ -217,24 +205,28 @@ export function getAllPanelDefs(): PanelDefinition[] {
   return PANEL_DEFINITIONS
 }
 
+function filterPanelDefs(predicate: (definition: PanelDefinition) => boolean): PanelDefinition[] {
+  return PANEL_DEFINITIONS.filter(predicate)
+}
+
 /** Only user-visible panels (for selectors, menus) */
 export function getVisiblePanelDefs(): PanelDefinition[] {
-  return PANEL_DEFINITIONS.filter((d) => !d.hidden)
+  return filterPanelDefs((d) => !d.hidden)
 }
 
 /** Primary panels (shown in main grid of empty panel) */
 export function getPrimaryPanelDefs(): PanelDefinition[] {
-  return PANEL_DEFINITIONS.filter((d) => !d.hidden && d.primary)
+  return filterPanelDefs((d) => !d.hidden && d.primary)
 }
 
 /** Secondary panels (shown in "More" section) */
 export function getSecondaryPanelDefs(): PanelDefinition[] {
-  return PANEL_DEFINITIONS.filter((d) => !d.hidden && !d.primary)
+  return filterPanelDefs((d) => !d.hidden && !d.primary)
 }
 
 /** Panel IDs for type picker / context menu (visible, non-empty) */
 export function getSelectablePanelIds(): PanelId[] {
-  return PANEL_DEFINITIONS.filter((d) => !d.hidden && d.id !== 'empty').map((d) => d.id)
+  return filterPanelDefs((d) => !d.hidden && d.id !== 'empty').map((d) => d.id)
 }
 
 /**
