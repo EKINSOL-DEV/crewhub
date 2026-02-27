@@ -82,9 +82,7 @@ describe('App', () => {
     await act(async () => {
       render(<App />)
     })
-    expect(
-      screen.getByText("Getting real work done doesn't have to be boring.")
-    ).toBeInTheDocument()
+    expect(screen.getByText('Multi-agent orchestration')).toBeInTheDocument()
   })
 
   it('shows connected status when connected', async () => {

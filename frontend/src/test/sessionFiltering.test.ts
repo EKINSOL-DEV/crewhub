@@ -16,7 +16,8 @@ describe('splitSessionsForDisplay', () => {
   it('splits sessions into visible and parking', () => {
     const now = Date.now()
     const sessions = [
-      makeMockSession(AGENT_MAIN_MAIN, now),
+      // Make parent main session old so the parking grace window does not keep idle subagents visible
+      makeMockSession(AGENT_MAIN_MAIN, now - 10 * 60 * 1000),
       makeMockSession('agent:main:subagent:1', now),
       // 5 minutes ago - idle but not expired from parking (within 30min parkingExpiryMs)
       makeMockSession('agent:main:subagent:2', now - 5 * 60 * 1000),
