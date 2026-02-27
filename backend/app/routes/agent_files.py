@@ -9,37 +9,20 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from ..db.database import get_db
-
-MSG_INVALID_PATH = "Invalid path"
-MSG_PATH_OUTSIDE = "Path outside workspace"
+from ._file_api_helpers import (
+    ALLOWED_EXTENSIONS,
+    MSG_INVALID_PATH,
+    MSG_PATH_OUTSIDE_WORKSPACE,
+    build_saved_file_response,
+    ensure_readable_file,
+    ensure_safe_path,
+    read_file_content,
+    scan_directory,
+    validate_relative_path,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Allowed file extensions for viewing
-ALLOWED_EXTENSIONS = {".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
-
-# Max file size (1MB)
-MAX_FILE_SIZE = 1_048_576
-
-# Directories to skip
-SKIP_DIRS = {
-    "node_modules",
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
-    ".next",
-    "dist",
-    "build",
-    ".cache",
-    ".tox",
-    ".mypy_cache",
-    ".pytest_cache",
-    "egg-info",
-    ".eggs",
-    ".DS_Store",
-}
 
 # Default agent workspace mappings (fallback if not in settings)
 DEFAULT_WORKSPACES = {
@@ -68,72 +51,6 @@ async def _get_agent_workspace(agent_id: str) -> Path:
     raise HTTPException(status_code=404, detail=f"No workspace configured for agent: {agent_id}")
 
 
-def _is_safe_path(base: Path, target: Path) -> bool:
-    """Check that target is inside base (no path traversal)."""
-    try:
-        target.resolve().relative_to(base.resolve())
-        return True
-    except ValueError:
-        return False
-
-
-def _file_info(base: Path, path: Path) -> dict:
-    """Build file info dict."""
-    stat = path.stat()
-    rel = path.relative_to(base)
-    return {
-        "name": path.name,
-        "path": str(rel),
-        "type": "file",
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-        "lines": _count_lines(path) if stat.st_size < MAX_FILE_SIZE else None,
-    }
-
-
-def _count_lines(path: Path) -> int:
-    """Count lines in a text file."""
-    try:
-        with open(path, errors="replace") as f:
-            return sum(1 for _ in f)
-    except Exception:
-        return 0
-
-
-def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> list:
-    """Recursively scan directory for allowed files."""
-    if depth > max_depth:
-        return []
-
-    items = []
-    try:
-        entries = sorted(directory.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-    except PermissionError:
-        return []
-
-    for entry in entries:
-        if entry.name.startswith(".") and entry.name != ".":
-            continue
-        if entry.name in SKIP_DIRS:
-            continue
-
-        if entry.is_dir():
-            children = _scan_directory(base, entry, depth + 1, max_depth)
-            if children:  # Only include dirs that have visible files
-                items.append(
-                    {
-                        "name": entry.name,
-                        "path": str(entry.relative_to(base)) + "/",
-                        "type": "directory",
-                        "children": children,
-                    }
-                )
-        elif entry.is_file() and entry.suffix.lower() in ALLOWED_EXTENSIONS:
-            items.append(_file_info(base, entry))
-
-    return items
-
-
 @router.get(
     "/{agent_id}/files",
     responses={
@@ -155,16 +72,13 @@ async def list_agent_files(
 
     scan_root = workspace
     if path:
-        # Validate path
-        if ".." in path:
-            raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
+        validate_relative_path(path, error_message=MSG_INVALID_PATH)
         scan_root = workspace / path
-        if not _is_safe_path(workspace, scan_root):
-            raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE)
+        ensure_safe_path(workspace, scan_root, outside_message=MSG_PATH_OUTSIDE_WORKSPACE)
         if not scan_root.exists():
             raise HTTPException(status_code=404, detail=f"Directory not found: {path}")
 
-    files = _scan_directory(workspace, scan_root, 0, depth)
+    files = scan_directory(workspace, scan_root, 0, depth)
 
     return {
         "agent_id": agent_id,
@@ -185,8 +99,7 @@ async def list_agent_files(
 )
 async def save_agent_file(agent_id: str, file_path: str, body: dict):
     """Save/update a file in an agent's workspace."""
-    if ".." in file_path:
-        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
+    validate_relative_path(file_path, error_message=MSG_INVALID_PATH)
 
     content = body.get("content")
     if content is None:
@@ -195,17 +108,8 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
     workspace = await _get_agent_workspace(agent_id)
     target = (workspace / file_path).resolve()
 
-    if not _is_safe_path(workspace, target):
-        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE)
-
-    if not target.exists():
-        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-
-    if not target.is_file():
-        raise HTTPException(status_code=400, detail="Path is not a file")
-
-    if target.suffix.lower() not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"File type not allowed: {target.suffix}")
+    ensure_safe_path(workspace, target, outside_message=MSG_PATH_OUTSIDE_WORKSPACE)
+    ensure_readable_file(target, file_path, allowed_extensions=ALLOWED_EXTENSIONS)
 
     # Optimistic concurrency check
     expected_modified = body.get("expected_modified")
@@ -230,14 +134,7 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to write file: {e}")
 
-    stat = target.stat()
-    return {
-        "path": file_path,
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-        "lines": content.count("\n") + 1 if content else 0,
-        "status": "saved",
-    }
+    return build_saved_file_response(file_path, content, target)
 
 
 @router.get(
@@ -252,52 +149,12 @@ async def save_agent_file(agent_id: str, file_path: str, body: dict):
 )
 async def read_agent_file(agent_id: str, file_path: str):
     """Read a single file from an agent's workspace."""
-    # Security: reject path traversal
-    if ".." in file_path:
-        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
+    validate_relative_path(file_path, error_message=MSG_INVALID_PATH)
 
     workspace = await _get_agent_workspace(agent_id)
     target = (workspace / file_path).resolve()
 
-    # Ensure file is within workspace
-    if not _is_safe_path(workspace, target):
-        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE)
+    ensure_safe_path(workspace, target, outside_message=MSG_PATH_OUTSIDE_WORKSPACE)
+    ensure_readable_file(target, file_path, allowed_extensions=ALLOWED_EXTENSIONS)
 
-    if not target.exists():
-        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-
-    if not target.is_file():
-        raise HTTPException(status_code=400, detail="Path is not a file")
-
-    # Check extension
-    if target.suffix.lower() not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"File type not allowed: {target.suffix}")
-
-    # Check size
-    stat = target.stat()
-    if stat.st_size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=413, detail=f"File too large: {stat.st_size} bytes (max {MAX_FILE_SIZE})")
-
-    try:
-        content = target.read_text(errors="replace")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
-
-    # Determine language from extension
-    lang_map = {
-        ".md": "markdown",
-        ".txt": "text",
-        ".json": "json",
-        ".yaml": "yaml",
-        ".yml": "yaml",
-        ".toml": "toml",
-    }
-
-    return {
-        "path": file_path,
-        "content": content,
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-        "lines": content.count("\n") + 1 if content else 0,
-        "language": lang_map.get(target.suffix.lower(), "text"),
-    }
+    return read_file_content(target, file_path)

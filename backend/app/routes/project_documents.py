@@ -6,7 +6,6 @@ Reuses patterns from agent_files.py (Phase 1).
 
 import logging
 import os
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -14,37 +13,20 @@ from fastapi import APIRouter, HTTPException, Query
 
 from ..config import settings
 from ..db.database import get_db
-
-MSG_INVALID_PATH = "Invalid path"
-MSG_PATH_OUTSIDE_PROJECT = "Path outside project folder"
+from ._file_api_helpers import (
+    ALLOWED_EXTENSIONS,
+    MSG_INVALID_PATH,
+    MSG_PATH_OUTSIDE_PROJECT,
+    build_saved_file_response,
+    ensure_readable_file,
+    ensure_safe_path,
+    read_file_content,
+    scan_directory,
+    validate_relative_path,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-# Allowed file extensions for viewing
-ALLOWED_EXTENSIONS = {".md", ".txt", ".json", ".yaml", ".yml", ".toml"}
-
-# Max file size (1MB)
-MAX_FILE_SIZE = 1_048_576
-
-# Directories to skip
-SKIP_DIRS = {
-    "node_modules",
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
-    ".next",
-    "dist",
-    "build",
-    ".cache",
-    ".tox",
-    ".mypy_cache",
-    ".pytest_cache",
-    "egg-info",
-    ".eggs",
-    ".DS_Store",
-}
 
 
 async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
@@ -72,67 +54,13 @@ async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
     return docs_dir, project_name
 
 
-def _is_safe_path(base: Path, target: Path) -> bool:
-    """Check that target is inside base (no path traversal)."""
-    try:
-        target.resolve().relative_to(base.resolve())
-        return True
-    except ValueError:
-        return False
-
-
-def _count_lines(path: Path) -> int:
-    try:
-        with open(path, errors="replace") as f:
-            return sum(1 for _ in f)
-    except Exception:
-        return 0
-
-
-def _file_info(base: Path, path: Path) -> dict:
-    stat = path.stat()
-    rel = path.relative_to(base)
-    return {
-        "name": path.name,
-        "path": str(rel),
-        "type": "file",
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-        "lines": _count_lines(path) if stat.st_size < MAX_FILE_SIZE else None,
-    }
-
-
-def _scan_directory(base: Path, directory: Path, depth: int, max_depth: int) -> list:
-    if depth > max_depth:
-        return []
-    items = []
-    try:
-        entries = sorted(directory.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-    except PermissionError:
-        return []
-    for entry in entries:
-        if entry.name.startswith(".") and entry.name != ".":
-            continue
-        if entry.name in SKIP_DIRS:
-            continue
-        if entry.is_dir():
-            children = _scan_directory(base, entry, depth + 1, max_depth)
-            if children:
-                items.append(
-                    {
-                        "name": entry.name,
-                        "path": str(entry.relative_to(base)) + "/",
-                        "type": "directory",
-                        "children": children,
-                    }
-                )
-        elif entry.is_file() and entry.suffix.lower() in ALLOWED_EXTENSIONS:
-            items.append(_file_info(base, entry))
-    return items
-
-
 @router.get(
-    "/{project_id}/documents", responses={400: {"description": "Bad request"}, 403: {"description": "Forbidden"}, 404: {"description": "Not found"}}
+    "/{project_id}/documents",
+    responses={
+        400: {"description": "Bad request"},
+        403: {"description": "Forbidden"},
+        404: {"description": "Not found"},
+    },
 )
 async def list_project_documents(
     project_id: str,
@@ -153,11 +81,9 @@ async def list_project_documents(
 
     scan_root = docs_dir
     if path:
-        if ".." in path:
-            raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
+        validate_relative_path(path, error_message=MSG_INVALID_PATH)
         scan_root = docs_dir / path
-        if not _is_safe_path(docs_dir, scan_root):
-            raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE_PROJECT)
+        ensure_safe_path(docs_dir, scan_root, outside_message=MSG_PATH_OUTSIDE_PROJECT)
         if not scan_root.exists():
             return {
                 "project_id": project_id,
@@ -166,7 +92,7 @@ async def list_project_documents(
                 "files": [],
             }
 
-    files = _scan_directory(docs_dir, scan_root, 0, depth)
+    files = scan_directory(docs_dir, scan_root, 0, depth)
 
     return {
         "project_id": project_id,
@@ -187,8 +113,7 @@ async def list_project_documents(
 )
 async def save_project_document(project_id: str, file_path: str, body: dict):
     """Save/update a document in a project's data directory."""
-    if ".." in file_path:
-        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
+    validate_relative_path(file_path, error_message=MSG_INVALID_PATH)
 
     content = body.get("content")
     if content is None:
@@ -197,17 +122,8 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
     docs_dir, _ = await _get_project_docs_path(project_id)
     target = (docs_dir / file_path).resolve()
 
-    if not _is_safe_path(docs_dir, target):
-        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE_PROJECT)
-
-    if not target.exists():
-        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-
-    if not target.is_file():
-        raise HTTPException(status_code=400, detail="Path is not a file")
-
-    if target.suffix.lower() not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"File type not allowed: {target.suffix}")
+    ensure_safe_path(docs_dir, target, outside_message=MSG_PATH_OUTSIDE_PROJECT)
+    ensure_readable_file(target, file_path, allowed_extensions=ALLOWED_EXTENSIONS)
 
     # Create backup
     try:
@@ -222,14 +138,7 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to write file: {e}")
 
-    stat = target.stat()
-    return {
-        "path": file_path,
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-        "lines": content.count("\n") + 1 if content else 0,
-        "status": "saved",
-    }
+    return build_saved_file_response(file_path, content, target)
 
 
 @router.get(
@@ -244,47 +153,12 @@ async def save_project_document(project_id: str, file_path: str, body: dict):
 )
 async def read_project_document(project_id: str, file_path: str):
     """Read a single document from a project's data directory."""
-    if ".." in file_path:
-        raise HTTPException(status_code=400, detail=MSG_INVALID_PATH)
+    validate_relative_path(file_path, error_message=MSG_INVALID_PATH)
 
     docs_dir, _ = await _get_project_docs_path(project_id)
     target = (docs_dir / file_path).resolve()
 
-    if not _is_safe_path(docs_dir, target):
-        raise HTTPException(status_code=403, detail=MSG_PATH_OUTSIDE_PROJECT)
+    ensure_safe_path(docs_dir, target, outside_message=MSG_PATH_OUTSIDE_PROJECT)
+    ensure_readable_file(target, file_path, allowed_extensions=ALLOWED_EXTENSIONS)
 
-    if not target.exists():
-        raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-
-    if not target.is_file():
-        raise HTTPException(status_code=400, detail="Path is not a file")
-
-    if target.suffix.lower() not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"File type not allowed: {target.suffix}")
-
-    stat = target.stat()
-    if stat.st_size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=413, detail=f"File too large: {stat.st_size} bytes (max {MAX_FILE_SIZE})")
-
-    try:
-        content = target.read_text(errors="replace")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
-
-    lang_map = {
-        ".md": "markdown",
-        ".txt": "text",
-        ".json": "json",
-        ".yaml": "yaml",
-        ".yml": "yaml",
-        ".toml": "toml",
-    }
-
-    return {
-        "path": file_path,
-        "content": content,
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(),
-        "lines": content.count("\n") + 1 if content else 0,
-        "language": lang_map.get(target.suffix.lower(), "text"),
-    }
+    return read_file_content(target, file_path)
