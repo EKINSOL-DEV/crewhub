@@ -515,6 +515,7 @@ export function TaskBoardOverlay({
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
+              role="dialog"
               aria-modal="true"
             >
               <h3 className="text-lg font-semibold mb-4">Create New Task</h3>
@@ -545,6 +546,7 @@ export function TaskBoardOverlay({
               className="bg-background rounded-xl p-6 w-[90%] max-w-md max-h-[80vh] overflow-auto shadow-xl"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
+              role="dialog"
               aria-modal="true"
             >
               <div className="flex items-center justify-between mb-4">

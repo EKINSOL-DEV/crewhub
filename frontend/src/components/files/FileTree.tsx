@@ -52,11 +52,14 @@ function TreeNode({
   }, [isDir, node, onSelect])
 
   return (
-    <button type="button">
+    <>
       <div
+        role="button"
+        tabIndex={0}
         onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
             handleClick()
           }
         }}
@@ -110,6 +113,7 @@ function TreeNode({
         )}
         {!isDir && onExpand && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation()
               onExpand(node)
@@ -143,7 +147,7 @@ function TreeNode({
             onExpand={onExpand}
           />
         ))}
-    </button>
+    </>
   )
 }
 

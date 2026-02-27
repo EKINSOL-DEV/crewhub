@@ -148,11 +148,14 @@ export function SettingsPanel({
       {/* ─── Fullscreen overlay ─── */}
       <div className="fixed inset-0 z-50 animate-in fade-in duration-200">
         {/* Backdrop */}
-        <div
+        <button
+          type="button"
+          aria-label="Close settings"
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onClick={() => onOpenChange(false)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
               onOpenChange(false)
             }
           }}

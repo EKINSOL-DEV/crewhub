@@ -143,10 +143,13 @@ export function EditableSessionName({
 
   return (
     <span
+      role="button"
+      tabIndex={0}
       className={`group cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 ${className}`}
       onClick={startEditing}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
           startEditing()
         }
       }}

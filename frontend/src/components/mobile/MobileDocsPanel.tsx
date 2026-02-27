@@ -93,15 +93,17 @@ function MobileDocTreeNode({
   const folderIcon = getNodeIcon(isDir, isExpanded)
 
   return (
-    <button type="button">
+    <>
       <div
+        role="button"
+        tabIndex={0}
         onClick={() => {
           if (isDir) setExpanded((prev) => !prev)
           else onOpen(node.path)
         }}
-        tabIndex={0}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
             if (isDir) setExpanded((prev) => !prev)
             else onOpen(node.path)
           }
@@ -155,7 +157,7 @@ function MobileDocTreeNode({
             searchQuery={searchQuery}
           />
         ))}
-    </button>
+    </>
   )
 }
 
