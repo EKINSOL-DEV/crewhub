@@ -120,7 +120,10 @@ function MessageBubble({
 }>) {
   const isUser = message.role === 'user'
   const isSystem = message.role === 'system'
-  const messageRole = isUser ? 'user' : isSystem ? 'system' : 'assistant'
+
+  let messageRole: 'user' | 'system' | 'assistant' = 'assistant'
+  if (isUser) messageRole = 'user'
+  else if (isSystem) messageRole = 'system'
 
   const copyContent = useCallback(() => {
     const text =

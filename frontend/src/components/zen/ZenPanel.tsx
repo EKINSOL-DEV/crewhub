@@ -47,7 +47,7 @@ function PanelTypePicker({ currentType, onSelect, onClose }: PanelTypePickerProp
             key={panelId}
             className={`zen-panel-type-option ${panelId === currentType ? 'active' : ''}`}
             onClick={() => {
-              onSelect(panelId as PanelType)
+              onSelect(panelId)
               onClose()
             }}
           >

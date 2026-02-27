@@ -30,7 +30,7 @@ export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {
               <button
                 key={def.id}
                 className="zen-panel-option"
-                onClick={() => onSelectPanelType(def.id as PanelType)}
+                onClick={() => onSelectPanelType(def.id)}
                 title={def.description}
               >
                 <div className="zen-panel-option-icon">{def.icon}</div>
@@ -52,7 +52,7 @@ export function ZenEmptyPanel({ onSelectPanelType }: ZenEmptyPanelProps) {
                   <button
                     key={def.id}
                     className="zen-panel-option zen-panel-option-small"
-                    onClick={() => onSelectPanelType(def.id as PanelType)}
+                    onClick={() => onSelectPanelType(def.id)}
                     title={def.description}
                   >
                     <span className="zen-panel-option-icon">{def.icon}</span>

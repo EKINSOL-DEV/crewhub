@@ -124,7 +124,7 @@ export function ZenContextMenu({
                   key={panelId}
                   className="zen-context-menu-item"
                   onClick={() => {
-                    onChangePanelType(panelId as PanelType)
+                    onChangePanelType(panelId)
                     onClose()
                   }}
                   role="menuitem"
