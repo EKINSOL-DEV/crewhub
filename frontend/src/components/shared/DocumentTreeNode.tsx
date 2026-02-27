@@ -121,10 +121,7 @@ export function DocumentTreeNode({
   const buttonStyles = getButtonStyles(variant, depth)
   const arrowStyle = getArrowStyle(variant)
   const dateStyle = getDateStyle(variant)
-  let arrow: string | null = null
-  if (isDirectory) {
-    arrow = isExpanded ? '▼' : '▶'
-  }
+  const arrow: string | null = isDirectory ? (isExpanded ? '▼' : '▶') : null
 
   const spacerWidth = variant === 'zen' ? 12 : 16
   const iconFontSize = variant === 'zen' ? 13 : 16
