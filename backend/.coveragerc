@@ -1,0 +1,11 @@
+[run]
+source = app
+omit =
+    app/db/migrations/*
+    */tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError

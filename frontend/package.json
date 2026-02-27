@@ -14,7 +14,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.2",
@@ -68,6 +69,7 @@
     "@typescript-eslint/eslint-plugin": "^8.56.1",
     "@typescript-eslint/parser": "^8.56.1",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10.4.17",
     "eslint": "^10.0.2",
     "eslint-plugin-jsx-a11y": "^6.10.2",
