@@ -280,7 +280,7 @@ export function GridDebugOverlay({ blueprint }: Omit<GridDebugOverlayProps, 'sho
   }, [cells, cellSize, gridWidth, gridDepth])
 
   return (
-    <group position={[0, 0.1, 0]}>
+    <group {...({ position: [0, 0.1, 0] } as any)}>
       {/* Cell layers — each instance is individually rotated flat */}
       <CellLayer
         cells={byCategory.walkable}

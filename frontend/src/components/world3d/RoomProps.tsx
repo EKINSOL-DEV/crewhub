@@ -1004,7 +1004,11 @@ function SignalWaves({ position }: Readonly<{ position: [number, number, number]
   return (
     <group position={position}>
       {[ring1Ref, ring2Ref, ring3Ref].map((ref) => (
-        <mesh key={ringKeys.get(ref) ?? 'ring-unknown'} ref={ref} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh
+          key={ringKeys.get(ref) ?? 'ring-unknown'}
+          ref={ref}
+          {...({ rotation: [Math.PI / 2, 0, 0] } as any)}
+        >
           <torusGeometry args={[0.3, 0.02, 8, 24]} />
           <meshStandardMaterial
             color="#60A5FA"

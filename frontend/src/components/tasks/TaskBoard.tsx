@@ -371,8 +371,6 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            role="dialog"
-            aria-modal="true"
           >
             <h3 style={{ margin: '0 0 16px', fontSize: 18, color: '#1f2937' }}>Create New Task</h3>
             <TaskForm
@@ -422,8 +420,6 @@ export function TaskBoard({
               maxHeight: '80vh',
               overflow: 'auto',
             }}
-            role="dialog"
-            aria-modal="true"
           >
             <div
               style={{

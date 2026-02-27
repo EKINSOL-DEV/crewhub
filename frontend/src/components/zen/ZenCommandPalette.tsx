@@ -237,11 +237,10 @@ export function ZenCommandPalette({ commands, onClose }: ZenCommandPaletteProps)
                   return (
                     <button
                       key={cmd.id}
-                      role="option"
                       className={`zen-command-item ${isSelected ? 'zen-command-item-selected' : ''}`}
                       onClick={() => executeCommand(cmd)}
                       onMouseEnter={() => setSelectedIndex(currentIndex)}
-                      aria-selected={isSelected}
+                      aria-pressed={isSelected}
                     >
                       <span className="zen-command-item-icon">{cmd.icon || '→'}</span>
                       <div className="zen-command-item-content">

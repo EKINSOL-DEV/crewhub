@@ -46,8 +46,6 @@ export function ParticipantListSheet({
           flexDirection: 'column',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
         }}
-        role="dialog"
-        aria-modal="true"
       >
         {/* Handle */}
         <div

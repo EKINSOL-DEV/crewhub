@@ -39,8 +39,7 @@ function RoomDropZone({ roomId, size }: Readonly<{ roomId: string; readonly size
 
   return (
     <Html position={[0, 0.5, 0]} center zIndexRange={[10, 15]} style={{ pointerEvents: 'auto' }}>
-      <div
-        role="region"
+      <section
         aria-label="Room drop zone"
         onDragOver={(e) => {
           e.preventDefault()
@@ -126,7 +125,7 @@ function RoomDropZone({ roomId, size }: Readonly<{ roomId: string; readonly size
             (current room)
           </div>
         )}
-      </div>
+      </section>
     </Html>
   )
 }
