@@ -8,7 +8,7 @@
  * - Increment the tray badge count via the Rust `update_tray_badge` command.
  * - Reset the badge count to 0 when the window regains focus.
  *
- * Only active in the Tauri desktop context (window.__TAURI_INTERNALS__ present).
+ * Only active in the Tauri desktop context (window.__TAURI__ or window.__TAURI_INTERNALS__ present).
  */
 
 import { sseManager } from './sseManager'
@@ -21,8 +21,14 @@ type TauriInvokeFn = (cmd: string, args?: Record<string, unknown>) => Promise<un
 let _notify: TauriNotifyFn | null = null
 let _invoke: TauriInvokeFn | null = null
 
+function isInTauri(): boolean {
+  return (
+    (window as any).__TAURI_INTERNALS__ !== undefined || (window as any).__TAURI__ !== undefined
+  )
+}
+
 async function getTauriApis(): Promise<boolean> {
-  if (!window.__TAURI_INTERNALS__) return false
+  if (!isInTauri()) return false
   if (_notify && _invoke) return true
 
   try {
@@ -237,7 +243,7 @@ let unsubscribers: Array<() => void> = []
  */
 export async function init(): Promise<void> {
   if (initialized) return
-  if (!window.__TAURI_INTERNALS__) {
+  if (!isInTauri()) {
     console.log('[NotificationManager] Not in Tauri context — skipping init')
     return
   }

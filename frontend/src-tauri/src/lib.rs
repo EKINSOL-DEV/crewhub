@@ -32,9 +32,11 @@ fn backend_url() -> String {
 
 /// Base init: sets backend URL and skips onboarding (backend handles OpenClaw connection).
 fn base_init() -> String {
+    // Use JSON string escaping so any backend URL is safe to inject into JS.
+    let url_json = serde_json::to_string(&backend_url()).unwrap_or_else(|_| "\"\"".to_string());
     format!(
-        "window.__CREWHUB_BACKEND_URL__ = '{}'; localStorage.setItem('crewhub-onboarded', 'true');",
-        backend_url()
+        "window.__CREWHUB_BACKEND_URL__ = {}; localStorage.setItem('crewhub-onboarded', 'true');",
+        url_json
     )
 }
 
@@ -50,7 +52,7 @@ fn world_init_script() -> String {
 
 /// JavaScript injected into the settings window before page load.
 fn settings_init_script() -> String {
-    format!("window.__TAURI_VIEW__ = 'settings'; window.__CREWHUB_BACKEND_URL__ = '{}';", backend_url())
+    format!("window.__TAURI_VIEW__ = 'settings'; {}", base_init())
 }
 
 /// Show an existing window and explicitly focus it.
