@@ -190,4 +190,188 @@ describe('ZenMode', () => {
     fireEvent.click(screen.getByTitle('Enter Zen Mode (Ctrl+Shift+Z)'))
     expect(onClick).toHaveBeenCalledTimes(1)
   })
+
+  // ── Second-pass: additional branch coverage ──────────────────────
+
+  it('theme picker modal closes after close button', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="Agent One"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByText('open-theme'))
+    expect(screen.getByText('theme-picker')).toBeInTheDocument()
+
+    // theme-picker's onClose → close button
+    fireEvent.click(screen.getByText('theme-picker'))
+    expect(screen.queryByText('theme-picker')).not.toBeInTheDocument()
+  })
+
+  it('command palette modal closes', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="Agent One"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByText('open-command'))
+    expect(screen.getByText('palette')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('palette'))
+    expect(screen.queryByText('palette')).not.toBeInTheDocument()
+  })
+
+  it('keyboard help modal closes', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="Agent One"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByText('open-help'))
+    expect(screen.getByText('kb-help')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('kb-help'))
+    expect(screen.queryByText('kb-help')).not.toBeInTheDocument()
+  })
+
+  it('renders with connected=false without crashing', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="Offline Agent"
+        agentIcon="🤖"
+        agentColor="#ff0000"
+        connected={false}
+        onExit={vi.fn()}
+      />
+    )
+    expect(screen.getByLabelText('Zen Mode - Focused workspace')).toBeInTheDocument()
+  })
+
+  it('renders with no sessionKey (null)', () => {
+    render(
+      <ZenMode
+        sessionKey={null}
+        agentName={null}
+        agentIcon={null}
+        agentColor={null}
+        connected={false}
+        onExit={vi.fn()}
+      />
+    )
+    expect(screen.getByLabelText('Zen Mode - Focused workspace')).toBeInTheDocument()
+  })
+
+  it('renders with exitLabel and exitIcon props', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="Agent"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+        exitLabel="Projects"
+        exitIcon="📋"
+      />
+    )
+    expect(screen.getByLabelText('Zen Mode - Focused workspace')).toBeInTheDocument()
+  })
+
+  it('status bar shows room and theme name', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="A"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+    // ZenStatusBar mock: status:{roomName}:{themeName}
+    // roomName derived from worldFocusState → rooms → room 'r1' → ''
+    // room has no .name passed to ZenMode, so it uses room.name from context 'Room One'
+    // but only when selectedRoomId is set
+    expect(screen.getByText(/status:/)).toBeInTheDocument()
+    expect(screen.getByText(/Tokyo/)).toBeInTheDocument()
+  })
+
+  it('createTab is called when add-tab is clicked', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="A"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByText('add-tab'))
+    expect(mockCreateTab).toHaveBeenCalledTimes(1)
+  })
+
+  it('closeTab is called when close-tab is clicked', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="A"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+    fireEvent.click(screen.getByText('close-tab'))
+    expect(mockCloseTab).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders panel content (chat panel for leaf node)', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="A"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+      />
+    )
+    // The active tab has layout: { kind: 'leaf', panelType: 'chat' }
+    // renderPanel → ZenChatPanel → 'chat-room:{roomId}'
+    expect(screen.getByText(/chat-room:/)).toBeInTheDocument()
+  })
+
+  it('renders with roomName override prop', () => {
+    render(
+      <ZenMode
+        sessionKey="agent:a1:main"
+        agentName="A"
+        agentIcon="🤖"
+        agentColor={null}
+        connected
+        onExit={vi.fn()}
+        roomName="Dev Lab"
+      />
+    )
+    expect(screen.getByLabelText('Zen Mode - Focused workspace')).toBeInTheDocument()
+  })
 })

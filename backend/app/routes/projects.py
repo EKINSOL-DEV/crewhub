@@ -4,6 +4,8 @@ SQL is delegated to app.services.project_service. This module owns
 HTTP concerns: status codes, SSE broadcasts, file I/O, and response shaping.
 """
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import os
