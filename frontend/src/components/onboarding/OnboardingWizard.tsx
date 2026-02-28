@@ -282,7 +282,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onRemoveConnection={handleRemoveConnection}
             />
           )}
-          {step === 4 && <RoomSetupStep onComplete={goNext} />}
+          {step === 4 && (
+              <RoomSetupStep
+                onComplete={() => (_connectionMode === 'claude_code' ? setStep(6) : goNext())}
+              />
+            )}
           {step === 5 && (
             <PersonaStep
               onComplete={async (config: PersonaConfig) => {
