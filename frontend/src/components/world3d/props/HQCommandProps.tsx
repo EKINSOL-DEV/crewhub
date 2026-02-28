@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import { Screen } from './components/Screen'
 import { DataStream } from './components/DataStream'
 import { LED as Led } from './components/LED'
