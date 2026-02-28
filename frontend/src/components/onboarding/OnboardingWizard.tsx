@@ -26,13 +26,20 @@ import { StepScan } from './steps/StepScan'
 import { StepConfigure } from './steps/StepConfigure'
 import { StepReady } from './steps/StepReady'
 import { candidateToConnection } from './onboardingHelpers'
-import type { WizardStep, ConnectionConfig, OnboardingWizardProps } from './onboardingTypes'
+import { StepConnectionMode } from './steps/StepConnectionMode'
+import type {
+  WizardStep,
+  ConnectionConfig,
+  ConnectionMode,
+  OnboardingWizardProps,
+} from './onboardingTypes'
 
 const APPLICATION_JSON = 'application/json'
 const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(1)
+  const [_connectionMode, setConnectionMode] = useState<ConnectionMode | null>(null)
   const [showOpenClawWizard, setShowOpenClawWizard] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<Parameters<typeof StepScan>[0]['scanResult']>(null)
@@ -167,8 +174,23 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   // ─── Navigation ───────────────────────────────────────────────
 
-  const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 6) as WizardStep), [])
+  const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 7) as WizardStep), [])
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 1) as WizardStep), [])
+
+  const handleConnectionMode = useCallback(
+    (mode: ConnectionMode) => {
+      setConnectionMode(mode)
+      if (mode === 'claude_code') {
+        // Skip OpenClaw scan/configure, go to Room setup
+        setStep(5)
+      } else {
+        // OpenClaw or Both: continue to scan
+        setStep(3)
+        runScan()
+      }
+    },
+    [runScan]
+  )
   const handleSkip = useCallback(() => {
     localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
     onSkip()
@@ -281,7 +303,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           )}
         </div>
         <div className="max-w-3xl mx-auto px-6 pb-4">
-          <StepProgress step={step} total={6} />
+          <StepProgress step={step} total={7} />
         </div>
       </div>
 
@@ -292,7 +314,6 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             <StepWelcome
               onScan={() => {
                 setStep(2)
-                runScan()
               }}
               onDemo={handleDemo}
               onManual={handleSkip}
@@ -305,7 +326,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onSkip={() => setShowOpenClawWizard(false)}
             />
           )}
-          {step === 2 && (
+          {step === 2 && <StepConnectionMode onSelect={handleConnectionMode} />}
+          {step === 3 && (
             <StepScan
               scanning={scanning}
               scanResult={scanResult}
@@ -316,7 +338,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onDemo={handleDemo}
             />
           )}
-          {step === 3 && (
+          {step === 4 && (
             <StepConfigure
               connections={connections}
               onUpdateConnection={handleUpdateConnection}
@@ -325,8 +347,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onRemoveConnection={handleRemoveConnection}
             />
           )}
-          {step === 4 && <RoomSetupStep onComplete={goNext} />}
-          {step === 5 && (
+          {step === 5 && <RoomSetupStep onComplete={goNext} />}
+          {step === 6 && (
             <PersonaStep
               onComplete={async (config: PersonaConfig) => {
                 try {
@@ -342,20 +364,20 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onSkip={goNext}
             />
           )}
-          {step === 6 && <StepReady connections={connections} onGoDashboard={completeOnboarding} />}
+          {step === 7 && <StepReady connections={connections} onGoDashboard={completeOnboarding} />}
         </div>
       </div>
 
       {/* Footer navigation */}
-      {step > 1 && step < 5 && (
+      {step > 2 && step < 6 && (
         <div className="shrink-0 border-t bg-card/80 backdrop-blur-sm">
           <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
             <Button variant="outline" onClick={goBack} className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Back
             </Button>
-            {step !== 4 && (
+            {step !== 5 && (
               <Button onClick={goNext} className="gap-2">
-                {step === 3 ? 'Save & Continue' : 'Continue'}
+                {step === 4 ? 'Save & Continue' : 'Continue'}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
