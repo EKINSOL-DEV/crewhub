@@ -75,9 +75,9 @@ class ClaudeCodeConnection(AgentConnection):
         """Start watching Claude Code sessions."""
         self.status = ConnectionStatus.CONNECTING
 
+        # CLI is optional — only needed for spawning new sessions, not for file watching
         if not self.cli_path:
-            self._set_error("Claude CLI not found in PATH")
-            return False
+            logger.warning("Claude CLI not found in PATH — watch-only mode (cannot start new sessions)")
 
         if not self.data_dir.exists():
             self._set_error(f"Claude data dir not found: {self.data_dir}")
@@ -205,7 +205,7 @@ class ClaudeCodeConnection(AgentConnection):
         """Check if watcher is running and CLI is available."""
         if not self.is_connected():
             return False
-        return self.cli_path is not None and self.data_dir.exists()
+        return self.data_dir.exists()
 
     # ── Watcher callbacks ────────────────────────────────────────
 
