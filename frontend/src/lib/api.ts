@@ -16,6 +16,8 @@ export interface CrewSession {
   transcriptPath?: string
   /** OpenClaw session status — may be "archived", "pruned", etc. for non-active sessions */
   status?: string
+  /** Source connection type: 'openclaw' | 'claude_code' */
+  source?: string
   deliveryContext?: {
     channel?: string
     to?: string
