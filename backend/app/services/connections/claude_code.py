@@ -8,6 +8,7 @@ import asyncio
 import logging
 import os
 import shutil
+import time
 from pathlib import Path
 from typing import Any, Optional
 
@@ -114,7 +115,9 @@ class ClaudeCodeConnection(AgentConnection):
             return []
 
         sessions = []
+        now_ms = int(time.time() * 1000)
         for sid, ws in self._watcher.get_watched_sessions().items():
+            last_ms = int(ws.last_event_time * 1000) if ws.last_event_time else now_ms
             sessions.append(
                 SessionInfo(
                     key=f"claude:{sid}",
@@ -125,7 +128,11 @@ class ClaudeCodeConnection(AgentConnection):
                     channel="cli",
                     label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
                     status=ws.last_activity.value,
-                    last_activity=int(ws.last_event_time * 1000) or None,
+                    last_activity=last_ms,
+                    metadata={
+                        "updatedAt": last_ms,
+                        "kind": "session",
+                    },
                 )
             )
         return sessions
