@@ -430,3 +430,18 @@ export const apiKeyApi = {
     }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
   },
 }
+
+// ── Claude Code detection ─────────────────────────────────────
+
+export interface ClaudeCodeDetectResult {
+  found: boolean
+  cli_path: string | null
+  projects_dir_exists: boolean
+  session_count: number
+}
+
+export async function detectClaudeCode(): Promise<ClaudeCodeDetectResult> {
+  const res = await fetch(`${API_BASE}/connections/claude-code/detect`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}

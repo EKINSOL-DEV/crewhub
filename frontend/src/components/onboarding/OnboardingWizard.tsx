@@ -27,6 +27,7 @@ import { StepConfigure } from './steps/StepConfigure'
 import { StepReady } from './steps/StepReady'
 import { candidateToConnection } from './onboardingHelpers'
 import { StepConnectionMode } from './steps/StepConnectionMode'
+import { StepClaudeDetect } from './steps/StepClaudeDetect'
 import type {
   WizardStep,
   ConnectionConfig,
@@ -181,10 +182,14 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     (mode: ConnectionMode) => {
       setConnectionMode(mode)
       if (mode === 'claude_code') {
-        // Skip OpenClaw scan/configure, go to Room setup
-        setStep(5)
+        // Show Claude detect step
+        setStep(3)
+      } else if (mode === 'both') {
+        // Both: scan first, then claude detect
+        setStep(3)
+        runScan()
       } else {
-        // OpenClaw or Both: continue to scan
+        // OpenClaw only: scan
         setStep(3)
         runScan()
       }
@@ -327,7 +332,10 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             />
           )}
           {step === 2 && <StepConnectionMode onSelect={handleConnectionMode} />}
-          {step === 3 && (
+          {step === 3 && _connectionMode === 'claude_code' && (
+            <StepClaudeDetect onContinue={() => setStep(5)} />
+          )}
+          {step === 3 && _connectionMode !== 'claude_code' && (
             <StepScan
               scanning={scanning}
               scanResult={scanResult}
