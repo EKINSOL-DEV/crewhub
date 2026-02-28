@@ -205,7 +205,8 @@ function makeId(prefix: string, ts: number): string {
   return `${prefix}-${ts}-${Math.random().toString(36).slice(2, 6)}`
 }
 
-function processAssistantBlock(block: any, ts: number, entries: ActivityEvent[]): void { // NOSONAR
+function processAssistantBlock(block: any, ts: number, entries: ActivityEvent[]): void {
+  // NOSONAR
   if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
     const args = block.arguments || block.input
     const { text, icon, color } = humanizeToolCall(block.name, args)
