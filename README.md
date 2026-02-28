@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/version-v0.17.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.18.5-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -35,39 +35,11 @@ But CrewHub isn't just another dashboard. Your agents come alive in a **fully in
 
 ---
 
-## ✨ What's New in v0.17.0
+## 📰 Latest Updates
 
-### ⚡ Streaming Chat
+Stay up to date with what's new in CrewHub on the blog:
 
-Agents now respond **word by word, in real-time**. No more waiting for the full reply to load — as soon as your agent starts thinking, you start reading.
-
-- Token-by-token streaming across all chat interfaces
-- Auto-scroll follows the response as it comes in
-- Works in Zen Mode, the float window, and mobile chat
-
-### 🎙️ Voice Messages
-
-Record a voice message directly in the chat. Tap the mic, speak, tap send.
-
-- **Auto-transcription** via Groq Whisper so your agent reads your actual words
-- Works in any language
-- Audio player renders inline in the chat bubble with transcript shown beneath
-- macOS mic support in the desktop app
-
-### 🧘 Zen Mode Superpowers
-
-Zen Mode got a serious upgrade.
-
-**Standalone window** — open Zen Mode as a dedicated window in the desktop app, separate from your main CrewHub workspace. Pure focus, no distractions.
-
-**Browser panels** — add one or more resizable browser panels right next to your chat. Each panel has its own URL bar. Perfect for Agentic Engineering: pull up docs, dashboards, your own apps, or any web tool alongside your agent conversation. In the desktop app, panels use a full native webview with no site restrictions. Panels persist across reloads.
-
-### Also in v0.17.0
-
-- **Improved Tailscale HTTPS support** for secure remote access
-- React hooks stability fixes and memory leak patches from 5 overnight QA cycles
-
-[Read the full v0.17.0 release notes →](https://crewhub.dev/blog/v0-17-0-released)
+> 📖 **[crewhub.dev/blog →](https://crewhub.dev/blog)**
 
 ---
 
