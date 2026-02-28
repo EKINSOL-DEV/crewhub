@@ -26,11 +26,37 @@ from .claude_transcript_parser import (
     ClaudeTranscriptParser,
     ParsedEvent,
     ProjectContextEvent,
+    ToolResultEvent,
     ToolUseEvent,
     UserMessageEvent,
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _extract_timestamp(ev: ParsedEvent) -> Optional[int]:
+    """Extract timestamp (epoch ms) from a ParsedEvent's raw dict.
+
+    The raw dict stores ``"timestamp"`` as either an ISO-8601 string or a
+    numeric epoch value (seconds or milliseconds).  Returns epoch ms or None.
+    """
+    ts = ev.raw.get("timestamp")
+    if ts is None:
+        return None
+    if isinstance(ts, str):
+        try:
+            from datetime import UTC, datetime
+
+            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            return int(dt.timestamp() * 1000)
+        except (ValueError, TypeError):
+            return None
+    if isinstance(ts, (int, float)):
+        # If the value looks like seconds (< 1e12), convert to ms
+        if ts < 1e12:
+            return int(ts * 1000)
+        return int(ts)
+    return None
 
 
 class ClaudeCodeConnection(AgentConnection):
@@ -109,15 +135,25 @@ class ClaudeCodeConnection(AgentConnection):
 
     # ── Sessions ─────────────────────────────────────────────────
 
+    # Only show sessions active within this window
+    SESSION_RECENCY_SECONDS = 30 * 60  # 30 minutes
+
     async def get_sessions(self) -> list[SessionInfo]:
-        """Return discovered Claude Code sessions."""
+        """Return discovered Claude Code sessions active within the last 30 minutes."""
         if not self.is_connected() or not self._watcher:
             return []
 
         sessions = []
-        now_ms = int(time.time() * 1000)
+        now = time.time()
+        now_ms = int(now * 1000)
+        cutoff = now - self.SESSION_RECENCY_SECONDS
+
         for sid, ws in self._watcher.get_watched_sessions().items():
-            last_ms = int(ws.last_event_time * 1000) if ws.last_event_time else now_ms
+            # Skip sessions with no activity in the recency window
+            if ws.last_event_wall_time and ws.last_event_wall_time < cutoff:
+                continue
+
+            last_ms = int(ws.last_event_wall_time * 1000) if ws.last_event_wall_time else now_ms
             sessions.append(
                 SessionInfo(
                     key=f"claude:{sid}",
@@ -155,23 +191,43 @@ class ClaudeCodeConnection(AgentConnection):
         events = self._parser.parse_file(str(ws.jsonl_path))
         messages: list[HistoryMessage] = []
         for ev in events:
+            ts = _extract_timestamp(ev)
+
             if isinstance(ev, AssistantTextEvent):
                 messages.append(
                     HistoryMessage(
                         role="assistant",
                         content=ev.text,
+                        timestamp=ts,
                         metadata={"model": ev.model} if ev.model else {},
                     )
                 )
             elif isinstance(ev, UserMessageEvent):
-                messages.append(HistoryMessage(role="user", content=ev.content))
+                messages.append(
+                    HistoryMessage(role="user", content=ev.content, timestamp=ts)
+                )
             elif isinstance(ev, ToolUseEvent):
                 messages.append(
                     HistoryMessage(
                         role="assistant",
                         content=f"[Tool: {ev.tool_name}]",
+                        timestamp=ts,
                         metadata={
+                            "type": "tool_use",
                             "tool_name": ev.tool_name,
+                            "tool_use_id": ev.tool_use_id,
+                            "input_data": ev.input_data,
+                        },
+                    )
+                )
+            elif isinstance(ev, ToolResultEvent):
+                messages.append(
+                    HistoryMessage(
+                        role="tool",
+                        content=ev.content,
+                        timestamp=ts,
+                        metadata={
+                            "type": "tool_result",
                             "tool_use_id": ev.tool_use_id,
                         },
                     )

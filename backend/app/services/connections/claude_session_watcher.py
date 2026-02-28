@@ -37,7 +37,8 @@ class WatchedSession:
     jsonl_path: Path
     file_offset: int = 0
     last_activity: AgentActivity = AgentActivity.IDLE
-    last_event_time: float = 0.0
+    last_event_time: float = 0.0  # monotonic clock (for internal timeouts)
+    last_event_wall_time: float = 0.0  # Unix epoch seconds (for recency filtering)
     last_text_only_time: float = 0.0
     pending_tool_uses: set = field(default_factory=set)
     active_subagents: dict = field(default_factory=dict)
@@ -166,35 +167,43 @@ class ClaudeSessionWatcher:
             pass
 
     def _peek_last_timestamp(self, path: Path) -> float:
-        """Read the last line of a JSONL file and extract its timestamp.
+        """Read the last lines of a JSONL file and extract the most recent timestamp.
 
         Returns the Unix timestamp (float) of the last event, or 0.0 if unreadable.
         Old sessions will have old timestamps, making parking expiry work correctly.
+
+        Uses progressively larger read windows (16KB → 64KB) because Claude Code
+        JSONL lines can be very large (tool results often exceed 10KB).
         """
+        from datetime import datetime
+
         try:
             size = path.stat().st_size
             if size == 0:
                 return 0.0
-            # Read last 512 bytes to find the last complete JSON line
-            read_size = min(512, size)
-            with open(path, "rb") as f:
-                f.seek(max(0, size - read_size))
-                tail = f.read(read_size).decode("utf-8", errors="ignore")
-            # Find last complete JSON line (iterate reversed)
-            for line in reversed(tail.splitlines()):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    record = json.loads(line)
-                    ts = record.get("timestamp", "")
-                    if ts:
-                        from datetime import datetime
 
-                        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-                        return dt.timestamp()
-                except (json.JSONDecodeError, ValueError):
-                    continue
+            for read_size in (16384, 65536, size):
+                read_size = min(read_size, size)
+                with open(path, "rb") as f:
+                    f.seek(max(0, size - read_size))
+                    tail = f.read(read_size).decode("utf-8", errors="ignore")
+
+                for line in reversed(tail.splitlines()):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        record = json.loads(line)
+                        ts = record.get("timestamp", "")
+                        if ts:
+                            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                            return dt.timestamp()
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+
+                # If we read the whole file already, stop
+                if read_size >= size:
+                    break
         except OSError:
             pass
         return 0.0
@@ -202,12 +211,13 @@ class ClaudeSessionWatcher:
     def watch_session(self, session_id: str, jsonl_path: Path):
         if session_id not in self._watched:
             offset = jsonl_path.stat().st_size if jsonl_path.exists() else 0
-            last_time = self._peek_last_timestamp(jsonl_path) if jsonl_path.exists() else 0.0
+            wall_time = self._peek_last_timestamp(jsonl_path) if jsonl_path.exists() else 0.0
             self._watched[session_id] = WatchedSession(
                 session_id=session_id,
                 jsonl_path=jsonl_path,
                 file_offset=offset,
-                last_event_time=last_time,
+                last_event_time=wall_time,
+                last_event_wall_time=wall_time,
             )
 
     def unwatch_session(self, session_id: str):
@@ -297,6 +307,7 @@ class ClaudeSessionWatcher:
     def _update_activity(self, ws: WatchedSession, events: list[ParsedEvent]):
         old_activity = ws.last_activity
         ws.last_event_time = time.monotonic()
+        ws.last_event_wall_time = time.time()
         ws.last_text_only_time = 0.0
 
         for event in events:

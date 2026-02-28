@@ -27,6 +27,7 @@ class ClaudeProcess:
     status: str = "pending"  # pending, running, completed, error, killed
     output_lines: list[str] = field(default_factory=list)
     model: Optional[str] = None
+    result_session_id: Optional[str] = None  # captured from "result" JSONL event
 
 
 class ClaudeProcessManager:
@@ -41,9 +42,17 @@ class ClaudeProcessManager:
         self.cli_path = cli_path
         self._processes: dict[str, ClaudeProcess] = {}
         self._on_output: Optional[Callable] = None
+        self._process_callbacks: dict[str, Callable] = {}  # per-process output routing
 
     def set_output_callback(self, callback: Callable) -> None:
         self._on_output = callback
+
+    def set_process_callback(self, process_id: str, callback: Callable) -> None:
+        """Set a per-process output callback. Takes priority over global callback."""
+        self._process_callbacks[process_id] = callback
+
+    def remove_process_callback(self, process_id: str) -> None:
+        self._process_callbacks.pop(process_id, None)
 
     async def spawn_task(
         self,
@@ -164,9 +173,21 @@ class ClaudeProcessManager:
 
                 cp.output_lines.append(line)
 
-                if self._on_output:
+                # Try to extract session_id from "result" JSONL events
+                try:
+                    parsed = json.loads(line)
+                    if isinstance(parsed, dict) and parsed.get("type") == "result":
+                        sid = parsed.get("session_id")
+                        if sid:
+                            cp.result_session_id = sid
+                except (json.JSONDecodeError, KeyError):
+                    pass
+
+                # Per-process callback takes priority over global
+                callback = self._process_callbacks.get(process_id) or self._on_output
+                if callback:
                     try:
-                        self._on_output(process_id, line)
+                        callback(process_id, line)
                     except Exception:
                         pass
 
@@ -179,8 +200,12 @@ class ClaudeProcessManager:
                 returncode,
             )
 
+            # Clean up per-process callback
+            self._process_callbacks.pop(process_id, None)
+
         except Exception as e:
             cp.status = "error"
+            self._process_callbacks.pop(process_id, None)
             logger.error("Error streaming output from %s: %s", process_id, e)
 
     async def cleanup(self) -> None:

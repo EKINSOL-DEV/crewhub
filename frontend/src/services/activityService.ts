@@ -166,37 +166,67 @@ function extractContentAndTools(msg: any): {
 }
 
 function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
-  return messages
-    .filter((m: any) => m?.message?.role && m.message.role !== 'thinking')
-    .map((m: any) => {
-      const msg = m.message
-      const { content, tools } = extractContentAndTools(msg)
+  const entries: LogEntry[] = []
 
-      if (msg.role === 'toolResult' && msg.toolName) {
-        return {
-          role: 'tool',
-          content: content || `[${msg.toolName} result]`,
-          timestamp: m.timestamp ? new Date(m.timestamp).getTime() : undefined,
-          tools: [],
-        }
+  for (const m of messages) {
+    // Standardized format from Claude Code: {role, content: string, metadata}
+    if (m.role && typeof m.content === 'string' && !m.message) {
+      const metadata = m.metadata
+      const tools: { name: string; status?: string }[] = []
+      if (metadata?.type === 'tool_use' && metadata.tool_name) {
+        tools.push({ name: metadata.tool_name })
       }
+      if (metadata?.type === 'tool_result') {
+        tools.push({ name: metadata.tool_name || 'tool', status: metadata.is_error ? 'error' : 'done' })
+      }
+      const role = m.role === 'assistant' ? 'assistant' : m.role === 'user' ? 'user' : 'system'
+      const content = m.content || (tools.length > 0 ? '' : '[no content]')
+      if (content || tools.length > 0) {
+        entries.push({
+          role,
+          content,
+          timestamp: m.timestamp ? (typeof m.timestamp === 'number' ? m.timestamp : new Date(m.timestamp).getTime()) : undefined,
+          tools,
+        })
+      }
+      continue
+    }
 
-      let role: string
-      if (msg.role === 'assistant') {
-        role = 'assistant'
-      } else if (msg.role === 'user') {
-        role = 'user'
-      } else {
-        role = 'system'
-      }
-      return {
-        role,
-        content: content || (tools.length > 0 ? '' : '[no content]'),
+    // OpenClaw format: {message: {role, content}, timestamp}
+    if (!m?.message?.role || m.message.role === 'thinking') continue
+
+    const msg = m.message
+    const { content, tools } = extractContentAndTools(msg)
+
+    if (msg.role === 'toolResult' && msg.toolName) {
+      const entry: LogEntry = {
+        role: 'tool',
+        content: content || `[${msg.toolName} result]`,
         timestamp: m.timestamp ? new Date(m.timestamp).getTime() : undefined,
-        tools,
+        tools: [],
       }
-    })
-    .filter((e: LogEntry) => e.content || (e.tools && e.tools.length > 0))
+      if (entry.content || (entry.tools && entry.tools.length > 0)) entries.push(entry)
+      continue
+    }
+
+    let role: string
+    if (msg.role === 'assistant') {
+      role = 'assistant'
+    } else if (msg.role === 'user') {
+      role = 'user'
+    } else {
+      role = 'system'
+    }
+    const entry: LogEntry = {
+      role,
+      content: content || (tools.length > 0 ? '' : '[no content]'),
+      timestamp: m.timestamp ? new Date(m.timestamp).getTime() : undefined,
+      tools,
+    }
+    if (entry.content || (entry.tools && entry.tools.length > 0)) entries.push(entry)
+  }
+
+  return entries
 }
 // NOSONAR
 // ── Parse Messages to Activity Entries ────────────────────────
@@ -271,6 +301,51 @@ function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
     const role = inner.role || raw.role
     const content = inner.content || raw.content
     const ts = inner.timestamp || (raw.timestamp ? new Date(raw.timestamp).getTime() : 0)
+    const metadata = raw.metadata || inner.metadata
+
+    // Standardized format from Claude Code: {role, content: string, metadata}
+    if (metadata) {
+      if (metadata.type === 'tool_use' && metadata.tool_name) {
+        const { text, icon, color } = humanizeToolCall(metadata.tool_name, metadata.input_data)
+        entries.push({
+          id: makeId('tool', ts),
+          timestamp: ts,
+          sessionKey: '',
+          description: text,
+          type: 'tool_call',
+          icon,
+          color,
+        })
+        continue
+      }
+      if (metadata.type === 'tool_result') {
+        const toolName = metadata.tool_name || 'tool'
+        const isError = metadata.is_error
+        entries.push({
+          id: makeId('result', ts),
+          timestamp: ts,
+          sessionKey: '',
+          description: isError ? `❌ ${toolName} failed` : `✓ ${toolName} done`,
+          type: 'tool_result',
+          icon: isError ? '❌' : '✅',
+          color: isError ? '#ef4444' : '#6b7280',
+        })
+        continue
+      }
+      if (role === 'assistant' && typeof content === 'string' && content.trim()) {
+        const preview = content.slice(0, 150).replaceAll('\n', ' ')
+        entries.push({
+          id: makeId('msg', ts),
+          timestamp: ts,
+          sessionKey: '',
+          description: preview + (content.length > 150 ? '…' : ''),
+          type: 'message',
+          icon: '💭',
+          color: '#374151',
+        })
+        continue
+      }
+    }
 
     if (!content || !Array.isArray(content)) continue
 

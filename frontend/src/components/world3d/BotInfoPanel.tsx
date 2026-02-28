@@ -20,7 +20,7 @@ interface BotInfoPanelProps {
 
 // ── Helpers ────────────────────────────────────────────────────
 
-const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+const FIXED_AGENT_RE = /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$/
 
 function isFixedAgent(key: string): boolean {
   return FIXED_AGENT_RE.test(key)

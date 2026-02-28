@@ -16,6 +16,9 @@ export interface Agent {
   bio: string | null
   created_at: number
   updated_at: number
+  source: 'openclaw' | 'claude_code'
+  project_path: string | null
+  permission_mode: string | null
 }
 
 export type AgentStatus = 'offline' | 'idle' | 'thinking' | 'working' | 'supervising'

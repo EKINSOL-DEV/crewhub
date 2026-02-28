@@ -36,6 +36,9 @@ class AgentUpdate(BaseModel):
     is_pinned: Optional[bool] = None
     auto_spawn: Optional[bool] = None
     bio: Optional[str] = None
+    source: Optional[str] = None
+    project_path: Optional[str] = None
+    permission_mode: Optional[str] = None
 
 
 class AgentCreate(BaseModel):
@@ -48,6 +51,9 @@ class AgentCreate(BaseModel):
     default_room_id: Optional[str] = "headquarters"
     agent_session_key: Optional[str] = None
     bio: Optional[str] = None
+    source: Optional[str] = "openclaw"
+    project_path: Optional[str] = None
+    permission_mode: Optional[str] = "default"
 
 
 # ── Routes ────────────────────────────────────────────────────────────
@@ -81,6 +87,9 @@ async def create_agent(payload: AgentCreate):
         default_room_id=payload.default_room_id or "headquarters",
         agent_session_key=payload.agent_session_key,
         bio=payload.bio,
+        source=payload.source or "openclaw",
+        project_path=payload.project_path,
+        permission_mode=payload.permission_mode or "default",
     )
 
 

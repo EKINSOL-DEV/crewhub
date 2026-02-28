@@ -405,8 +405,23 @@ function isFixedAgent(key: string): boolean {
 }
 
 function hasTerminalStatus(status: string | undefined): boolean {
-  return !!status && !['active', 'idle', ''].includes(status)
+  if (!status) return false
+  // Non-terminal statuses from OpenClaw and Claude Code
+  const nonTerminal = new Set([
+    'active',
+    'idle',
+    '',
+    // Claude Code active statuses
+    'responding',
+    'tool_use',
+    'waiting_input',
+    'waiting_permission',
+  ])
+  return !nonTerminal.has(status)
 }
+
+// Claude Code statuses that indicate the session is actively working — never park
+const CC_BUSY_STATUSES = new Set(['responding', 'tool_use', 'waiting_permission'])
 
 export function shouldBeInParkingLane(
   session: MinionSession,
@@ -416,6 +431,15 @@ export function shouldBeInParkingLane(
 ): boolean {
   if (isFixedAgent(session.key)) return false
   if (hasTerminalStatus(session.status)) return true
+
+  // Claude Code sessions: use their explicit status rather than updatedAt heuristics.
+  // The backend already filters CC sessions to a 30-min recency window,
+  // so any session present here is recent enough to display.
+  if (session.key.startsWith('claude:')) {
+    if (session.status && CC_BUSY_STATUSES.has(session.status)) return false
+    // waiting_input / idle: park only after the sleeping threshold (30 min)
+    return getIdleTimeSeconds(session) > SESSION_CONFIG.statusSleepingThresholdMs / 1000
+  }
 
   const status = getSessionStatus(session, allSessions)
   if (status === SUPERVISING) return false

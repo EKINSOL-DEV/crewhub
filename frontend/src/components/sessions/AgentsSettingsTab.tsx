@@ -34,6 +34,9 @@ interface Agent {
   created_at: number
   updated_at: number
   is_stale: boolean
+  source: string
+  project_path: string | null
+  permission_mode: string | null
 }
 
 interface Room {
@@ -79,6 +82,9 @@ async function createAgent(payload: {
   color: string
   default_room_id: string
   bio?: string
+  source?: string
+  project_path?: string
+  permission_mode?: string
 }): Promise<void> {
   const res = await fetch(`${API_BASE}/agents`, {
     method: 'POST',
@@ -125,12 +131,15 @@ function AddAgentModal({
   readonly onClose: () => void
   readonly onCreated: () => void
 }>) {
+  const [source, setSource] = useState<'openclaw' | 'claude_code'>('openclaw')
   const [name, setName] = useState('')
   const [agentId, setAgentId] = useState('')
   const [icon, setIcon] = useState('🤖')
   const [color, setColor] = useState('#6b7280')
   const [roomId, setRoomId] = useState(HEADQUARTERS)
   const [bio, setBio] = useState('')
+  const [projectPath, setProjectPath] = useState('')
+  const [permissionMode, setPermissionMode] = useState('default')
   const [saving, setSaving] = useState(false)
   const [idManual, setIdManual] = useState(false)
   const { toast } = useToast()
@@ -155,6 +164,7 @@ function AddAgentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim() || !agentId.trim()) return
+    if (source === 'claude_code' && !projectPath.trim()) return
     setSaving(true)
     try {
       await createAgent({
@@ -162,8 +172,11 @@ function AddAgentModal({
         name,
         icon,
         color,
-        default_room_id: roomId,
+        default_room_id: source === 'claude_code' ? HEADQUARTERS : roomId,
         bio: bio || undefined,
+        source,
+        project_path: source === 'claude_code' ? projectPath : undefined,
+        permission_mode: source === 'claude_code' ? permissionMode : undefined,
       })
       toast({ title: 'Agent created', description: `${icon} ${name} added to CrewHub` })
       onCreated()
@@ -266,6 +279,40 @@ function AddAgentModal({
             </div>
           </div>
 
+          {/* Source selector */}
+          <div style={{ marginBottom: '12px' }}>
+            <label
+              htmlFor="agent-source"
+              style={{
+                display: 'block',
+                fontSize: '0.75em',
+                fontWeight: 500,
+                marginBottom: '6px',
+                opacity: 0.7,
+              }}
+            >
+              Source
+            </label>
+            <select
+              id="agent-source"
+              value={source}
+              onChange={(e) => setSource(e.target.value as 'openclaw' | 'claude_code')}
+              style={{
+                width: '100%',
+                height: '36px',
+                borderRadius: '6px',
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                background: HSL_BACKGROUND,
+                color: HSL_FOREGROUND,
+                padding: '0 8px',
+                fontSize: '0.875rem',
+              }}
+            >
+              <option value="openclaw">OpenClaw</option>
+              <option value="claude_code">Claude Code</option>
+            </select>
+          </div>
+
           {/* Name */}
           <div style={{ marginBottom: '12px' }}>
             <label
@@ -316,44 +363,108 @@ function AddAgentModal({
             />
           </div>
 
-          {/* Room */}
-          <div style={{ marginBottom: '12px' }}>
-            <label
-              htmlFor="agent-room"
-              style={{
-                display: 'block',
-                fontSize: '0.75em',
-                fontWeight: 500,
-                marginBottom: '6px',
-                opacity: 0.7,
-              }}
-            >
-              Default Room
-            </label>
-            <select
-              id="agent-room"
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-              style={{
-                width: '100%',
-                height: '36px',
-                borderRadius: '6px',
-                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                background: HSL_BACKGROUND,
-                color: HSL_FOREGROUND,
-                padding: '0 8px',
-                fontSize: '0.875rem',
-              }}
-            >
-              <option value={HEADQUARTERS}>🏠 Headquarters</option>
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.icon ? `${r.icon} ` : ''}
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Room (OpenClaw only) */}
+          {source === 'openclaw' && (
+            <div style={{ marginBottom: '12px' }}>
+              <label
+                htmlFor="agent-room"
+                style={{
+                  display: 'block',
+                  fontSize: '0.75em',
+                  fontWeight: 500,
+                  marginBottom: '6px',
+                  opacity: 0.7,
+                }}
+              >
+                Default Room
+              </label>
+              <select
+                id="agent-room"
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '36px',
+                  borderRadius: '6px',
+                  border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                  background: HSL_BACKGROUND,
+                  color: HSL_FOREGROUND,
+                  padding: '0 8px',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <option value={HEADQUARTERS}>🏠 Headquarters</option>
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.icon ? `${r.icon} ` : ''}
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Claude Code fields */}
+          {source === 'claude_code' && (
+            <>
+              <div style={{ marginBottom: '12px' }}>
+                <label
+                  htmlFor="agent-project-path"
+                  style={{
+                    display: 'block',
+                    fontSize: '0.75em',
+                    fontWeight: 500,
+                    marginBottom: '6px',
+                    opacity: 0.7,
+                  }}
+                >
+                  Project Path *
+                </label>
+                <Input
+                  id="agent-project-path"
+                  value={projectPath}
+                  onChange={(e) => setProjectPath(e.target.value)}
+                  placeholder="/home/user/my-project"
+                  className="font-mono text-sm"
+                  required
+                />
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                <label
+                  htmlFor="agent-permission-mode"
+                  style={{
+                    display: 'block',
+                    fontSize: '0.75em',
+                    fontWeight: 500,
+                    marginBottom: '6px',
+                    opacity: 0.7,
+                  }}
+                >
+                  Permission Mode
+                </label>
+                <select
+                  id="agent-permission-mode"
+                  value={permissionMode}
+                  onChange={(e) => setPermissionMode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '36px',
+                    borderRadius: '6px',
+                    border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                    background: HSL_BACKGROUND,
+                    color: HSL_FOREGROUND,
+                    padding: '0 8px',
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  <option value="default">Default</option>
+                  <option value="plan">Plan mode</option>
+                  <option value="auto-edit">Auto-edit</option>
+                  <option value="full-auto">Full-auto</option>
+                </select>
+              </div>
+            </>
+          )}
 
           {/* Bio */}
           <div style={{ marginBottom: '20px' }}>
@@ -603,6 +714,11 @@ function AgentCard({
               </button>
             )}
             <h3 className="font-semibold text-sm truncate">{agent.display_name || agent.name}</h3>
+            {agent.source === 'claude_code' && (
+              <Badge variant="secondary" className="text-[10px]">
+                Claude Code
+              </Badge>
+            )}
             {agent.is_pinned && (
               <Badge variant="secondary" className="text-[10px]">
                 Pinned
@@ -614,7 +730,7 @@ function AgentCard({
                 className="text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400 gap-1"
               >
                 <AlertTriangle className="h-2.5 w-2.5" />
-                Not in OpenClaw
+                {agent.source === 'claude_code' ? 'Project not found' : 'Not in OpenClaw'}
               </Badge>
             )}
           </div>
@@ -686,32 +802,46 @@ function AgentCard({
             </div>
           </div>
 
-          {/* Room dropdown */}
-          <div className="space-y-2">
-            <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Default Room</Label>
-            <select
-              value={roomId}
-              onChange={(e) => setRoomId(e.target.value)}
-              style={{
-                width: '100%',
-                height: '36px',
-                borderRadius: '6px',
-                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                background: HSL_BACKGROUND,
-                color: HSL_FOREGROUND,
-                padding: '0 8px',
-                fontSize: '0.875rem',
-              }}
-            >
-              <option value={HEADQUARTERS}>🏠 Headquarters</option>
-              {rooms.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.icon ? `${r.icon} ` : ''}
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Room dropdown (OpenClaw only) */}
+          {agent.source !== 'claude_code' && (
+            <div className="space-y-2">
+              <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Default Room</Label>
+              <select
+                value={roomId}
+                onChange={(e) => setRoomId(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '36px',
+                  borderRadius: '6px',
+                  border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                  background: HSL_BACKGROUND,
+                  color: HSL_FOREGROUND,
+                  padding: '0 8px',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <option value={HEADQUARTERS}>🏠 Headquarters</option>
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.icon ? `${r.icon} ` : ''}
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Project path (Claude Code only) */}
+          {agent.source === 'claude_code' && (
+            <div className="space-y-2">
+              <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Project Path</Label>
+              <Input
+                value={agent.project_path || ''}
+                disabled
+                className="font-mono text-sm opacity-70"
+              />
+            </div>
+          )}
 
           {/* Bio */}
           <div className="space-y-2">
@@ -824,7 +954,7 @@ function DeleteConfirmDialog({
               }}
             />
             <p style={{ margin: 0, fontSize: '0.8em', lineHeight: 1.5, opacity: 0.85 }}>
-              This agent is still active in OpenClaw. Only removing from CrewHub — the agent will
+              This agent is still active in {agent.source === 'claude_code' ? 'Claude Code' : 'OpenClaw'}. Only removing from CrewHub — the agent will
               still run.
             </p>
           </div>
@@ -934,7 +1064,7 @@ export function AgentsSettingsTab() {
           {staleCount > 0 && (
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
               <AlertTriangle className="h-3 w-3" />
-              {staleCount} agent{staleCount > 1 ? 's' : ''} not found in OpenClaw gateway
+              {staleCount} agent{staleCount > 1 ? 's' : ''} not found in their source
             </p>
           )}
         </div>
@@ -956,8 +1086,8 @@ export function AgentsSettingsTab() {
       >
         <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95em' }}>💡 Creating Agents</h4>
         <p style={{ margin: '0 0 12px 0', fontSize: '0.9em', lineHeight: '1.5', opacity: 0.8 }}>
-          You can create new agents by talking to your existing agent. Just ask it to create a new
-          agent for you!
+          You can create OpenClaw agents by talking to your existing agent, or add Claude Code agents
+          that run directly via the Claude CLI.
         </p>
         <details>
           <summary

@@ -26,7 +26,7 @@ interface SessionCardProps {
   readonly onViewLogs?: (session: CrewSession) => void
 }
 
-const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+const FIXED_AGENT_RE = /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$/
 
 export const SessionCard = memo(function SessionCard({ session, onViewLogs }: SessionCardProps) {
   const status = getSessionStatus(session)

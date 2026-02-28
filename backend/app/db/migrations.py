@@ -658,6 +658,29 @@ async def run_migrations(db) -> None:
         ON project_agents(room_id)
     """)
 
+    # ========================================
+    # v20: Claude Code Fixed Agents
+    # ========================================
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN source TEXT NOT NULL DEFAULT 'openclaw'")
+    except Exception:
+        pass  # Column already exists
+
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN project_path TEXT")
+    except Exception:
+        pass  # Column already exists
+
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN permission_mode TEXT DEFAULT 'default'")
+    except Exception:
+        pass  # Column already exists
+
+    await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_agents_source
+        ON agents(source)
+    """)
+
     # Advance schema version
     await db.execute(
         """

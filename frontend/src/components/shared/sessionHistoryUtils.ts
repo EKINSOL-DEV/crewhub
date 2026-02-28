@@ -10,26 +10,58 @@ export interface SessionUsageTotals {
 }
 
 export function parseSessionHistory(rawEntries: any[]): SessionMessage[] {
-  return rawEntries
-    .filter((entry: any) => entry.type === 'message' && entry.message)
-    .map((entry: any) => {
-      const message = entry.message
-      let content = message.content
-      if (typeof content === 'string') {
-        content = [{ type: 'text', text: content }]
+  const results: SessionMessage[] = []
+
+  for (const entry of rawEntries) {
+    // Standardized format from Claude Code: {role, content: string, timestamp, metadata}
+    if (entry.role && !entry.message) {
+      const blocks: any[] = []
+      const metadata = entry.metadata
+      if (metadata?.type === 'tool_use' && metadata.tool_name) {
+        blocks.push({
+          type: 'tool_use',
+          name: metadata.tool_name,
+          id: metadata.tool_use_id,
+          arguments: metadata.input_data,
+        })
+      } else if (metadata?.type === 'tool_result') {
+        blocks.push({ type: 'tool_result', text: entry.content })
+      } else if (typeof entry.content === 'string' && entry.content.trim()) {
+        blocks.push({ type: 'text', text: entry.content })
       }
-      if (!Array.isArray(content)) {
-        content = []
+      if (blocks.length > 0) {
+        results.push({
+          role: entry.role,
+          content: blocks,
+          model: metadata?.model,
+          timestamp: entry.timestamp,
+        } as SessionMessage)
       }
-      return {
-        role: message.role || 'unknown',
-        content,
-        model: message.model || entry.model,
-        usage: message.usage,
-        stopReason: message.stopReason,
-        timestamp: entry.timestamp ? new Date(entry.timestamp).getTime() : undefined,
-      } as SessionMessage
-    })
+      continue
+    }
+
+    // OpenClaw raw format: {type: 'message', message: {role, content}, timestamp}
+    if (entry.type !== 'message' || !entry.message) continue
+
+    const message = entry.message
+    let content = message.content
+    if (typeof content === 'string') {
+      content = [{ type: 'text', text: content }]
+    }
+    if (!Array.isArray(content)) {
+      content = []
+    }
+    results.push({
+      role: message.role || 'unknown',
+      content,
+      model: message.model || entry.model,
+      usage: message.usage,
+      stopReason: message.stopReason,
+      timestamp: entry.timestamp ? new Date(entry.timestamp).getTime() : undefined,
+    } as SessionMessage)
+  }
+
+  return results
 }
 
 export function calculateUsageTotals(messages: SessionMessage[]): SessionUsageTotals {
