@@ -72,6 +72,31 @@ interface Bot3DProps {
  * Includes body, face, accessory, chest display, status glow, laptop (when active),
  * animations, wandering, and floating name tag.
  */
+function _bot3dPropsEqual(prev: Readonly<Bot3DProps>, next: Readonly<Bot3DProps>): boolean {
+  const pp = prev.position
+  const np = next.position
+  return (
+    pp[0] === np[0] &&
+    pp[1] === np[1] &&
+    pp[2] === np[2] &&
+    prev.status === next.status &&
+    prev.name === next.name &&
+    prev.activity === next.activity &&
+    prev.isActive === next.isActive &&
+    prev.showLabel === next.showLabel &&
+    prev.showActivity === next.showActivity &&
+    prev.roomId === next.roomId &&
+    prev.roomName === next.roomName &&
+    prev.session?.key === next.session?.key &&
+    prev.session?.status === next.session?.status &&
+    prev.session?.contextTokens === next.session?.contextTokens &&
+    prev.roomBounds === next.roomBounds &&
+    prev.config === next.config &&
+    prev.scale === next.scale &&
+    prev.onClick === next.onClick
+  )
+}
+
 export const Bot3D = memo(function Bot3D({
   position,
   config,
@@ -586,6 +611,6 @@ export const Bot3D = memo(function Bot3D({
       </group>
     </group>
   )
-})
+}, _bot3dPropsEqual)
 
 // SleepingZs moved to BotAnimations.tsx

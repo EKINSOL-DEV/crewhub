@@ -141,6 +141,9 @@ export function useSessionsStream(enabled: boolean = true) {
 
   const pollingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pollingActiveRef = useRef(false)
+  // Throttle session-updated SSE events to max 10 re-renders/sec (100ms window)
+  const sessionUpdateThrottleRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingUpdatesRef = useRef<Map<string, CrewSession>>(new Map())
   const consecutiveFailsRef = useRef(0)
   const enabledRef = useRef(enabled)
   enabledRef.current = enabled
@@ -302,7 +305,19 @@ export function useSessionsStream(enabled: boolean = true) {
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
         const updatedSession: CrewSession = JSON.parse(event.data)
-        setState(makeSessionUpdatedUpdater(updatedSession, sessionsFingerprintRef))
+        // Accumulate updates and flush at most every 100ms to prevent
+        // high-frequency SSE bursts from triggering per-event React re-renders.
+        pendingUpdatesRef.current.set(updatedSession.key, updatedSession)
+        if (!sessionUpdateThrottleRef.current) {
+          sessionUpdateThrottleRef.current = setTimeout(() => {
+            sessionUpdateThrottleRef.current = null
+            const batch = new Map(pendingUpdatesRef.current)
+            pendingUpdatesRef.current.clear()
+            batch.forEach((updated) => {
+              setState(makeSessionUpdatedUpdater(updated, sessionsFingerprintRef))
+            })
+          }, 100)
+        }
       } catch (error) {
         console.error('Failed to parse session-updated event:', error)
       }
@@ -328,6 +343,11 @@ export function useSessionsStream(enabled: boolean = true) {
       unsubscribeCreated()
       unsubscribeUpdated()
       unsubscribeRemoved()
+      if (sessionUpdateThrottleRef.current) {
+        clearTimeout(sessionUpdateThrottleRef.current)
+        sessionUpdateThrottleRef.current = null
+      }
+      pendingUpdatesRef.current.clear()
     }
   }, [enabled])
 

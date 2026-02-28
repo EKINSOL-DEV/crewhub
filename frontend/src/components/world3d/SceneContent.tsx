@@ -307,6 +307,32 @@ export function SceneContent({
     [layout]
   )
 
+  // Pre-compute bot positions per room as stable memoized arrays.
+  // getBotPositionsInRoom must NOT be called inside .map() — it creates new
+  // array references on every render, breaking Bot3D memo() and causing jitter.
+  const allRoomBotPositions = useMemo(() => {
+    if (!layout) return new Map<string, [number, number, number][]>()
+    const map = new Map<string, [number, number, number][]>()
+    for (const { room, position, size } of layout.roomPositions) {
+      const botsInRoom = roomBots.get(room.id) ?? []
+      const visibleCount = Math.min(botsInRoom.length, SESSION_CONFIG.maxVisibleBotsPerRoom)
+      map.set(room.id, getBotPositionsInRoom(position, size, visibleCount))
+    }
+    return map
+  }, [layout, roomBots])
+
+  const parkingBotPositions = useMemo(() => {
+    if (!layout) return []
+    const { parkingArea } = layout
+    return getBotPositionsInParking(
+      parkingArea.x,
+      parkingArea.z,
+      parkingArea.width,
+      parkingArea.depth,
+      parkingBots.length
+    )
+  }, [layout, parkingBots.length])
+
   const shouldShowLabel = (botStatus: BotStatus, botRoomId: string): boolean => {
     if (focusLevel === 'overview') return botStatus === 'active' || botStatus === 'supervising'
     return focusedRoomId === botRoomId
@@ -397,7 +423,7 @@ export function SceneContent({
         const botsInRoom = roomBots.get(room.id) || []
         const visibleBots = botsInRoom.slice(0, SESSION_CONFIG.maxVisibleBotsPerRoom)
         const overflowCount = botsInRoom.length - visibleBots.length
-        const botPositions = getBotPositionsInRoom(position, roomSize, visibleBots.length)
+        const botPositions = allRoomBotPositions.get(room.id) ?? []
         const bounds = roomBoundsMap.get(room.id)!
 
         return (
@@ -457,13 +483,7 @@ export function SceneContent({
 
       {parkingBots.length > 0 &&
         (() => {
-          const positions = getBotPositionsInParking(
-            parkingArea.x,
-            parkingArea.z,
-            parkingArea.width,
-            parkingArea.depth,
-            parkingBots.length
-          )
+          const positions = parkingBotPositions
           const bounds = parkingBoundsStable!
           return parkingBots.map((bot, i) => (
             <Bot3D
