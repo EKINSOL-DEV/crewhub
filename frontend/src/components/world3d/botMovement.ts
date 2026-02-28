@@ -477,8 +477,9 @@ export function handleRandomGridWalk(
     return
   }
 
-  // Move toward next cell
-  const dirMag = Math.hypot(state.dirX, state.dirZ)
+  // Move toward next cell.
+  // Derive position from cellProgress (single source of truth) to avoid
+  // floating-point accumulation errors causing a visible snap at cell completion.
   const easedSpeed = opts.speed * 1.2
   state.cellProgress += (easedSpeed * opts.delta) / cellSize
   if (state.cellProgress >= 1) {
@@ -494,8 +495,9 @@ export function handleRandomGridWalk(
         Math.random() * (SESSION_CONFIG.wanderMaxWaitS - SESSION_CONFIG.wanderMinWaitS)
     }
   } else {
-    state.currentX += (state.dirX / dirMag) * easedSpeed * opts.delta
-    state.currentZ += (state.dirZ / dirMag) * easedSpeed * opts.delta
+    // Interpolate directly from cellStart using progress — no += accumulation
+    state.currentX = state.cellStartX + state.dirX * cellSize * state.cellProgress
+    state.currentZ = state.cellStartZ + state.dirZ * cellSize * state.cellProgress
   }
 
   smoothRotateY(group, Math.atan2(state.dirX, state.dirZ), 0.15)
