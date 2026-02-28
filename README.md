@@ -329,6 +329,19 @@ AGPL-3.0 — see [LICENSE](LICENSE)
 
 CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license.
 
+### Using without OpenClaw (Claude Code CLI)
+
+CrewHub can monitor your local Claude Code sessions without an OpenClaw gateway:
+
+1. **Install Claude Code**: `npm install -g @anthropic-ai/claude-code`
+2. **Start CrewHub**: The backend auto-detects the Claude CLI and begins watching `~/.claude/projects/` for sessions.
+
+**Docker users**: Mount your Claude data directory as a read-only volume:
+```yaml
+volumes:
+  - ${HOME}/.claude:/root/.claude:ro
+```
+
 ---
 
 <p align="center">
