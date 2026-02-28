@@ -212,7 +212,7 @@ async def load_connections_from_db():
     claude_dir = Path.home() / ".claude"
     if claude_dir.exists():  # cli_path optional — works via ~/.claude mount in Docker too
         # Check if a claude_code connection already exists
-        existing = [c for c in manager.get_all_connections() if c.connection_type.value == "claude_code"]
+        existing = [c for c in manager.get_connections().values() if c.connection_type.value == "claude_code"]
         if not existing:
             logger.info(f"Claude Code detected (cli={claude_cli}, dir={claude_dir}) — auto-registering connection")
             try:
