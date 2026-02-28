@@ -6,6 +6,8 @@ HTTP concerns (SSE broadcasts, response formatting).
 
 import logging
 import time
+import uuid
+from typing import Optional
 
 from fastapi import HTTPException
 
@@ -235,3 +237,46 @@ async def reorder_rooms(room_order: list[str]) -> dict:
             )
         await db.commit()
     return {"success": True, "order": room_order}
+
+
+async def get_or_create_project_rule(project_name: str) -> Optional[str]:
+    """Find a room matching project_name and create an assignment rule.
+
+    Returns room_id if a matching room was found and rule created, else None.
+    """
+    if not project_name:
+        return None
+
+    async with get_db() as db:
+        # Find room whose name contains the project name (case-insensitive)
+        async with db.execute(
+            "SELECT id, name FROM rooms WHERE LOWER(name) LIKE ?",
+            (f"%{project_name.lower()}%",),
+        ) as cursor:
+            row = await cursor.fetchone()
+
+        if not row:
+            return None
+
+        room_id = row["id"]
+        rule_value = f"claude:{project_name}"
+
+        # Check if rule already exists
+        async with db.execute(
+            "SELECT id FROM room_assignment_rules WHERE rule_type = 'session_key_contains' AND rule_value = ?",
+            (rule_value,),
+        ) as cursor:
+            if await cursor.fetchone():
+                return room_id  # Rule already exists
+
+        # Create new rule
+        rule_id = str(uuid.uuid4())
+        now = int(time.time() * 1000)
+        await db.execute(
+            """INSERT INTO room_assignment_rules (id, room_id, rule_type, rule_value, priority, created_at)
+               VALUES (?, ?, 'session_key_contains', ?, 10, ?)""",
+            (rule_id, room_id, rule_value, now),
+        )
+        await db.commit()
+        logger.info("Created project rule: %s -> room %s", rule_value, room_id)
+        return room_id
