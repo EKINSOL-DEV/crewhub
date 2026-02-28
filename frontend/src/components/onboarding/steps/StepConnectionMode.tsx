@@ -8,6 +8,8 @@ import type { ConnectionMode } from '../onboardingTypes'
 
 interface StepConnectionModeProps {
   readonly onSelect: (mode: ConnectionMode) => void
+  readonly onDemo?: () => void
+  readonly onSkip?: () => void
 }
 
 const cards: {
@@ -56,7 +58,7 @@ const cards: {
   },
 ]
 
-export function StepConnectionMode({ onSelect }: StepConnectionModeProps) {
+export function StepConnectionMode({ onSelect, onDemo, onSkip }: StepConnectionModeProps) {
   return (
     <div className="space-y-8">
       <div className="text-center space-y-2">
@@ -100,6 +102,27 @@ export function StepConnectionMode({ onSelect }: StepConnectionModeProps) {
           )
         })}
       </div>
+
+      {(onDemo || onSkip) && (
+        <div className="flex items-center justify-center gap-6 pt-2">
+          {onDemo && (
+            <button
+              onClick={onDemo}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ✦ Demo mode
+            </button>
+          )}
+          {onSkip && (
+            <button
+              onClick={onSkip}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              ✦ Skip setup
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

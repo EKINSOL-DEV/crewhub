@@ -2,7 +2,7 @@
 
 export type ConnectionMode = 'openclaw' | 'claude_code' | 'both'
 
-export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6 | 7
+export type WizardStep = 1 | 2 | 3 | 4 | 5 | 6
 
 export interface ConnectionConfig {
   id: string

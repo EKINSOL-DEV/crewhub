@@ -3,8 +3,8 @@
  * OnboardingWizard — First-run experience for CrewHub.
  *
  * 6-step wizard:
- *  1. Welcome
- *  2. Auto-Scan
+ *  1. Connection Mode
+ *  2. Auto-Scan / Claude Detect
  *  3. Configure Connections
  *  4. Room Setup (optional)
  *  5. Persona
@@ -15,13 +15,11 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { scanForRuntimes, testConnection, type DiscoveryCandidate } from '@/lib/api'
-import { OpenClawWizard } from './OpenClawWizard'
 import { RoomSetupStep } from './RoomSetupStep'
 import { PersonaStep } from './PersonaStep'
 import type { PersonaConfig } from '@/lib/personaTypes'
 import { updatePersona } from '@/lib/personaApi'
 import { StepProgress } from './steps/StepProgress'
-import { StepWelcome } from './steps/StepWelcome'
 import { StepScan } from './steps/StepScan'
 import { StepConfigure } from './steps/StepConfigure'
 import { StepReady } from './steps/StepReady'
@@ -41,7 +39,6 @@ const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(1)
   const [_connectionMode, setConnectionMode] = useState<ConnectionMode | null>(null)
-  const [showOpenClawWizard, setShowOpenClawWizard] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<Parameters<typeof StepScan>[0]['scanResult']>(null)
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
@@ -175,7 +172,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   // ─── Navigation ───────────────────────────────────────────────
 
-  const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 7) as WizardStep), [])
+  const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 6) as WizardStep), [])
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 1) as WizardStep), [])
 
   const handleConnectionMode = useCallback(
@@ -183,14 +180,14 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       setConnectionMode(mode)
       if (mode === 'claude_code') {
         // Show Claude detect step
-        setStep(3)
+        setStep(2)
       } else if (mode === 'both') {
         // Both: scan first, then claude detect
-        setStep(3)
+        setStep(2)
         runScan()
       } else {
         // OpenClaw only: scan
-        setStep(3)
+        setStep(2)
         runScan()
       }
     },
@@ -205,85 +202,6 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     localStorage.setItem('crewhub-demo-mode', 'true')
     onComplete()
   }, [onComplete])
-
-  const handleOpenClawComplete = useCallback(
-    async (config: {
-      name: string
-      url: string
-      token: string
-      botTemplate?: string
-      displayName?: string
-    }) => {
-      try {
-        await fetch('/api/connections', {
-          method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
-          body: JSON.stringify({
-            name: config.name,
-            type: 'openclaw',
-            config: { gateway_url: config.url, token: config.token },
-            enabled: true,
-          }),
-        })
-      } catch {
-        /* best-effort */
-      }
-
-      if (config.displayName) {
-        const templateToAgentId: Record<string, string> = {
-          default: 'main',
-          developer: 'dev',
-          reviewer: 'reviewer',
-        }
-        const agentId = config.botTemplate
-          ? templateToAgentId[config.botTemplate] || 'main'
-          : 'main'
-        const sessionKey = `agent:${agentId}:main`
-        try {
-          await fetch(`/api/session-display-names/${encodeURIComponent(sessionKey)}`, {
-            method: 'POST',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
-            body: JSON.stringify({ display_name: config.displayName }),
-          })
-        } catch {
-          /* intentionally empty */
-        }
-        try {
-          await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
-            method: 'PUT',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
-            body: JSON.stringify({ name: config.displayName }),
-          })
-        } catch {
-          /* intentionally empty */
-        }
-        try {
-          await fetch('/api/settings/agent-display-name', {
-            method: 'PUT',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
-            body: JSON.stringify({
-              value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }),
-            }),
-          })
-        } catch {
-          /* intentionally empty */
-        }
-      }
-
-      localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
-      try {
-        await fetch('/api/settings/crewhub-onboarded', {
-          method: 'PUT',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
-          body: JSON.stringify({ value: 'true' }),
-        })
-      } catch {
-        /* intentionally empty */
-      }
-      onComplete()
-    },
-    [onComplete]
-  )
 
   // ─── Render ───────────────────────────────────────────────────
 
@@ -308,34 +226,24 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
           )}
         </div>
         <div className="max-w-3xl mx-auto px-6 pb-4">
-          <StepProgress step={step} total={7} />
+          <StepProgress step={step} total={6} />
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-10">
-          {step === 1 && !showOpenClawWizard && (
-            <StepWelcome
-              onScan={() => {
-                setStep(2)
-              }}
+          {step === 1 && (
+            <StepConnectionMode
+              onSelect={handleConnectionMode}
               onDemo={handleDemo}
-              onManual={handleSkip}
-              onOpenClawWizard={() => setShowOpenClawWizard(true)}
+              onSkip={handleSkip}
             />
           )}
-          {step === 1 && showOpenClawWizard && (
-            <OpenClawWizard
-              onComplete={handleOpenClawComplete}
-              onSkip={() => setShowOpenClawWizard(false)}
-            />
+          {step === 2 && _connectionMode === 'claude_code' && (
+            <StepClaudeDetect onContinue={() => setStep(4)} />
           )}
-          {step === 2 && <StepConnectionMode onSelect={handleConnectionMode} />}
-          {step === 3 && _connectionMode === 'claude_code' && (
-            <StepClaudeDetect onContinue={() => setStep(5)} />
-          )}
-          {step === 3 && _connectionMode !== 'claude_code' && (
+          {step === 2 && _connectionMode !== 'claude_code' && (
             <StepScan
               scanning={scanning}
               scanResult={scanResult}
@@ -346,7 +254,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onDemo={handleDemo}
             />
           )}
-          {step === 4 && (
+          {step === 3 && (
             <StepConfigure
               connections={connections}
               onUpdateConnection={handleUpdateConnection}
@@ -355,8 +263,8 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onRemoveConnection={handleRemoveConnection}
             />
           )}
-          {step === 5 && <RoomSetupStep onComplete={goNext} />}
-          {step === 6 && (
+          {step === 4 && <RoomSetupStep onComplete={goNext} />}
+          {step === 5 && (
             <PersonaStep
               onComplete={async (config: PersonaConfig) => {
                 try {
@@ -372,20 +280,20 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onSkip={goNext}
             />
           )}
-          {step === 7 && <StepReady connections={connections} onGoDashboard={completeOnboarding} />}
+          {step === 6 && <StepReady connections={connections} onGoDashboard={completeOnboarding} />}
         </div>
       </div>
 
       {/* Footer navigation */}
-      {step > 2 && step < 6 && (
+      {step > 1 && step < 5 && (
         <div className="shrink-0 border-t bg-card/80 backdrop-blur-sm">
           <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
             <Button variant="outline" onClick={goBack} className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Back
             </Button>
-            {step !== 5 && (
+            {step !== 4 && (
               <Button onClick={goNext} className="gap-2">
-                {step === 4 ? 'Save & Continue' : 'Continue'}
+                {step === 3 ? 'Save & Continue' : 'Continue'}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             )}
