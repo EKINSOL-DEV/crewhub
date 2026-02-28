@@ -94,16 +94,31 @@ class ClaudeTranscriptParser:
         except json.JSONDecodeError:
             return []
 
+        events = []
+
         record_type = record.get("type")
         if record_type == "assistant":
-            return self._parse_assistant(record)
+            events.extend(self._parse_assistant(record))
         elif record_type == "user":
-            return self._parse_user(record)
+            events.extend(self._parse_user(record))
         elif record_type == "system":
-            return self._parse_system(record)
+            events.extend(self._parse_system(record))
         elif record_type == "progress":
-            return self._parse_progress(record)
-        return []
+            events.extend(self._parse_progress(record))
+
+        # Claude Code v2.x embeds cwd on every line rather than a system/init event
+        if not any(isinstance(e, ProjectContextEvent) for e in events):
+            cwd = record.get("cwd", "")
+            if cwd:
+                events.append(
+                    ProjectContextEvent(
+                        cwd=cwd,
+                        project_name=project_name_from_cwd(cwd),
+                        raw=record,
+                    )
+                )
+
+        return events
 
     def _parse_assistant(self, record: dict) -> list[ParsedEvent]:
         events = []

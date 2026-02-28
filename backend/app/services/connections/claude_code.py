@@ -227,7 +227,10 @@ class ClaudeCodeConnection(AgentConnection):
                 )
                 # Auto room assignment on project context
                 if isinstance(ev, ProjectContextEvent) and ev.project_name:
-                    asyncio.get_event_loop().create_task(self._auto_assign_room(session_id, ev.project_name))
+                    # Only auto-assign once per session (avoid firing on every JSONL line in v2.x)
+                    ws = self._watcher.get_watched_sessions().get(session_id) if self._watcher else None
+                    if ws and not ws.project_name:
+                        asyncio.get_event_loop().create_task(self._auto_assign_room(session_id, ev.project_name))
         except Exception:
             pass
 
