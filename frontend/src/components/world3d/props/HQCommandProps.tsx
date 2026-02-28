@@ -1,6 +1,3 @@
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
 import { Screen } from './components/Screen'
 import { DataStream } from './components/DataStream'
 import { LED as Led } from './components/LED'
@@ -10,14 +7,6 @@ import { LED as Led } from './components/LED'
  * Placed above the central meeting table in HQ.
  */
 export function HologramTable({ position = [0, 0, 0] as [number, number, number] }) {
-  const ringRef = useRef<THREE.Mesh>(null)
-
-  useFrame((state) => {
-    if (ringRef.current) {
-      ringRef.current.rotation.y = state.clock.elapsedTime * 0.5
-    }
-  })
-
   return (
     <group position={position}>
       {/* Transparent hologram cylinder */}
@@ -31,17 +20,6 @@ export function HologramTable({ position = [0, 0, 0] as [number, number, number]
           opacity={0.08}
           side={THREE.DoubleSide}
           depthWrite={false}
-        />
-      </mesh>
-
-      {/* Rotating ring at base */}
-      <mesh ref={ringRef} position={[0, 0.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.85, 0.02, 8, 32]} />
-        <meshStandardMaterial
-          color="#00ddff"
-          emissive="#00ddff"
-          emissiveIntensity={1.5}
-          toneMapped={false}
         />
       </mesh>
 
