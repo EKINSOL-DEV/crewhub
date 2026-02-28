@@ -24,6 +24,7 @@ from .claude_transcript_parser import (
     AssistantTextEvent,
     ClaudeTranscriptParser,
     ParsedEvent,
+    ProjectContextEvent,
     ToolUseEvent,
     UserMessageEvent,
 )
@@ -122,7 +123,7 @@ class ClaudeCodeConnection(AgentConnection):
                     connection_id=self.connection_id,
                     agent_id="main",
                     channel="cli",
-                    label=f"Claude Code {sid[:8]}",
+                    label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
                     status=ws.last_activity.value,
                     last_activity=int(ws.last_event_time * 1000) or None,
                 )
@@ -224,8 +225,47 @@ class ClaudeCodeConnection(AgentConnection):
                         },
                     )
                 )
+                # Auto room assignment on project context
+                if isinstance(ev, ProjectContextEvent) and ev.project_name:
+                    asyncio.get_event_loop().create_task(self._auto_assign_room(session_id, ev.project_name))
         except Exception:
             pass
+
+    async def _auto_assign_room(self, session_id: str, project_name: str) -> None:
+        """Try to auto-assign session to a room based on project name."""
+        try:
+            from ...services.room_service import get_or_create_project_rule
+
+            room_id = await get_or_create_project_rule(project_name)
+            if room_id:
+                import time
+
+                from ...db.database import get_db
+
+                session_key = f"claude:{session_id}"
+                async with get_db() as db:
+                    now = int(time.time() * 1000)
+                    await db.execute(
+                        """INSERT INTO session_room_assignments (session_key, room_id, assigned_at)
+                           VALUES (?, ?, ?)
+                           ON CONFLICT(session_key) DO UPDATE SET room_id = excluded.room_id, assigned_at = excluded.assigned_at""",
+                        (session_key, room_id, now),
+                    )
+                    await db.commit()
+
+                from ...routes.sse import broadcast
+
+                await broadcast(
+                    "rooms-refresh",
+                    {
+                        "action": "assignment_changed",
+                        "session_key": session_key,
+                        "room_id": room_id,
+                    },
+                )
+                logger.info("Auto-assigned session %s to room %s", session_id, room_id)
+        except Exception as e:
+            logger.debug("Auto room assignment failed for %s: %s", session_id, e)
 
     def _on_activity_change(self, session_id: str, activity: AgentActivity) -> None:
         """Activity state changed for a session."""
@@ -243,16 +283,14 @@ class ClaudeCodeConnection(AgentConnection):
                     status=activity.value,
                 )
                 self._notify_session_update(si)
-                asyncio.get_event_loop().create_task(
-                    broadcast(
-                        "session-updated",
-                        {
-                            "sessionKey": f"claude:{session_id}",
-                            "status": activity.value,
-                            "source": "claude_code",
-                        },
-                    )
-                )
+                payload = {
+                    "sessionKey": f"claude:{session_id}",
+                    "status": activity.value,
+                    "source": "claude_code",
+                }
+                if ws and ws.project_name:
+                    payload["project_name"] = ws.project_name
+                asyncio.get_event_loop().create_task(broadcast("session-updated", payload))
         except Exception:
             pass
 

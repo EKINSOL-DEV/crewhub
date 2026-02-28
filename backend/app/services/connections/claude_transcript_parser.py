@@ -66,6 +66,24 @@ class UserMessageEvent(ParsedEvent):
     content: str = ""
 
 
+@dataclass
+class ProjectContextEvent(ParsedEvent):
+    event_type: str = "project_context"
+    cwd: str = ""
+    project_name: str = ""
+
+
+def project_name_from_cwd(cwd: str) -> str:
+    """Extract project name from a working directory path.
+
+    Example: '/Users/nicky/ekinapps/crewhub' -> 'crewhub'
+    """
+    if not cwd:
+        return ""
+    # Strip trailing slashes and get basename
+    return cwd.rstrip("/").rsplit("/", 1)[-1] or ""
+
+
 class ClaudeTranscriptParser:
     """Parse Claude Code JSONL transcript lines into typed events."""
 
@@ -129,8 +147,19 @@ class ClaudeTranscriptParser:
         return events
 
     def _parse_system(self, record: dict) -> list[ParsedEvent]:
-        if record.get("subtype") == "turn_duration":
+        subtype = record.get("subtype")
+        if subtype == "turn_duration":
             return [TurnCompleteEvent(duration_ms=record.get("durationMs", 0), raw=record)]
+        if subtype == "init":
+            cwd = record.get("cwd", "")
+            if cwd:
+                return [
+                    ProjectContextEvent(
+                        cwd=cwd,
+                        project_name=project_name_from_cwd(cwd),
+                        raw=record,
+                    )
+                ]
         return []
 
     def _parse_progress(self, record: dict) -> list[ParsedEvent]:

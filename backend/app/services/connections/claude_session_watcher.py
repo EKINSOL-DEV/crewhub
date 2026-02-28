@@ -14,6 +14,7 @@ from .claude_transcript_parser import (
     AssistantTextEvent,
     ClaudeTranscriptParser,
     ParsedEvent,
+    ProjectContextEvent,
     SubAgentProgressEvent,
     ToolResultEvent,
     ToolUseEvent,
@@ -40,6 +41,7 @@ class WatchedSession:
     pending_tool_uses: set = field(default_factory=set)
     active_subagents: dict = field(default_factory=dict)
     has_pending_tools: bool = False
+    project_name: Optional[str] = None
 
 
 class ClaudeSessionWatcher:
@@ -249,6 +251,8 @@ class ClaudeSessionWatcher:
                 ws.last_activity = AgentActivity.RESPONDING
                 if not ws.has_pending_tools:
                     ws.last_text_only_time = time.monotonic()
+            elif isinstance(event, ProjectContextEvent):
+                ws.project_name = event.project_name
             elif isinstance(event, SubAgentProgressEvent):
                 pass
 
