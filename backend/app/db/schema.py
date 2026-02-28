@@ -16,4 +16,4 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version — bump when adding new migrations
-SCHEMA_VERSION = 17  # v17: Placed Props (Creator Mode)
+SCHEMA_VERSION = 18  # v18: Claude Processes

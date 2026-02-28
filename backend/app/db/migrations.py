@@ -615,6 +615,29 @@ async def run_migrations(db) -> None:
         ON placed_props(room_id)
     """)
 
+    # ========================================
+    # v18: Claude Processes
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS claude_processes (
+            id TEXT PRIMARY KEY,
+            session_id TEXT,
+            project_path TEXT,
+            model TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            started_at REAL,
+            finished_at REAL,
+            message TEXT,
+            output TEXT,
+            metadata TEXT
+        )
+    """)
+
+    await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_claude_processes_status
+        ON claude_processes(status)
+    """)
+
     # Advance schema version
     await db.execute(
         """
