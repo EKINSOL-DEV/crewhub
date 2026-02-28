@@ -399,6 +399,8 @@ export function handleRandomGridWalk(
     stepsRemaining: number
     waitTimer: number
     cellProgress: number
+    cellStartX: number
+    cellStartZ: number
   },
   gridData: {
     blueprint: { cellSize: number; gridWidth: number; gridDepth: number }
@@ -435,7 +437,8 @@ export function handleRandomGridWalk(
           Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps + 1)
         )
       state.cellProgress = 0
-      state.waitTimer = 1 + Math.random() * 2
+      state.cellStartX = state.currentX
+      state.cellStartZ = state.currentZ
     } else {
       state.waitTimer = 1
     }
@@ -464,6 +467,8 @@ export function handleRandomGridWalk(
         Math.max(2, SESSION_CONFIG.wanderMinSteps - 1) +
         Math.floor(Math.random() * (SESSION_CONFIG.wanderMaxSteps - SESSION_CONFIG.wanderMinSteps))
       state.cellProgress = 0
+      state.cellStartX = state.currentX
+      state.cellStartZ = state.currentZ
     } else {
       state.stepsRemaining = 0
       state.waitTimer = 1
@@ -476,10 +481,12 @@ export function handleRandomGridWalk(
   const easedSpeed = opts.speed * 1.2
   state.cellProgress += (easedSpeed * opts.delta) / cellSize
   if (state.cellProgress >= 1) {
-    state.currentX = state.currentX + state.dirX * cellSize
-    state.currentZ = state.currentZ + state.dirZ * cellSize
+    state.currentX = state.cellStartX + state.dirX * cellSize
+    state.currentZ = state.cellStartZ + state.dirZ * cellSize
     state.stepsRemaining--
     state.cellProgress = 0
+    state.cellStartX = state.currentX
+    state.cellStartZ = state.currentZ
     if (state.stepsRemaining <= 0) {
       state.waitTimer =
         SESSION_CONFIG.wanderMinWaitS +

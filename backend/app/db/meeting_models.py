@@ -1,6 +1,14 @@
 """Pydantic models for AI-orchestrated meetings."""
 
-from enum import StrEnum
+try:
+    from enum import StrEnum
+except ImportError:  # Python < 3.11
+    from enum import Enum  # type: ignore[assignment]
+
+    class StrEnum(str, Enum):  # type: ignore[no-redef]  # noqa: UP042
+        pass
+
+
 from typing import Literal, Optional
 
 from pydantic import BaseModel, Field
