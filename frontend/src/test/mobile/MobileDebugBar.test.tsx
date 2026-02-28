@@ -108,7 +108,7 @@ describe('MobileDebugBar', () => {
   describe('version', () => {
     it('shows app version', () => {
       render(<MobileDebugBar enabled={true} />)
-      expect(screen.getByText('v0.12.0')).toBeInTheDocument()
+      expect(screen.getByText('v0.19.0')).toBeInTheDocument()
     })
   })
 })
