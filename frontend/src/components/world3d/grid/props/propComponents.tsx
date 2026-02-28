@@ -548,7 +548,7 @@ export function ControlPanelProp({ position, rotation }: PropProps) {
         const colIdx = i % 3
         return (
           <mesh
-            key={col}
+            key={`panel-button-${i}`}
             position={[-0.15 + colIdx * 0.15, 0.78 - row * 0.1, 0.12 - row * 0.06]}
             rotation={[-0.4, 0, 0]}
           >

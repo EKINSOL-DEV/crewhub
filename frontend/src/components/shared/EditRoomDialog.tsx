@@ -157,8 +157,9 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
       className="backdrop:bg-black/50 backdrop:backdrop-blur-sm bg-transparent p-0 m-0 max-w-none max-h-none open:flex items-center justify-center fixed inset-0"
       style={{ zIndex: 100 }}
     >
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -291,7 +292,7 @@ export function EditRoomDialog({ room, open, onOpenChange, onSave }: EditRoomDia
             {saving ? 'Saving…' : 'Save Changes'}
           </Button>
         </div>
-      </button>
+      </div>
     </dialog>
   )
 }
