@@ -72,7 +72,7 @@ export function WallClockProp({ position }: PropProps) {
         const r = 0.33
         return (
           <mesh
-            key={JSON.stringify(_)}
+            key={`clock-marker-${i}`}
             {...({ position: [Math.sin(angle) * r, Math.cos(angle) * r, 0.035] } as any)}
           >
             <boxGeometry args={[0.02, 0.06, 0.005]} />
@@ -123,7 +123,7 @@ export function GearMechanismProp({ position, rotation }: PropProps) {
           const angle = (i / 8) * Math.PI * 2
           return (
             <mesh
-              key={JSON.stringify(_)}
+              key={`gear1-tooth-${i}`}
               {...({ position: [Math.cos(angle) * 0.22, Math.sin(angle) * 0.22, 0] } as any)}
             >
               <boxGeometry args={[0.06, 0.06, 0.06]} />
@@ -145,7 +145,7 @@ export function GearMechanismProp({ position, rotation }: PropProps) {
           const angle = (i / 6) * Math.PI * 2
           return (
             <mesh
-              key={JSON.stringify(_)}
+              key={`gear2-tooth-${i}`}
               {...({ position: [Math.cos(angle) * 0.16, Math.sin(angle) * 0.16, 0] } as any)}
             >
               <boxGeometry args={[0.05, 0.05, 0.06]} />
@@ -188,7 +188,7 @@ export function SignalWavesProp({ position }: PropProps) {
   return (
     <group position={position}>
       {[ring1Ref, ring2Ref, ring3Ref].map((ref, _i) => (
-        <mesh key={JSON.stringify(ref)} ref={ref} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh key={`gyro-ring-${_i}`} ref={ref} rotation={[Math.PI / 2, 0, 0]}>
           <torusGeometry args={[0.3, 0.02, 8, 24]} />
           <meshStandardMaterial
             color="#60A5FA"
