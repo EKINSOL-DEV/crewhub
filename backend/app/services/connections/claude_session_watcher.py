@@ -122,15 +122,47 @@ class ClaudeSessionWatcher:
         return [d for d in self.projects_dir.iterdir() if d.is_dir()]
 
     def discover_sessions(self, project_dir: Path) -> list[tuple[str, Path]]:
+        """Discover JSONL session files. Supports old (flat) and new (nested UUID dir) formats."""
         sessions = []
         try:
-            for entry in os.listdir(project_dir):
-                if entry.endswith(".jsonl"):
-                    session_id = entry[:-6]
-                    sessions.append((session_id, project_dir / entry))
+            for entry in os.scandir(project_dir):
+                if entry.is_file() and entry.name.endswith(".jsonl"):
+                    # Old format: <project>/<session-id>.jsonl
+                    session_id = entry.name[:-6]
+                    sessions.append((session_id, Path(entry.path)))
+                elif entry.is_dir():
+                    # New format: <project>/<session-uuid>/
+                    session_uuid = entry.name
+                    session_dir = Path(entry.path)
+                    self._discover_session_dir(session_uuid, session_dir, sessions)
         except OSError:
             pass
         return sessions
+
+    def _discover_session_dir(
+        self,
+        session_uuid: str,
+        session_dir: Path,
+        sessions: list[tuple[str, Path]],
+    ) -> None:
+        """Scan a session UUID directory for JSONL files (direct + subagents/)."""
+        try:
+            for entry in os.scandir(session_dir):
+                if entry.is_file() and entry.name.endswith(".jsonl"):
+                    stem = entry.name[:-6]
+                    session_id = f"{session_uuid[:8]}-{stem}" if stem != session_uuid else session_uuid
+                    sessions.append((session_id, Path(entry.path)))
+                elif entry.is_dir() and entry.name == "subagents":
+                    try:
+                        for sub_entry in os.scandir(entry.path):
+                            if sub_entry.is_file() and sub_entry.name.endswith(".jsonl"):
+                                stem = sub_entry.name[:-6]
+                                session_id = f"{session_uuid[:8]}-{stem}"
+                                sessions.append((session_id, Path(sub_entry.path)))
+                    except OSError:
+                        pass
+        except OSError:
+            pass
 
     def watch_session(self, session_id: str, jsonl_path: Path):
         if session_id not in self._watched:
