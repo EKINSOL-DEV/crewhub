@@ -146,7 +146,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         }
         await fetch('/api/connections', {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: { 'Content-Type': APPLICATION_JSON },
           body: JSON.stringify({ name: conn.name, type: conn.type, config, enabled: true }),
         })
       } catch {
@@ -161,7 +161,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     try {
       await fetch('/api/settings/crewhub-onboarded', {
         method: 'PUT',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: { 'Content-Type': APPLICATION_JSON },
         body: JSON.stringify({ value: 'true' }),
       })
     } catch {
