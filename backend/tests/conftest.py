@@ -11,7 +11,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 if not hasattr(_dt, "UTC"):
-    _dt.UTC = _dt.UTC
+    _utc = _dt.UTC
+    _dt.UTC = _utc
 
 # Python 3.9 compatibility: emulate zip(..., strict=False)
 _orig_zip = builtins.zip
