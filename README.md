@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/version-v0.18.5-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.19.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -32,6 +32,15 @@ CrewHub is an **open-source monitoring dashboard** for AI coding agents. It conn
 But CrewHub isn't just another dashboard. Your agents come alive in a **fully interactive 3D world** where they walk between rooms, gather around meeting tables, and collaborate on structured discussions that produce real results.
 
 > 🎮 **[Try the Live Demo →](https://demo.crewhub.dev)**
+
+---
+
+## 🆕 What's New in v0.19.0
+
+- **Native Claude Code support** — Connect CrewHub directly to Claude Code sessions without OpenClaw. Watches `~/.claude/projects/*/` JSONL files in real-time.
+- **New onboarding wizard** — Choose your connection mode: OpenClaw, Claude Code, or both.
+- **Source badges** — Color-coded indicators on session cards and 3D bots showing which agent type is running.
+- **Auto-detection** — CrewHub detects your Claude installation automatically at startup.
 
 ---
 
