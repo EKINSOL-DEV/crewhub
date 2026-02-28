@@ -133,6 +133,8 @@ export const Bot3D = memo(function Bot3D({
     dirZ: -1,
     stepsRemaining: 0,
     cellProgress: 0, // 0..1 progress toward next cell center
+    cellStartX: position[0],
+    cellStartZ: position[2],
     // Meeting pathfinding waypoints
     meetingWaypoints: [] as { x: number; z: number }[],
     meetingWaypointIndex: 0,
@@ -188,6 +190,8 @@ export const Bot3D = memo(function Bot3D({
       state.sessionKey = newKey
       state.stepsRemaining = 0
       state.cellProgress = 0
+      state.cellStartX = spawnX
+      state.cellStartZ = spawnZ
     }
   }, [session?.key, position, roomBounds, gridData])
 

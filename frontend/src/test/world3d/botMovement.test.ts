@@ -155,6 +155,8 @@ describe('botMovement utilities', () => {
       stepsRemaining: 0,
       waitTimer: 0,
       cellProgress: 0,
+      cellStartX: 0,
+      cellStartZ: 0,
     }
 
     handleRandomGridWalk(g, s, gridData, roomBounds, {
@@ -319,6 +321,8 @@ describe('botMovement utilities', () => {
       stepsRemaining: 3,
       waitTimer: 2,
       cellProgress: 0,
+      cellStartX: 0,
+      cellStartZ: 0,
     }
     handleRandomGridWalk(g, s, gridData, roomBounds, {
       roomCenterX: 0,
@@ -346,6 +350,8 @@ describe('botMovement utilities', () => {
       stepsRemaining: 1,
       waitTimer: 0,
       cellProgress: 0,
+      cellStartX: 0,
+      cellStartZ: 0,
     }
     handleRandomGridWalk(g, s, allBlockedGrid, roomBounds, {
       roomCenterX: 0,
