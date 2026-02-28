@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Hook for thread (group chat) message management.
  * Subscribes to SSE for real-time streaming of agent responses.

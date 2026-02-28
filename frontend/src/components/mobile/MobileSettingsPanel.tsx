@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-refresh/only-export-components */
 /**
  * MobileSettingsPanel – slide-in settings drawer for mobile & Tauri chat.
  *

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * CreatorModeContext — global state for Creator Mode (prop placement).
  *

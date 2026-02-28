@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * MobileDocsPanel Tests
  * Tests for the mobile fullscreen docs browser

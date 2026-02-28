@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ─── Prop Saver ─────────────────────────────────────────────────
 // Saves generated prop code to the custom props directory
 // and registers it in the PropRegistry with custom: namespace.

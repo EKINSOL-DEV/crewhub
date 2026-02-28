@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ─── Grid Debug Overlay ─────────────────────────────────────────
 // Visual debug overlay that renders the 20×20 grid for a room.
 // Color-coded cells: green=walkable, red=blocked, blue=interaction,

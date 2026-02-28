@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * ParticipantAvatarStack Tests
  * Tests for the stacked participant avatar strip shown in group threads

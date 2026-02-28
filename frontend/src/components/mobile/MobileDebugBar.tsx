@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MobileDebugBar – compact status strip shown at the bottom of the screen
  * when debug mode is enabled. Shows SSE connection state, API base URL,

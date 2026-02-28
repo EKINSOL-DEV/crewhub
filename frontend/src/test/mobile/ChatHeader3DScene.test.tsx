@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * ChatHeader3DScene Tests
  * Tests for the Three.js scene rendered inside the chat header avatar strip

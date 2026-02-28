@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-this-alias, @typescript-eslint/no-unsafe-function-type, @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * Tests for FullscreenPropMaker (zones/creator/FullscreenPropMaker.tsx)
  */

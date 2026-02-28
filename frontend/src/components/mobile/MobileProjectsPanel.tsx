@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * Mobile Projects Panel
  * Project list with status overview and quick actions

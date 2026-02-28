@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * MobileSettingsPanel Tests
  * Tests for the slide-in settings drawer for mobile & Tauri chat

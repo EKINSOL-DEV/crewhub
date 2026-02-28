@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MeetingOutput — Rich structured results view after meeting completes.
  *

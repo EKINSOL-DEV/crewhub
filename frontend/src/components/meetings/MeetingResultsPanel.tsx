@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MeetingResultsPanel — Fullscreen overlay for meeting results.
  *

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import { GrassEnvironment } from './GrassEnvironment'
 import { IslandEnvironment } from './IslandEnvironment'

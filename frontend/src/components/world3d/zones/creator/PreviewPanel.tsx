@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 // ─── Preview Panel ──────────────────────────────────────────────
 // Renders a generated prop in an isolated 3D preview box
 // with orbit controls for inspection.

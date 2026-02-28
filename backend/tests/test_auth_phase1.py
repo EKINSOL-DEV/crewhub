@@ -16,10 +16,10 @@ _test_dir = tempfile.mkdtemp(prefix="crewhub_test_")
 TEST_DB = os.path.join(_test_dir, "crewhub.db")
 os.environ["CREWHUB_DB_PATH"] = TEST_DB
 
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient  # noqa: E402
 
-from app.auth import init_api_keys
-from app.main import app
+from app.auth import init_api_keys  # noqa: E402
+from app.main import app  # noqa: E402
 
 
 @pytest_asyncio.fixture(autouse=True)

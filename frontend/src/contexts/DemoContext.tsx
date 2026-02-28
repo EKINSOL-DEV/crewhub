@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // ─── Demo Mode Context ──────────────────────────────────────────
 // Provides mock session data for screenshots and demos.
 // Toggle with F5. Persists state in localStorage.

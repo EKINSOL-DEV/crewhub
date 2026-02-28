@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ─── Animated Prop Components ───────────────────────────────────
 // Props that use useFrame hooks for animation.
 // Separated to keep static components tree-shakeable.

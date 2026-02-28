@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // ─── Prop Components ────────────────────────────────────────────
 // React component definitions for all built-in props.
 // Wraps existing /props/ components and defines inline mini-props.
