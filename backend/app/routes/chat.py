@@ -4,6 +4,8 @@ Handles message history retrieval, sending messages, and session info.
 Phase 1: non-streaming (send message, get full response).
 """
 
+from __future__ import annotations
+
 import logging
 import re
 import time
@@ -338,7 +340,7 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         return {"response": None, "tokens": 0, "success": False, "error": "No response from agent"}
 
 
-async def _prepend_context_if_available(session_key: str, agent_id: str, body: "SendMessageBody", message: str) -> str:
+async def _prepend_context_if_available(session_key: str, agent_id: str, body: SendMessageBody, message: str) -> str:
     """Prepend CrewHub context envelope to message if a room can be resolved."""
     try:
         from app.db.database import get_db
