@@ -211,9 +211,20 @@ async def load_connections_from_db():
     claude_cli = shutil.which("claude")
     claude_dir = Path.home() / ".claude"
     if claude_dir.exists():  # cli_path optional — works via ~/.claude mount in Docker too
+        # Only auto-register if the user has already completed onboarding
+        # (prevents skipping the wizard on a fresh install)
+        already_onboarded = False
+        try:
+            from app.db.database import get_db
+            async with get_db() as db:
+                async with db.execute("SELECT value FROM settings WHERE key = 'crewhub-onboarded'") as cur:
+                    row = await cur.fetchone()
+                    already_onboarded = row is not None and row[0] == "true"
+        except Exception:
+            pass
         # Check if a claude_code connection already exists
         existing = [c for c in manager.get_connections().values() if c.connection_type.value == "claude_code"]
-        if not existing:
+        if already_onboarded and not existing:
             logger.info(f"Claude Code detected (cli={claude_cli}, dir={claude_dir}) — auto-registering connection")
             try:
                 import json as _json
