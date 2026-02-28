@@ -216,11 +216,24 @@ async def load_connections_from_db():
         if not existing:
             logger.info(f"Claude Code detected (cli={claude_cli}, dir={claude_dir}) — auto-registering connection")
             try:
+                import json as _json
+                import time as _time
+                import uuid as _uuid
+                from app.db.database import get_db
+                conn_id = "auto-claude-code"
+                now = int(_time.time() * 1000)
+                config = {"cli_path": claude_cli or "", "data_dir": str(claude_dir)}
+                async with get_db() as db:
+                    await db.execute(
+                        "INSERT OR IGNORE INTO connections (id, name, type, config, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (conn_id, "Claude Code", "claude_code", _json.dumps(config), True, now, now),
+                    )
+                    await db.commit()
                 await manager.add_connection(
-                    connection_id="auto-claude-code",
+                    connection_id=conn_id,
                     connection_type="claude_code",
-                    config={"cli_path": claude_cli or "", "data_dir": str(claude_dir)},
-                    name="Claude Code (auto)",
+                    config=config,
+                    name="Claude Code",
                     auto_connect=True,
                 )
             except Exception as e:
