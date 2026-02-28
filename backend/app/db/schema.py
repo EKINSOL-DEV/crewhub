@@ -16,4 +16,4 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version — bump when adding new migrations
-SCHEMA_VERSION = 18  # v18: Claude Processes
+SCHEMA_VERSION = 19  # v19: Project Agents

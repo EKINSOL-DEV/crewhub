@@ -45,6 +45,7 @@ from app.routes.creator import router as creator_router
 from app.routes.docs import router as docs_router
 from app.routes.meetings import router as meetings_router
 from app.routes.personas import router as personas_router
+from app.routes.project_agents import router as project_agents_router
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.prop_placement import router as prop_placement_router
 from app.routes.self_routes import router as self_router
@@ -377,6 +378,9 @@ app.include_router(prop_placement_router)
 
 # Phase 7: Group Chat Threads
 app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
+
+# Project agents (agent templates per room)
+app.include_router(project_agents_router, prefix="/api/rooms", tags=["project-agents"])
 
 
 @app.get("/")

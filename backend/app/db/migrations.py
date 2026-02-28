@@ -638,6 +638,26 @@ async def run_migrations(db) -> None:
         ON claude_processes(status)
     """)
 
+    # ========================================
+    # v19: Project Agents (agent templates per room)
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS project_agents (
+            id TEXT PRIMARY KEY,
+            room_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            cwd TEXT NOT NULL,
+            startup_prompt TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+        )
+    """)
+
+    await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_project_agents_room
+        ON project_agents(room_id)
+    """)
+
     # Advance schema version
     await db.execute(
         """
