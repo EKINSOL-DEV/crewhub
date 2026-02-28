@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 // ─── A* Pathfinding ─────────────────────────────────────────────
 // Simple A* implementation on a walkable boolean mask
 

@@ -25,7 +25,7 @@ class _MockConn:
 
 
 _mock_conn_module.OpenClawConnection = _MockConn  # type: ignore
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock  # noqa: E402
 
 _mock_conn_module.get_connection_manager = AsyncMock()  # type: ignore
 sys.modules.setdefault("app.services.connections", _mock_conn_module)

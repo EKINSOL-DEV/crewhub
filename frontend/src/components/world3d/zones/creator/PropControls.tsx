@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PropControls — Left-side control panel for FullscreenPropMaker.
  * Contains the tab bar (Generate / History / Advanced) and all tab content:

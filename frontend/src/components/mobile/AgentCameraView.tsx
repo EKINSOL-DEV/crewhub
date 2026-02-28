@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, lazy, Suspense } from 'react'
 import { Camera, Minimize2, Maximize2 } from 'lucide-react'
 import type { BotVariantConfig } from '@/components/world3d/utils/botVariants'

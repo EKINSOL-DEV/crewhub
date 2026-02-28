@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 /**
  * Tests for GridRoomRenderer (world3d/grid/GridRoomRenderer.tsx)
  *

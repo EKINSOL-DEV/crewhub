@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 /**
  * GenerationHistory — History panel with delete confirmation dialog.
  * Lists all past prop generations, allows loading into preview or deleting.

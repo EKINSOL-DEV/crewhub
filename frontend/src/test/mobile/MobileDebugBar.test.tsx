@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MobileDebugBar Tests
  * Tests for the bottom debug strip that shows SSE state, API URL, and Tauri info

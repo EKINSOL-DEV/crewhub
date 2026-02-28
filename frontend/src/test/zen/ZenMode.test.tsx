@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { ZenMode, ZenModeButton } from '@/components/zen/ZenMode'

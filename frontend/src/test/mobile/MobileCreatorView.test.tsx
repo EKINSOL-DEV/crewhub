@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-this-alias, @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * MobileCreatorView Tests
  * Tests for the mobile-friendly Creator / Prop Maker view

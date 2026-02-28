@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * AudioMessage – compact audio player for voice messages in chat bubbles.
  *

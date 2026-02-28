@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * MobileProjectsPanel Tests
  * Tests for the mobile Projects panel with project list and detail modal

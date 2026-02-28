@@ -98,16 +98,16 @@ class TestInsertCodeAfterLastImport:
         code = "import { useRef } from 'react'\n\nexport function Foo() {}"
         result = _insert_code_after_last_import(code, "const X = 1")
         lines = result.split("\n")
-        import_idx = next(i for i, l in enumerate(lines) if "import" in l)
-        inject_idx = next(i for i, l in enumerate(lines) if "const X = 1" in l)
+        import_idx = next(i for i, line in enumerate(lines) if "import" in line)
+        inject_idx = next(i for i, line in enumerate(lines) if "const X = 1" in line)
         assert inject_idx == import_idx + 1
 
     def test_inserts_after_last_of_multiple_imports(self):
         code = "import A from 'a'\nimport B from 'b'\nimport C from 'c'\n\nconst X = 1"
         result = _insert_code_after_last_import(code, "// injected")
         lines = result.split("\n")
-        c_import_idx = next(i for i, l in enumerate(lines) if "import C" in l)
-        injected_idx = next(i for i, l in enumerate(lines) if "// injected" in l)
+        c_import_idx = next(i for i, line in enumerate(lines) if "import C" in line)
+        injected_idx = next(i for i, line in enumerate(lines) if "// injected" in line)
         assert injected_idx == c_import_idx + 1
 
     def test_handles_no_imports(self):
@@ -161,7 +161,6 @@ class TestAddSingleComponent:
         assert result.count(imp) == 1
 
     def test_all_known_components_can_be_added(self):
-        base = "import {{ useRef }} from 'react'\n\nexport function X() {{\n  return (<group><mesh /></group>)\n}}"
         for comp in ["LED", "GlowOrb", "SteamParticles"]:
             code = "import { useRef } from 'react'\n\nexport function X() {\n  return (<group><mesh /></group>)\n}"
             result, added = _add_single_component(code, comp)
@@ -340,10 +339,9 @@ class TestMultiPassGeneratorValidate:
         assert any("acceptable" in n or "mesh" in n for n in notes)
 
     def test_good_complexity_for_8_meshes(self):
-        code = "<group>" + "<mesh>\n<boxGeometry /></mesh>\n" * 8 + "</group>"
         # Count: re.findall r"<mesh[\s>]" needs space or >
-        code2 = "<group>" + "<mesh>\n<boxGeometry /></mesh>\n" * 8 + "</group>"
-        _, notes = self.gen._validate(code2)
+        code = "<group>" + "<mesh>\n<boxGeometry /></mesh>\n" * 8 + "</group>"
+        _, notes = self.gen._validate(code)
         # Some note about meshes
         assert any("mesh" in n for n in notes)
 
@@ -432,7 +430,7 @@ class TestConstants:
             assert len(pos.split(",")) == 3
 
     def test_component_jsx_has_format_placeholders(self):
-        for name, tmpl in COMPONENT_JSX.items():
+        for _name, tmpl in COMPONENT_JSX.items():
             if "{color}" in tmpl or "{pos}" in tmpl:
                 rendered = tmpl.format(color="#FF0000", pos="0, 0.5, 0")
                 assert "#FF0000" in rendered or "0, 0.5, 0" in rendered

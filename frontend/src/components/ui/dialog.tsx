@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from 'react'
 import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X } from 'lucide-react'

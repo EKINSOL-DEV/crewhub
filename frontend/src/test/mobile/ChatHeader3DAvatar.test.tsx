@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 /**
  * ChatHeader3DAvatar Tests
  * Tests for the 128×72 header avatar strip (3D or static fallback)

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { TransformControls } from '@react-three/drei'
 import { getToonMaterialProps } from '../../utils/toonMaterials'

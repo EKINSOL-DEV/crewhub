@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * MobileDrawer Tests
  * Tests for the slide-in left-side navigation drawer

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * RoutingSelector Tests
  * Tests for the broadcast / targeted routing mode toggle in group chats

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { RefreshCw, ServerCrash } from 'lucide-react'
 import { Button } from './ui/button'

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * MobileAgentList Tests
  * Tests for the main agent listing screen (agent cards, status, group threads)

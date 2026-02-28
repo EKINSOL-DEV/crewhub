@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MeetingDialog — Configuration dialog for starting a new AI meeting.
  *

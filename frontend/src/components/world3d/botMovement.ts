@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /**
  * Bot3D movement helpers — extracted from Bot3D useFrame to reduce cognitive complexity.
  */

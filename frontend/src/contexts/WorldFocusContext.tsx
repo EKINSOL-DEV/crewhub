@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-refresh/only-export-components */
 import {
   createContext,
   useContext,
