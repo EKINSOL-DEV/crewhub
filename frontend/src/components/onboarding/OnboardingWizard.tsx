@@ -241,7 +241,26 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
             />
           )}
           {step === 2 && _connectionMode === 'claude_code' && (
-            <StepClaudeDetect onContinue={() => setStep(4)} />
+            <StepClaudeDetect
+                onContinue={() => {
+                  // Auto-register claude_code connection so it gets saved on completion
+                  setConnections((prev) => {
+                    if (prev.some((c) => c.type === 'claude_code')) return prev
+                    return [
+                      ...prev,
+                      {
+                        id: `claude-code-${Date.now()}`,
+                        name: 'Claude Code',
+                        type: 'claude_code',
+                        url: '',
+                        enabled: true,
+                        testStatus: 'idle' as const,
+                      },
+                    ]
+                  })
+                  setStep(4)
+                }}
+              />
           )}
           {step === 2 && _connectionMode !== 'claude_code' && (
             <StepScan
