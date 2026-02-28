@@ -12,13 +12,17 @@ installGlobalErrorCapture()
 initAppSettings()
 
 // Initialize mock API for demo builds (must run before any React rendering)
-if (import.meta.env.VITE_DEMO_MODE === 'true') {
-  const { setupMockApi } = await import('./lib/mock')
-  setupMockApi()
+async function bootstrap() {
+  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+    const { setupMockApi } = await import('./lib/mock')
+    setupMockApi()
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-)
+void bootstrap()
