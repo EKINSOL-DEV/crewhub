@@ -5,6 +5,8 @@ Builds a ≤2KB JSON envelope with room/project/participants/tasks info,
 respecting privacy tiers (internal vs external channels).
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
