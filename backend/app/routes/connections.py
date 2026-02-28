@@ -207,6 +207,29 @@ def _db_to_response(
 # ============================================================================
 
 
+@router.get("/claude-code/detect")
+async def detect_claude_code():
+    """Detect if Claude Code CLI is available locally."""
+    import os
+    import shutil
+    from pathlib import Path
+
+    cli_path = shutil.which("claude")
+    projects_dir = Path.home() / ".claude" / "projects"
+    projects_exists = projects_dir.exists()
+    session_count = 0
+    if projects_exists:
+        for proj in projects_dir.iterdir():
+            if proj.is_dir():
+                session_count += sum(1 for f in os.listdir(proj) if f.endswith(".jsonl"))
+    return {
+        "found": cli_path is not None,
+        "cli_path": cli_path,
+        "projects_dir_exists": projects_exists,
+        "session_count": session_count,
+    }
+
+
 @router.get("", response_model=ConnectionListResponse)
 async def list_connections():
     """
