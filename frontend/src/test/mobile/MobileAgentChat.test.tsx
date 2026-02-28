@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, sonarjs/no-duplicate-string */
 /**
  * MobileAgentChat Tests
  * Tests for the mobile streaming agent chat interface

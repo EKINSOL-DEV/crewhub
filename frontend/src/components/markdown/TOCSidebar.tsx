@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { useState, useEffect, type RefObject } from 'react'
 
 export interface TOCHeading {

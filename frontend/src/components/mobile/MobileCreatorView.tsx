@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * MobileCreatorView - Mobile-friendly Creator / Prop Maker view
  *

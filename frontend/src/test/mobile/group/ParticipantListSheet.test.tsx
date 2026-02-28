@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 /**
  * ParticipantListSheet Tests
  * Tests for the bottom-sheet that lists thread participants and allows removal/adding

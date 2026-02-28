@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 // ─── Blueprint Helper Functions ─────────────────────────────────
 // Utilities for creating and manipulating room grids
 

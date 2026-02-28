@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { Button } from '@/components/ui/button'

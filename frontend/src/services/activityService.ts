@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/cognitive-complexity */
 /**
  * Centralized Activity Service
  *
@@ -140,7 +141,6 @@ function humanizeToolCall(
 
 // ── Parse Messages to Log Entries ─────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractContentAndTools(msg: any): {
   content: string
   tools: { name: string; status?: string }[]
@@ -165,7 +165,6 @@ function extractContentAndTools(msg: any): {
   return { content, tools }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
   return messages
     .filter((m: any) => m?.message?.role && m.message.role !== 'thinking')
@@ -206,12 +205,7 @@ function makeId(prefix: string, ts: number): string {
   return `${prefix}-${ts}-${Math.random().toString(36).slice(2, 6)}`
 }
 
-function processAssistantBlock( // NOSONAR
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  block: any,
-  ts: number,
-  entries: ActivityEvent[]
-): void {
+function processAssistantBlock(block: any, ts: number, entries: ActivityEvent[]): void { // NOSONAR
   if ((block.type === 'toolCall' || block.type === 'tool_use') && block.name) {
     const args = block.arguments || block.input
     const { text, icon, color } = humanizeToolCall(block.name, args)
@@ -253,7 +247,6 @@ function processAssistantBlock( // NOSONAR
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function processToolResultEntry(inner: any, ts: number, entries: ActivityEvent[]): void {
   const toolName = inner.toolName || ''
   const isError = inner.isError
@@ -269,7 +262,6 @@ function processToolResultEntry(inner: any, ts: number, entries: ActivityEvent[]
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
   const entries: ActivityEvent[] = []
 

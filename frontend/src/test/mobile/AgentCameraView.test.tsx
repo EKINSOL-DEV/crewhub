@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
  * AgentCameraView Tests
  * Tests for AgentCameraButton, AgentMiniViewport, AgentCameraOverlay

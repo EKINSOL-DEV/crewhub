@@ -187,7 +187,7 @@ class TestMultiPassGeneratorNight3:
         result, _ = self.gen._apply_polish(code)
         # Should NOT add flatShading to a material that already has emissive
         # (the regex only matches materials WITHOUT emissive)
-        lines_with_flat = [l for l in result.split("\n") if "flatShading" in l and "emissive" in l]
+        lines_with_flat = [line for line in result.split("\n") if "flatShading" in line and "emissive" in line]
         assert len(lines_with_flat) == 0
 
     def test_validate_3_meshes_is_acceptable(self):
@@ -210,15 +210,7 @@ class TestMultiPassGeneratorNight3:
         is False. Then the elif fires if fiber is also missing.
         """
         # useFrame appears before any import statement, AND @react-three/fiber is absent
-        code = (
-            "// useFrame is referenced here before imports\n"
-            "// const fn = useFrame  -- triggering text\n"
-            "import { useRef } from 'react'\n"
-            "export function X() {\n"
-            "  return (<group>" + "<mesh>\n<boxGeometry/></mesh>\n" * 5 + "</group>)\n}"
-        )
-        # This code does NOT have useFrame in it so we won't hit line 240 this way.
-        # Instead, build code where useFrame IS present, BEFORE the import token
+        # Build code where useFrame IS present, BEFORE the import token
         code2 = (
             "useFrame is mentioned here\n"
             "import { useRef } from 'react'\n"

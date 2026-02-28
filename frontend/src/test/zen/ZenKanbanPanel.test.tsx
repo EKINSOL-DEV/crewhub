@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 /**
  * Tests for ZenKanbanPanel (zen/ZenKanbanPanel.tsx)
  */

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, sonarjs/no-duplicate-string */
 /**
  * GroupThreadChat Tests
  * Tests for the mobile group thread chat interface

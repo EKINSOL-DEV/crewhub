@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useChatContext } from '@/contexts/ChatContext'

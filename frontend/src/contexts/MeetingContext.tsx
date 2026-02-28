@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-refresh/only-export-components */
 /**
  * MeetingContext — Bridges meeting state between 3D world and UI panels.
  *

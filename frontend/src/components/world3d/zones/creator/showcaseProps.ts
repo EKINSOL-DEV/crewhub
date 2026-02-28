@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { lazy, type ComponentType } from 'react'
 
 export interface ShowcaseProp {

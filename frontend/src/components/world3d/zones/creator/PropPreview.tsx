@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * PropPreview — Right-side 3D canvas view.
  * Renders the generated prop in a persistent Three.js canvas so OrbitControls

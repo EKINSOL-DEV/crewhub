@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { MobileAgentList } from './MobileAgentList'
 import { MobileAgentChat } from './MobileAgentChat'

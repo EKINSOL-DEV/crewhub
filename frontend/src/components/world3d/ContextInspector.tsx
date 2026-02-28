@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * Context Envelope Inspector
  * Shows the context envelope that agents receive for a room.

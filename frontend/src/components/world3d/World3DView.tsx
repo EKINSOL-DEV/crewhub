@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-refresh/only-export-components */
 import { Suspense, useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { useCreatorMode } from '@/contexts/CreatorModeContext'

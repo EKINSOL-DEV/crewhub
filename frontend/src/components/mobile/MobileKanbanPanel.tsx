@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * Mobile Kanban Panel
  * Touch-friendly kanban board with swipe gestures

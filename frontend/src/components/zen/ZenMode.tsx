@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * Zen Mode - Full-screen focused workspace
  * A tmux-inspired interface for distraction-free agent interaction

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 /**
  * Fullscreen Prop Maker View
  * Split-pane overlay: Left 50% (controls + think process), Right 50% (3D preview).

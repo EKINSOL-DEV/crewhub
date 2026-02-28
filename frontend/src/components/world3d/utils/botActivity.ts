@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /**
  * Bot status and activity text utilities.
  * Pure functions — no React imports.

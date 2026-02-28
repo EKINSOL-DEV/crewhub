@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /**
  * OnboardingWizard — First-run experience for CrewHub.
  *

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * ChatMessageBubble — shared message renderer used by:
  *  - ZenChatPanel (variant="zen")

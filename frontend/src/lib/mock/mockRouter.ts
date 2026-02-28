@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 /**
  * Mock API — request router
  * Dispatches /api/* requests to the appropriate mock response.

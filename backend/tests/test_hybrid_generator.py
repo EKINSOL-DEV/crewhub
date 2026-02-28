@@ -126,7 +126,7 @@ class TestLoadTemplate:
         (props_dir / "CoffeeMachine.tsx").write_text(template_content)
 
         # Monkeypatch Path resolution
-        original_load = self.gen._load_template
+        # original_load removed (was unused)
 
         def mock_load(tid):
             comp_name = TEMPLATE_BASES.get(tid)

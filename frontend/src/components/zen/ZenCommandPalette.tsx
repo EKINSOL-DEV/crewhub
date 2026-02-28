@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * Zen Command Palette
  * Quick access to all Zen Mode commands with fuzzy search

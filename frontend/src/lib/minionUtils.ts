@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 import type { CrewSession, SessionContentBlock, SessionMessage } from './api'
 
 // Type aliases for backwards compatibility

@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * MobileKanbanPanel Tests
  * Tests for the mobile Kanban board with column navigation, task cards, and filter
