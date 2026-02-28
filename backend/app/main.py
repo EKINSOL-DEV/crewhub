@@ -202,6 +202,28 @@ async def load_connections_from_db():
                 )
             except Exception as e:
                 logger.error(f"Failed to create default OpenClaw connection: {e}")
+
+    # Auto-register Claude Code connection if CLI is available
+    import shutil
+    from pathlib import Path
+
+    claude_cli = shutil.which("claude")
+    claude_dir = Path.home() / ".claude"
+    if claude_cli and claude_dir.exists():
+        # Check if a claude_code connection already exists
+        existing = [c for c in manager.get_all_connections() if c.connection_type.value == "claude_code"]
+        if not existing:
+            logger.info(f"Claude Code CLI detected at {claude_cli} — auto-registering connection")
+            try:
+                await manager.add_connection(
+                    connection_id="auto-claude-code",
+                    connection_type="claude_code",
+                    config={"cli_path": claude_cli, "data_dir": str(claude_dir)},
+                    name="Claude Code (auto)",
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to auto-register Claude Code: {e}")
         else:
             logger.info("No OpenClaw connections in DB and no env credentials — skipping default connection")
 
