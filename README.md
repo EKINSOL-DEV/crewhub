@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/version-v0.19.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.19.5-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -35,7 +35,20 @@ But CrewHub isn't just another dashboard. Your agents come alive in a **fully in
 
 ---
 
-## 🆕 What's New in v0.19.0
+## 🆕 What's New in v0.19.5
+
+- **Subagent responses surfaced** — When a Claude Code agent spawns a helper, its output now appears in chat, clearly labeled.
+- **Human-readable tool activity** — 3D bots, chat headers, and zen mode now show what the agent is actually doing ("Reading config.py", "Running: npm test") instead of a generic "Using tools..." message.
+- **Interleaved tool calls in chat** — Tool chips and text appear in the correct order during streaming and in history, not grouped above a text blob.
+- **Smarter pathfinding** — Agents use A-star patrol waypoints, bot-to-bot soft repulsion, and grid-aware spawning. No more clustering near walls or stacking on the same tile.
+- **Activity status persists across reloads** — Sessions render with their last known activity detail instantly on page load, before the first SSE update.
+- **CC agents in any room** — Claude Code agents can now be assigned to any room. Offline CC agents are visible in their room. Subagent room inheritance fixed.
+- **Pin multiple agents to the top bar** — Previously only one agent could be pinned at a time.
+- **Agent creation in Room panel** — New "+" button in the Room panel creates agents pre-filled with that room.
+
+---
+
+## What's New in v0.19.0
 
 - **Native Claude Code support** — Connect CrewHub directly to Claude Code sessions without OpenClaw. Watches `~/.claude/projects/*/` JSONL files in real-time.
 - **New onboarding wizard** — Choose your connection mode: OpenClaw, Claude Code, or both.
