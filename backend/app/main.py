@@ -216,6 +216,7 @@ async def load_connections_from_db():
         already_onboarded = False
         try:
             from app.db.database import get_db
+
             async with get_db() as db:
                 async with db.execute("SELECT value FROM settings WHERE key = 'crewhub-onboarded'") as cur:
                     row = await cur.fetchone()
@@ -229,8 +230,9 @@ async def load_connections_from_db():
             try:
                 import json as _json
                 import time as _time
-                import uuid as _uuid
+
                 from app.db.database import get_db
+
                 conn_id = "auto-claude-code"
                 now = int(_time.time() * 1000)
                 config = {"cli_path": claude_cli or "", "data_dir": str(claude_dir)}

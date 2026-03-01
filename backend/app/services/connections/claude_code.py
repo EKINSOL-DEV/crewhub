@@ -46,7 +46,7 @@ def _extract_timestamp(ev: ParsedEvent) -> Optional[int]:
         return None
     if isinstance(ts, str):
         try:
-            from datetime import UTC, datetime
+            from datetime import datetime
 
             dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
             return int(dt.timestamp() * 1000)
@@ -205,9 +205,7 @@ class ClaudeCodeConnection(AgentConnection):
                     )
                 )
             elif isinstance(ev, UserMessageEvent):
-                messages.append(
-                    HistoryMessage(role="user", content=ev.content, timestamp=ts)
-                )
+                messages.append(HistoryMessage(role="user", content=ev.content, timestamp=ts))
             elif isinstance(ev, ThinkingEvent):
                 messages.append(
                     HistoryMessage(

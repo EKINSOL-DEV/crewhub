@@ -338,6 +338,7 @@ export function useSessionsStream(enabled: boolean = true) {
     const unsubscribeUpdated = sseManager.subscribe('session-updated', handleSessionUpdated)
     const unsubscribeRemoved = sseManager.subscribe('session-removed', handleSessionRemoved)
 
+    const pendingUpdates = pendingUpdatesRef.current
     return () => {
       unsubscribeRefresh()
       unsubscribeCreated()
@@ -347,7 +348,7 @@ export function useSessionsStream(enabled: boolean = true) {
         clearTimeout(sessionUpdateThrottleRef.current)
         sessionUpdateThrottleRef.current = null
       }
-      pendingUpdatesRef.current.clear()
+      pendingUpdates.clear()
     }
   }, [enabled])
 

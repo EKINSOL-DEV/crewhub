@@ -519,17 +519,17 @@ async def _stream_via_claude_code(
                     elif bt == "tool_use":
                         tool_name = block.get("name", "unknown")
                         tool_input = block.get("input", {})
-                        tool_calls_collected.append(
-                            {"name": tool_name, "input": str(tool_input)[:500]}
+                        tool_calls_collected.append({"name": tool_name, "input": str(tool_input)[:500]})
+                        queue.put_nowait(
+                            (
+                                "tool",
+                                {
+                                    "name": tool_name,
+                                    "input": str(tool_input)[:200],
+                                    "message": f"🔧 Using tool: {tool_name}",
+                                },
+                            )
                         )
-                        queue.put_nowait((
-                            "tool",
-                            {
-                                "name": tool_name,
-                                "input": str(tool_input)[:200],
-                                "message": f"🔧 Using tool: {tool_name}",
-                            },
-                        ))
             elif isinstance(content, str) and content:
                 raw_text_parts.append(content)
                 queue.put_nowait(("text", {"text": content[:200]}))
@@ -553,7 +553,7 @@ async def _stream_via_claude_code(
             if isinstance(result_text, str) and result_text:
                 final_text = result_text
 
-    yield _sse_event("status", {"message": f"🤖 Spawning Claude Code for: \"{prompt}\"...", "phase": "start"})
+    yield _sse_event("status", {"message": f'🤖 Spawning Claude Code for: "{prompt}"...', "phase": "start"})
     model_id, _ = resolve_model(model_key)
     yield _sse_event("model", {"model": model_key, "modelLabel": model_label, "modelId": model_id})
     yield _sse_event("full_prompt", {"prompt": full_prompt})
@@ -625,8 +625,15 @@ async def _stream_via_claude_code(
         code = generate_template_code(name, prompt)
         parts = extract_parts(prompt)
         record = _template_record(
-            gen_id, prompt, name, model_key, model_label, full_prompt,
-            parts, code, "No AI response from Claude Code",
+            gen_id,
+            prompt,
+            name,
+            model_key,
+            model_label,
+            full_prompt,
+            parts,
+            code,
+            "No AI response from Claude Code",
             extra_diags=["No CC result, used template"],
         )
         add_generation_record(record)
@@ -643,8 +650,15 @@ async def _stream_via_claude_code(
         code = generate_template_code(name, prompt)
         parts = extract_parts(prompt)
         record = _template_record(
-            gen_id, prompt, name, model_key, model_label, full_prompt,
-            parts, code, "AI output validation failed",
+            gen_id,
+            prompt,
+            name,
+            model_key,
+            model_label,
+            full_prompt,
+            parts,
+            code,
+            "AI output validation failed",
             extra_diags=["CC output invalid, used template"],
             extra_tool_calls=tool_calls_collected,
         )
@@ -679,9 +693,19 @@ async def _stream_via_claude_code(
 
     add_generation_record(
         _ai_success_record(
-            gen_id, prompt, name, model_key, model_label, full_prompt,
-            tool_calls_collected, corrections_collected, diagnostics_collected,
-            parts, code, pp_result.quality_score, validation,
+            gen_id,
+            prompt,
+            name,
+            model_key,
+            model_label,
+            full_prompt,
+            tool_calls_collected,
+            corrections_collected,
+            diagnostics_collected,
+            parts,
+            code,
+            pp_result.quality_score,
+            validation,
         )
     )
 

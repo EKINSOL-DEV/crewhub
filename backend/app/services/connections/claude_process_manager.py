@@ -248,9 +248,7 @@ class ClaudeProcessManager:
                 stderr_bytes = await cp.proc.stderr.read()
                 stderr_text = stderr_bytes.decode("utf-8", errors="replace").strip()
                 if stderr_text:
-                    logger.error(
-                        "Claude process %s stderr: %s", process_id, stderr_text[:500]
-                    )
+                    logger.error("Claude process %s stderr: %s", process_id, stderr_text[:500])
 
             logger.info(
                 "Claude process %s finished with code %d",

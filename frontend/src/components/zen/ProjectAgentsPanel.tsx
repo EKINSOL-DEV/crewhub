@@ -6,6 +6,10 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const API = '/api/rooms'
+const ZEN_BORDER = '1px solid var(--zen-border)'
+const ZEN_FG_MUTED = 'var(--zen-fg-muted)'
+const ZEN_FG = 'var(--zen-fg)'
+const ZEN_BG = 'var(--zen-bg)'
 
 interface ProjectAgent {
   id: string
@@ -91,7 +95,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
   return (
     <div
       className="zen-agents-panel"
-      style={{ borderTop: '1px solid var(--zen-border)', padding: '8px 12px' }}
+      style={{ borderTop: ZEN_BORDER, padding: '8px 12px' }}
     >
       <div
         style={{
@@ -101,7 +105,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
           marginBottom: 6,
         }}
       >
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--zen-fg-muted)' }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: ZEN_FG_MUTED }}>
           🤖 Agents
         </span>
         <button
@@ -112,7 +116,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
             borderRadius: 4,
             background: 'var(--zen-bg-hover)',
             border: 'none',
-            color: 'var(--zen-fg)',
+            color: ZEN_FG,
             cursor: 'pointer',
           }}
         >
@@ -130,9 +134,9 @@ export function ProjectAgentsPanel({ roomId }: Props) {
               fontSize: 12,
               padding: '4px 6px',
               borderRadius: 4,
-              border: '1px solid var(--zen-border)',
-              background: 'var(--zen-bg)',
-              color: 'var(--zen-fg)',
+              border: ZEN_BORDER,
+              background: ZEN_BG,
+              color: ZEN_FG,
             }}
           />
           <input
@@ -143,9 +147,9 @@ export function ProjectAgentsPanel({ roomId }: Props) {
               fontSize: 12,
               padding: '4px 6px',
               borderRadius: 4,
-              border: '1px solid var(--zen-border)',
-              background: 'var(--zen-bg)',
-              color: 'var(--zen-fg)',
+              border: ZEN_BORDER,
+              background: ZEN_BG,
+              color: ZEN_FG,
             }}
           />
           <textarea
@@ -157,9 +161,9 @@ export function ProjectAgentsPanel({ roomId }: Props) {
               fontSize: 12,
               padding: '4px 6px',
               borderRadius: 4,
-              border: '1px solid var(--zen-border)',
-              background: 'var(--zen-bg)',
-              color: 'var(--zen-fg)',
+              border: ZEN_BORDER,
+              background: ZEN_BG,
+              color: ZEN_FG,
               resize: 'vertical',
             }}
           />
@@ -181,7 +185,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
       )}
 
       {agents.length === 0 && !showForm && (
-        <div style={{ fontSize: 11, color: 'var(--zen-fg-muted)', padding: '4px 0' }}>
+        <div style={{ fontSize: 11, color: ZEN_FG_MUTED, padding: '4px 0' }}>
           No agent templates defined
         </div>
       )}
@@ -202,7 +206,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
             <div
               style={{
                 fontSize: 10,
-                color: 'var(--zen-fg-muted)',
+                color: ZEN_FG_MUTED,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -237,7 +241,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
                 borderRadius: 4,
                 background: 'var(--zen-bg-hover)',
                 border: 'none',
-                color: 'var(--zen-fg-muted)',
+                color: ZEN_FG_MUTED,
                 cursor: 'pointer',
               }}
             >

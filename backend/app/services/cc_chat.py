@@ -8,7 +8,8 @@ yields text deltas that the chat route wraps in SSE events.
 import asyncio
 import json
 import logging
-from typing import AsyncGenerator, Optional
+from collections.abc import AsyncGenerator
+from typing import Optional
 
 from app.db.database import get_db
 
@@ -173,9 +174,7 @@ async def send_cc_blocking(agent_id: str, message: str) -> str:
 # ── Discovered session helpers ────────────────────────────────────
 
 
-async def stream_cc_discovered_response(
-    session_id: str, project_path: str, message: str
-) -> AsyncGenerator[str, None]:
+async def stream_cc_discovered_response(session_id: str, project_path: str, message: str) -> AsyncGenerator[str, None]:
     """Stream response for a discovered (non-agent) CC session."""
     pm = _get_process_manager()
     queue: asyncio.Queue[Optional[str]] = asyncio.Queue()

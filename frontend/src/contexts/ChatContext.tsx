@@ -27,7 +27,13 @@ export interface ChatWindowState {
 
 export interface ChatContextValue {
   windows: ChatWindowState[]
-  openChat: (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string, kind?: string) => void
+  openChat: (
+    sessionKey: string,
+    agentName: string,
+    agentIcon?: string,
+    agentColor?: string,
+    kind?: string
+  ) => void
   closeChat: (sessionKey: string) => void
   minimizeChat: (sessionKey: string) => void
   restoreChat: (sessionKey: string) => void
@@ -157,7 +163,13 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, [windows])
 
   const openChat = useCallback(
-    (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string, kind?: string) => {
+    (
+      sessionKey: string,
+      agentName: string,
+      agentIcon?: string,
+      agentColor?: string,
+      kind?: string
+    ) => {
       // Don't allow chat for subagents
       if (kind === 'subagent') return
       // Only allow chat for eligible sessions

@@ -66,9 +66,7 @@ async def _get_agent_source(agent_id: str, session_key: str = "") -> str:
         from app.db.database import get_db
 
         async with get_db() as db:
-            async with db.execute(
-                "SELECT source FROM agents WHERE id = ?", (agent_id,)
-            ) as cursor:
+            async with db.execute("SELECT source FROM agents WHERE id = ?", (agent_id,)) as cursor:
                 row = await cursor.fetchone()
                 if row and "source" in row.keys():
                     return row["source"]
@@ -379,12 +377,14 @@ def _group_cc_history(history_msgs: list, raw: bool) -> list[dict]:
             # Tool result — attach to the current assistant turn
             tool_use_id = meta.get("tool_use_id", "")
             tool_name = tool_id_to_name.get(tool_use_id, "tool")
-            pending_blocks.append({
-                "type": "tool_result",
-                "toolName": tool_name,
-                "content": hm.content,
-                "isError": meta.get("is_error", False),
-            })
+            pending_blocks.append(
+                {
+                    "type": "tool_result",
+                    "toolName": tool_name,
+                    "content": hm.content,
+                    "isError": meta.get("is_error", False),
+                }
+            )
 
     flush()
     return results
@@ -483,7 +483,12 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
             session_id = session_key[7:]
             project_path = await _get_discovered_project_path(session_id)
             if not project_path:
-                return {"response": None, "tokens": 0, "success": False, "error": "Cannot resolve project path for discovered session"}
+                return {
+                    "response": None,
+                    "tokens": 0,
+                    "success": False,
+                    "error": "Cannot resolve project path for discovered session",
+                }
             try:
                 from app.services.cc_chat import send_cc_discovered_blocking
 
@@ -517,7 +522,9 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
                         ctx_room_id = row["default_room_id"]
 
             if ctx_room_id:
-                envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
+                envelope = await build_crewhub_context(
+                    room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key
+                )
                 if envelope:
                     message = format_context_block(envelope) + CREWHUB_MSG_SEP + message
         except Exception as e:
@@ -717,9 +724,7 @@ async def get_chat_info(session_key: str):
             from app.db.database import get_db
 
             async with get_db() as db:
-                async with db.execute(
-                    "SELECT name FROM agents WHERE id = ?", (agent_id,)
-                ) as cursor:
+                async with db.execute("SELECT name FROM agents WHERE id = ?", (agent_id,)) as cursor:
                     row = await cursor.fetchone()
                     agent_name = row["name"] if row else agent_id.capitalize()
         except Exception:

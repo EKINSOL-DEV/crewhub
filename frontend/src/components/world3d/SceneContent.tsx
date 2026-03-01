@@ -207,6 +207,43 @@ export function SceneContent({
     return { key: session.key, session, status, config, name, scale, activity, isActive }
   }
 
+  const placeOfflineAgent = (
+    runtime: AgentRuntime,
+    roomBots: Map<string, BotPlacement[]>,
+    placedKeys: Set<string>,
+    fallbackRoom: string
+  ) => {
+    // CC agents without an active session still appear as offline bots
+    const agentKey = runtime.agent.agent_session_key || `cc:${runtime.agent.id}`
+    const syntheticSession: CrewSession = {
+      key: agentKey,
+      kind: 'agent',
+      channel: 'claude_code',
+      sessionId: runtime.agent.id,
+      updatedAt: runtime.agent.updated_at || 0,
+      label: runtime.agent.name,
+      source: 'claude_code',
+    }
+    const roomId =
+      getRoomForSession(agentKey, { label: runtime.agent.name }) ||
+      runtime.agent.default_room_id ||
+      fallbackRoom
+    const config = getBotConfigFromSession(agentKey, runtime.agent.name, runtime.agent.color)
+    const placement: BotPlacement = {
+      key: agentKey,
+      session: syntheticSession,
+      status: 'sleeping' as BotStatus,
+      config,
+      name: runtime.agent.name,
+      scale: 1,
+      activity: 'Waiting for a task...',
+      isActive: false,
+    }
+    const target = roomBots.has(roomId) ? roomId : fallbackRoom
+    roomBots.get(target)?.push(placement)
+    placedKeys.add(agentKey)
+  }
+
   const { roomBots, parkingBots } = useMemo(() => {
     const roomBots = new Map<string, BotPlacement[]>()
     const parkingBots: BotPlacement[] = []
@@ -218,9 +255,8 @@ export function SceneContent({
 
     const placeBot = (session: CrewSession, roomId: string, placement: BotPlacement) => {
       const target = roomBots.has(roomId) ? roomId : fallbackRoom
-      const targetList = roomBots.get(target)
-      if (targetList) targetList.push(placement)
-      else roomBots.get(fallbackRoom)?.push(placement)
+      const targetList = roomBots.get(target) ?? roomBots.get(fallbackRoom)
+      targetList?.push(placement)
       placedKeys.add(session.key)
     }
 
@@ -241,32 +277,7 @@ export function SceneContent({
           buildBotPlacement(runtime.session, runtime)
         )
       } else if (!runtime.session && runtime.agent.source === 'claude_code') {
-        // CC agents without an active session still appear as offline bots
-        const agentKey = runtime.agent.agent_session_key || `cc:${runtime.agent.id}`
-        const syntheticSession: CrewSession = {
-          key: agentKey,
-          kind: 'agent',
-          channel: 'claude_code',
-          sessionId: runtime.agent.id,
-          updatedAt: runtime.agent.updated_at || 0,
-          label: runtime.agent.name,
-          source: 'claude_code',
-        }
-        const roomId = getRoomForSession(agentKey, { label: runtime.agent.name }) || runtime.agent.default_room_id || fallbackRoom
-        const config = getBotConfigFromSession(agentKey, runtime.agent.name, runtime.agent.color)
-        const placement: BotPlacement = {
-          key: agentKey,
-          session: syntheticSession,
-          status: 'sleeping' as BotStatus,
-          config,
-          name: runtime.agent.name,
-          scale: 1,
-          activity: 'Waiting for a task...',
-          isActive: false,
-        }
-        const target = roomBots.has(roomId) ? roomId : fallbackRoom
-        roomBots.get(target)?.push(placement)
-        placedKeys.add(agentKey)
+        placeOfflineAgent(runtime, roomBots, placedKeys, fallbackRoom)
       }
       for (const child of runtime.childSessions) {
         if (!placedKeys.has(child.key) && visibleKeys.has(child.key)) {

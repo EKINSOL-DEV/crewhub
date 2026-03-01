@@ -932,7 +932,8 @@ export function AgentTopBar({
   // Hidden in first-person and bot-focus modes
   if (state.level === 'firstperson' || state.level === 'bot') return null
   // Hide when there are no sessions at all (no agents to show)
-  if (!bossSession && fixedAgents.length === 0 && recentSubagents.length === 0 && !pinnedSession) return null
+  if (!bossSession && fixedAgents.length === 0 && recentSubagents.length === 0 && !pinnedSession)
+    return null
 
   return (
     <div

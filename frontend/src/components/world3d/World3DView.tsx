@@ -612,8 +612,9 @@ function World3DViewInner({
                 }
                 botConfig={focusedBotConfig}
                 canChat={
-                  /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+|claude:[a-zA-Z0-9_-]+)$/.test(focusedSession.key)
-                  && focusedSession.kind !== 'subagent'
+                  /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+|claude:[a-zA-Z0-9_-]+)$/.test(
+                    focusedSession.key
+                  ) && focusedSession.kind !== 'subagent'
                 }
                 onOpenLog={(session) => {
                   setSelectedSession(session)
