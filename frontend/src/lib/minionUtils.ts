@@ -401,7 +401,7 @@ function isWithinAnnouncementRoutingGrace(
 }
 
 function isFixedAgent(key: string): boolean {
-  return /^agent:[a-zA-Z0-9_-]+:main$/.test(key)
+  return /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$/.test(key)
 }
 
 function hasTerminalStatus(status: string | undefined): boolean {
@@ -437,7 +437,11 @@ export function shouldBeInParkingLane(
   // so any session present here is recent enough to display.
   if (session.key.startsWith('claude:')) {
     if (session.status && CC_BUSY_STATUSES.has(session.status)) return false
-    // waiting_input / idle: park only after the sleeping threshold (30 min)
+    // CC subagents park quickly (2 min) like OpenClaw subagents
+    if (session.kind === 'subagent') {
+      return getIdleTimeSeconds(session) > idleThresholdSeconds
+    }
+    // Top-level CC sessions: park only after the sleeping threshold (30 min)
     return getIdleTimeSeconds(session) > SESSION_CONFIG.statusSleepingThresholdMs / 1000
   }
 

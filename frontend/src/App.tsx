@@ -223,6 +223,13 @@ function AppContent() {
     connectionMethod,
     refresh,
   } = useSessionsStream(true)
+  // Grace period: suppress "No Connection" for 2s after mount to let SSE connect
+  const [initialGrace, setInitialGrace] = useState(true)
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialGrace(false), 2000)
+    return () => clearTimeout(timer)
+  }, [])
+
   const { isDemoMode, demoSessions } = useDemoMode()
   const { windows } = useChatContext()
   const { rooms, getRoomForSession } = useRoomsContext()
@@ -477,11 +484,11 @@ function AppContent() {
         <ErrorBoundary>
           <div className="flex-1 overflow-hidden flex flex-col">
             {activeTab === 'active' &&
-              (!connected && !loading ? (
+              (!connected ? (
                 <NoConnectionView
                   connected={connected}
-                  loading={loading}
-                  error={error}
+                  loading={loading || initialGrace}
+                  error={initialGrace ? null : error}
                   onRetry={refresh}
                   onOpenConnections={openConnectionsSettings}
                 />
@@ -504,8 +511,8 @@ function AppContent() {
               (sessions.length === 0 ? (
                 <NoConnectionView
                   connected={connected}
-                  loading={loading}
-                  error={error}
+                  loading={loading || initialGrace}
+                  error={initialGrace ? null : error}
                   onRetry={refresh}
                   onOpenConnections={openConnectionsSettings}
                 />

@@ -44,6 +44,8 @@ class WatchedSession:
     active_subagents: dict = field(default_factory=dict)
     has_pending_tools: bool = False
     project_name: Optional[str] = None
+    is_subagent: bool = False
+    project_path: Optional[str] = None
 
 
 class ClaudeSessionWatcher:
@@ -123,15 +125,18 @@ class ClaudeSessionWatcher:
             return []
         return [d for d in self.projects_dir.iterdir() if d.is_dir()]
 
-    def discover_sessions(self, project_dir: Path) -> list[tuple[str, Path]]:
-        """Discover JSONL session files. Supports old (flat) and new (nested UUID dir) formats."""
-        sessions = []
+    def discover_sessions(self, project_dir: Path) -> list[tuple[str, Path, bool]]:
+        """Discover JSONL session files. Supports old (flat) and new (nested UUID dir) formats.
+
+        Returns list of (session_id, jsonl_path, is_subagent) tuples.
+        """
+        sessions: list[tuple[str, Path, bool]] = []
         try:
             for entry in os.scandir(project_dir):
                 if entry.is_file() and entry.name.endswith(".jsonl"):
                     # Old format: <project>/<session-id>.jsonl
                     session_id = entry.name[:-6]
-                    sessions.append((session_id, Path(entry.path)))
+                    sessions.append((session_id, Path(entry.path), False))
                 elif entry.is_dir():
                     # New format: <project>/<session-uuid>/
                     session_uuid = entry.name
@@ -145,7 +150,7 @@ class ClaudeSessionWatcher:
         self,
         session_uuid: str,
         session_dir: Path,
-        sessions: list[tuple[str, Path]],
+        sessions: list[tuple[str, Path, bool]],
     ) -> None:
         """Scan a session UUID directory for JSONL files (direct + subagents/)."""
         try:
@@ -153,14 +158,14 @@ class ClaudeSessionWatcher:
                 if entry.is_file() and entry.name.endswith(".jsonl"):
                     stem = entry.name[:-6]
                     session_id = f"{session_uuid[:8]}-{stem}" if stem != session_uuid else session_uuid
-                    sessions.append((session_id, Path(entry.path)))
+                    sessions.append((session_id, Path(entry.path), False))
                 elif entry.is_dir() and entry.name == "subagents":
                     try:
                         for sub_entry in os.scandir(entry.path):
                             if sub_entry.is_file() and sub_entry.name.endswith(".jsonl"):
                                 stem = sub_entry.name[:-6]
                                 session_id = f"{session_uuid[:8]}-{stem}"
-                                sessions.append((session_id, Path(sub_entry.path)))
+                                sessions.append((session_id, Path(sub_entry.path), True))
                     except OSError:
                         pass
         except OSError:
@@ -208,7 +213,7 @@ class ClaudeSessionWatcher:
             pass
         return 0.0
 
-    def watch_session(self, session_id: str, jsonl_path: Path):
+    def watch_session(self, session_id: str, jsonl_path: Path, is_subagent: bool = False):
         if session_id not in self._watched:
             offset = jsonl_path.stat().st_size if jsonl_path.exists() else 0
             wall_time = self._peek_last_timestamp(jsonl_path) if jsonl_path.exists() else 0.0
@@ -218,6 +223,7 @@ class ClaudeSessionWatcher:
                 file_offset=offset,
                 last_event_time=wall_time,
                 last_event_wall_time=wall_time,
+                is_subagent=is_subagent,
             )
 
     def unwatch_session(self, session_id: str):
@@ -253,11 +259,11 @@ class ClaudeSessionWatcher:
             try:
                 found_new = False
                 for project_dir in self.discover_project_dirs():
-                    for session_id, jsonl_path in self.discover_sessions(project_dir):
+                    for session_id, jsonl_path, is_subagent in self.discover_sessions(project_dir):
                         path_key = str(jsonl_path)
                         if path_key not in self._known_jsonl_files:
                             self._known_jsonl_files.add(path_key)
-                            self.watch_session(session_id, jsonl_path)
+                            self.watch_session(session_id, jsonl_path, is_subagent)
                             found_new = True
                 if found_new and self.on_sessions_changed:
                     self.on_sessions_changed()
@@ -333,6 +339,8 @@ class ClaudeSessionWatcher:
                     ws.last_text_only_time = time.monotonic()
             elif isinstance(event, ProjectContextEvent):
                 ws.project_name = event.project_name
+                if event.cwd:
+                    ws.project_path = event.cwd
             elif isinstance(event, SubAgentProgressEvent):
                 pass
 

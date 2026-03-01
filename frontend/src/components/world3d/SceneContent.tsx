@@ -202,7 +202,7 @@ export function SceneContent({
     const status: BotStatus = meetingParticipantKeys?.has(session.key) ? 'meeting' : baseStatus
     const config = getBotConfigFromSession(session.key, session.label, _runtime?.agent?.color)
     const name = getSessionDisplayName(session, displayNames.get(session.key))
-    const scale = isSubagent(session.key) ? 0.6 : 1
+    const scale = isSubagent(session.key, session.kind) ? 0.6 : 1
     const activity = getActivityText(session, isActive, allSessions)
     return { key: session.key, session, status, config, name, scale, activity, isActive }
   }
@@ -252,7 +252,7 @@ export function SceneContent({
           label: runtime.agent.name,
           source: 'claude_code',
         }
-        const roomId = runtime.agent.default_room_id || fallbackRoom
+        const roomId = getRoomForSession(agentKey, { label: runtime.agent.name }) || runtime.agent.default_room_id || fallbackRoom
         const config = getBotConfigFromSession(agentKey, runtime.agent.name, runtime.agent.color)
         const placement: BotPlacement = {
           key: agentKey,

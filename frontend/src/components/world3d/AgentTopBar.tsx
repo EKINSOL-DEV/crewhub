@@ -443,12 +443,13 @@ function buildFixedAgentEntries( // NOSONAR: agent entry builder with multiple s
       if (session) {
         entries.push(makeEntry(session, helpers))
       } else {
+        const isCC = agent.source === 'claude_code'
         const syntheticSession: CrewSession = {
           key: agentKey,
           sessionId: agentKey,
           kind: 'agent',
-          channel: 'whatsapp',
-          updatedAt: 0,
+          channel: isCC ? 'claude_code' : 'whatsapp',
+          updatedAt: agent.updated_at || 0,
           label: agent.name,
         }
         const roomId = agent.default_room_id || helpers.defaultRoomId || HEADQUARTERS

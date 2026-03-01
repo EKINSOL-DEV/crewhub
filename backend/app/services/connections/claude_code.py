@@ -167,7 +167,8 @@ class ClaudeCodeConnection(AgentConnection):
                     last_activity=last_ms,
                     metadata={
                         "updatedAt": last_ms,
-                        "kind": "session",
+                        "kind": "subagent" if ws.is_subagent else "session",
+                        "projectPath": ws.project_path,
                     },
                 )
             )

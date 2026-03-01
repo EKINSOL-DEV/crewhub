@@ -168,3 +168,74 @@ async def send_cc_blocking(agent_id: str, message: str) -> str:
     async for chunk in stream_cc_response(agent_id, message):
         chunks.append(chunk)
     return "".join(chunks)
+
+
+# ── Discovered session helpers ────────────────────────────────────
+
+
+async def stream_cc_discovered_response(
+    session_id: str, project_path: str, message: str
+) -> AsyncGenerator[str, None]:
+    """Stream response for a discovered (non-agent) CC session."""
+    pm = _get_process_manager()
+    queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
+
+    def on_output(process_id: str, line: str) -> None:
+        try:
+            data = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            return
+        if not isinstance(data, dict):
+            return
+        event_type = data.get("type", "")
+        if event_type == "assistant":
+            content = data.get("message", {}).get("content", [])
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        text = block.get("text", "")
+                        if text:
+                            queue.put_nowait(text)
+            elif isinstance(content, str) and content:
+                queue.put_nowait(content)
+        elif event_type == "content_block_delta":
+            delta = data.get("delta", {})
+            if isinstance(delta, dict) and delta.get("type") == "text_delta":
+                text = delta.get("text", "")
+                if text:
+                    queue.put_nowait(text)
+
+    process_id = await pm.spawn_task(
+        message=message,
+        session_id=session_id,
+        project_path=project_path,
+    )
+    pm.set_process_callback(process_id, on_output)
+
+    try:
+        while True:
+            cp = pm.get_process(process_id)
+            if cp is None:
+                break
+            try:
+                chunk = await asyncio.wait_for(queue.get(), timeout=1.0)
+                if chunk is not None:
+                    yield chunk
+            except TimeoutError:
+                pass
+            if cp.status in ("completed", "error", "killed") and queue.empty():
+                while not queue.empty():
+                    chunk = queue.get_nowait()
+                    if chunk is not None:
+                        yield chunk
+                break
+    finally:
+        pm.remove_process_callback(process_id)
+
+
+async def send_cc_discovered_blocking(session_id: str, project_path: str, message: str) -> str:
+    """Send a message to a discovered CC session and collect the full response."""
+    chunks: list[str] = []
+    async for chunk in stream_cc_discovered_response(session_id, project_path, message):
+        chunks.append(chunk)
+    return "".join(chunks)

@@ -14,6 +14,34 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+# Map user-friendly permission mode names to valid Claude CLI values.
+# CLI accepts: acceptEdits, bypassPermissions, default, dontAsk, plan
+_PERMISSION_MODE_MAP: dict[str, str] = {
+    "full-auto": "bypassPermissions",
+    "full_auto": "bypassPermissions",
+    "auto": "bypassPermissions",
+    "accept-edits": "acceptEdits",
+    "accept_edits": "acceptEdits",
+    "dont-ask": "dontAsk",
+    "dont_ask": "dontAsk",
+    "bypass": "bypassPermissions",
+    "bypass-permissions": "bypassPermissions",
+    "bypass_permissions": "bypassPermissions",
+}
+
+_VALID_PERMISSION_MODES = {"acceptEdits", "bypassPermissions", "default", "dontAsk", "plan"}
+
+
+def _resolve_permission_mode(mode: str) -> str:
+    """Resolve a permission mode string to a valid Claude CLI value."""
+    if mode in _VALID_PERMISSION_MODES:
+        return mode
+    resolved = _PERMISSION_MODE_MAP.get(mode)
+    if resolved:
+        return resolved
+    logger.warning("Unknown permission mode '%s', falling back to 'default'", mode)
+    return "default"
+
 
 @dataclass
 class ClaudeProcess:
@@ -69,7 +97,7 @@ class ClaudeProcessManager:
         """
         process_id = str(uuid.uuid4())
 
-        cmd = [self.cli_path, "--output-format", "stream-json"]
+        cmd = [self.cli_path, "--output-format", "stream-json", "--verbose"]
 
         if session_id:
             cmd.extend(["--resume", session_id])
@@ -77,8 +105,9 @@ class ClaudeProcessManager:
         if model:
             cmd.extend(["--model", model])
 
-        if permission_mode != "default":
-            cmd.extend(["--permission-mode", permission_mode])
+        resolved_mode = _resolve_permission_mode(permission_mode)
+        if resolved_mode != "default":
+            cmd.extend(["--permission-mode", resolved_mode])
 
         cmd.extend(["--print", message])
 
@@ -91,16 +120,21 @@ class ClaudeProcessManager:
         self._processes[process_id] = cp
 
         try:
+            import os
             import time
 
             cp.started_at = time.time()
             cp.status = "running"
+
+            # Strip env vars that prevent nested Claude Code sessions
+            env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=project_path,
+                env=env,
             )
             cp.proc = proc
 
@@ -194,6 +228,16 @@ class ClaudeProcessManager:
             # Process finished
             returncode = await cp.proc.wait()
             cp.status = "completed" if returncode == 0 else "error"
+
+            # Log stderr on failure for debugging
+            if returncode != 0 and cp.proc.stderr:
+                stderr_bytes = await cp.proc.stderr.read()
+                stderr_text = stderr_bytes.decode("utf-8", errors="replace").strip()
+                if stderr_text:
+                    logger.error(
+                        "Claude process %s stderr: %s", process_id, stderr_text[:500]
+                    )
+
             logger.info(
                 "Claude process %s finished with code %d",
                 process_id,

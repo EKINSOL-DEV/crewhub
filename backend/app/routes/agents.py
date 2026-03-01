@@ -54,6 +54,7 @@ class AgentCreate(BaseModel):
     source: Optional[str] = "openclaw"
     project_path: Optional[str] = None
     permission_mode: Optional[str] = "default"
+    initial_session_id: Optional[str] = None
 
 
 # ── Routes ────────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ async def list_agents():
 async def create_agent(payload: AgentCreate):
     """Create a new agent in the local registry."""
     agent_id = payload.id.strip().lower().replace(" ", "-")
-    return await agent_svc.create_agent(
+    result = await agent_svc.create_agent(
         agent_id=agent_id,
         name=payload.name,
         icon=payload.icon or "🤖",
@@ -91,6 +92,17 @@ async def create_agent(payload: AgentCreate):
         project_path=payload.project_path,
         permission_mode=payload.permission_mode or "default",
     )
+
+    # If this is a CC agent with an initial session, seed the session tracker
+    if payload.source == "claude_code" and payload.initial_session_id:
+        try:
+            from app.services.cc_chat import _agent_sessions
+
+            _agent_sessions[agent_id] = payload.initial_session_id
+        except Exception as e:
+            logger.warning(f"Failed to seed CC session for {agent_id}: {e}")
+
+    return result
 
 
 @router.get("/{agent_id}")

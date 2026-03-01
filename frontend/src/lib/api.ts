@@ -18,6 +18,8 @@ export interface CrewSession {
   status?: string
   /** Source connection type: 'openclaw' | 'claude_code' */
   source?: string
+  /** Project path for Claude Code sessions */
+  projectPath?: string
   deliveryContext?: {
     channel?: string
     to?: string

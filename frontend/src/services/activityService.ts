@@ -347,6 +347,33 @@ function parseMessagesToActivityEntries(messages: any[]): ActivityEvent[] {
       }
     }
 
+    // Claude Code standardized format: content is a string, not array
+    if (typeof content === 'string' && content.trim()) {
+      const preview = content.slice(0, 150).replaceAll('\n', ' ')
+      if (role === 'assistant') {
+        entries.push({
+          id: makeId('msg', ts),
+          timestamp: ts,
+          sessionKey: '',
+          description: preview + (content.length > 150 ? '…' : ''),
+          type: 'message',
+          icon: '💭',
+          color: '#374151',
+        })
+      } else if (role === 'user') {
+        entries.push({
+          id: makeId('msg', ts),
+          timestamp: ts,
+          sessionKey: '',
+          description: preview + (content.length > 150 ? '…' : ''),
+          type: 'message',
+          icon: '👤',
+          color: '#6b7280',
+        })
+      }
+      continue
+    }
+
     if (!content || !Array.isArray(content)) continue
 
     if (role === 'assistant') {

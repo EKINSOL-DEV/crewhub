@@ -296,7 +296,7 @@ function World3DViewInner({
   }
 
   // ── Derived session/bot data ──────────────────────────────────
-  const allSessions = useMemo(
+  const baseSessions = useMemo(
     () => [...visibleSessions, ...parkingSessions],
     [visibleSessions, parkingSessions]
   )
@@ -305,6 +305,32 @@ function World3DViewInner({
     () => boardTasks.filter((t) => t.status === 'in_progress' || t.status === 'review').length,
     [boardTasks]
   )
+
+  // Agent runtimes (fetches agents from API, matches with sessions)
+  const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(baseSessions)
+
+  // Expand session list with synthetic entries for CC agents without active sessions
+  const allSessions = useMemo(() => {
+    const combined = [...baseSessions]
+    const existingKeys = new Set(combined.map((s) => s.key))
+    for (const runtime of agentRuntimesForPanel) {
+      if (runtime.agent.source === 'claude_code' && !runtime.session) {
+        const key = runtime.agent.agent_session_key || `cc:${runtime.agent.id}`
+        if (!existingKeys.has(key)) {
+          combined.push({
+            key,
+            sessionId: runtime.agent.id,
+            kind: 'agent',
+            channel: 'claude_code',
+            updatedAt: runtime.agent.updated_at || 0,
+            label: runtime.agent.name,
+            source: 'claude_code',
+          } as CrewSession)
+        }
+      }
+    }
+    return combined
+  }, [baseSessions, agentRuntimesForPanel])
 
   const focusedSession = useMemo(
     () =>
@@ -322,8 +348,6 @@ function World3DViewInner({
     if (!focusedSession) return 'offline' as const
     return getAccurateBotStatus(focusedSession, isActivelyRunning(focusedSession.key), allSessions)
   }, [focusedSession, isActivelyRunning, allSessions])
-
-  const { agents: agentRuntimesForPanel, refresh: refreshAgents } = useAgentsRegistry(allSessions)
   const focusedBotRuntime = useMemo(() => {
     if (!focusedSession) return null
     return (
@@ -369,7 +393,20 @@ function World3DViewInner({
     [focusBot, focusState.focusedRoomId]
   )
 
-  const handleBotClick = (_session: CrewSession) => {}
+  const handleBotClick = useCallback(
+    (session: CrewSession) => {
+      const roomId =
+        getRoomForSession(session.key, {
+          label: session.label,
+          model: session.model,
+          channel: session.lastChannel || session.channel,
+        }) ||
+        rooms[0]?.id ||
+        'headquarters'
+      focusBot(session.key, roomId)
+    },
+    [getRoomForSession, rooms, focusBot]
+  )
 
   const isNotFirstPerson = focusState.level !== 'firstperson'
 
@@ -574,7 +611,10 @@ function World3DViewInner({
                   getSessionDisplayName(focusedSession, null)
                 }
                 botConfig={focusedBotConfig}
-                canChat={/^agent:[a-zA-Z0-9_-]+:main$/.test(focusedSession.key)}
+                canChat={
+                  /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+|claude:[a-zA-Z0-9_-]+)$/.test(focusedSession.key)
+                  && focusedSession.kind !== 'subagent'
+                }
                 onOpenLog={(session) => {
                   setSelectedSession(session)
                   setLogViewerOpen(true)

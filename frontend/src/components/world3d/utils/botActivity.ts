@@ -20,6 +20,8 @@ export function getAccurateBotStatus(
     const status = session.status
     if (status === 'responding' || status === 'tool_use' || status === 'waiting_permission') return 'active'
     if (status === 'waiting_input') return 'idle'
+    // Synthetic session (no watcher data) — show idle, not offline
+    if (!status) return 'idle'
     // idle/unknown: age-based
     const idleMs = Date.now() - session.updatedAt
     if (idleMs < SESSION_CONFIG.botSleepingThresholdMs) return 'sleeping'

@@ -21,7 +21,7 @@ router = APIRouter(tags=["chat"])
 
 # ── Validation ──────────────────────────────────────────────────
 
-FIXED_AGENT_PATTERN = re.compile(r"^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$")
+FIXED_AGENT_PATTERN = re.compile(r"^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+|claude:[a-zA-Z0-9_-]+)$")
 
 AGENT_DISPLAY_NAMES = {
     "main": "Assistent",
@@ -48,15 +48,20 @@ def _get_agent_id(session_key: str) -> str:
 
     'agent:main:main' -> 'main'
     'cc:mybot' -> 'mybot'
+    'claude:abc123' -> 'abc123'
     """
     if session_key.startswith("cc:"):
         return session_key[3:]
+    if session_key.startswith("claude:"):
+        return session_key[7:]
     parts = session_key.split(":")
     return parts[1] if len(parts) > 1 else "main"
 
 
-async def _get_agent_source(agent_id: str) -> str:
+async def _get_agent_source(agent_id: str, session_key: str = "") -> str:
     """Look up the agent's source from the DB. Defaults to 'openclaw'."""
+    if session_key.startswith("claude:"):
+        return "claude_code"
     try:
         from app.db.database import get_db
 
@@ -70,6 +75,24 @@ async def _get_agent_source(agent_id: str) -> str:
     except Exception:
         pass
     return "openclaw"
+
+
+async def _get_discovered_project_path(session_id: str) -> Optional[str]:
+    """Get project_path for a discovered CC session from the watcher."""
+    try:
+        from app.services.connections.claude_code import ClaudeCodeConnection
+
+        manager = await get_connection_manager()
+        cc_conn = next(
+            (c for c in manager._connections.values() if isinstance(c, ClaudeCodeConnection) and c.is_connected()),
+            None,
+        )
+        if not cc_conn or not cc_conn._watcher:
+            return None
+        ws = cc_conn._watcher.get_watched_sessions().get(session_id)
+        return ws.project_path if ws else None
+    except Exception:
+        return None
 
 
 # ── Rate limiter ────────────────────────────────────────────────
@@ -266,7 +289,7 @@ async def get_chat_history(
     """Get chat history for a session with pagination."""
     _validate_session_key(session_key)
     agent_id = _get_agent_id(session_key)
-    source = await _get_agent_source(agent_id)
+    source = await _get_agent_source(agent_id, session_key)
 
     if source == "claude_code":
         # CC agent: resolve the actual Claude session ID and pull history
@@ -349,18 +372,32 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
     message = message.replace("\x00", "")
 
     agent_id = _get_agent_id(session_key)
-    source = await _get_agent_source(agent_id)
+    source = await _get_agent_source(agent_id, session_key)
 
     if source == "claude_code":
-        # CC agent: prepend context then use cc_chat module
-        message = await _prepend_context_if_available(session_key, agent_id, body, message)
-        try:
-            from app.services.cc_chat import send_cc_blocking
+        if session_key.startswith("claude:"):
+            # Discovered session — resolve project_path from watcher
+            session_id = session_key[7:]
+            project_path = await _get_discovered_project_path(session_id)
+            if not project_path:
+                return {"response": None, "tokens": 0, "success": False, "error": "Cannot resolve project path for discovered session"}
+            try:
+                from app.services.cc_chat import send_cc_discovered_blocking
 
-            response_text = await send_cc_blocking(agent_id, message)
-        except Exception as e:
-            logger.error(f"CC send_chat error: {e}")
-            return {"response": None, "tokens": 0, "success": False, "error": str(e)}
+                response_text = await send_cc_discovered_blocking(session_id, project_path, message)
+            except Exception as e:
+                logger.error(f"CC discovered send error: {e}")
+                return {"response": None, "tokens": 0, "success": False, "error": str(e)}
+        else:
+            # Fixed CC agent: prepend context then use cc_chat module
+            message = await _prepend_context_if_available(session_key, agent_id, body, message)
+            try:
+                from app.services.cc_chat import send_cc_blocking
+
+                response_text = await send_cc_blocking(agent_id, message)
+            except Exception as e:
+                logger.error(f"CC send_chat error: {e}")
+                return {"response": None, "tokens": 0, "success": False, "error": str(e)}
     else:
         # OpenClaw agent
         # Build context envelope for agent awareness
@@ -459,10 +496,45 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
     message = message.replace("\x00", "")
 
     agent_id = _get_agent_id(session_key)
-    source = await _get_agent_source(agent_id)
+    source = await _get_agent_source(agent_id, session_key)
 
     if source == "claude_code":
-        # CC agent: prepend context then stream via cc_chat module
+        if session_key.startswith("claude:"):
+            # Discovered session — stream via cc_chat discovered helper
+            disc_session_id = session_key[7:]
+            disc_project_path = await _get_discovered_project_path(disc_session_id)
+            if not disc_project_path:
+                raise HTTPException(status_code=400, detail="Cannot resolve project path for discovered session")
+
+            from app.services.cc_chat import stream_cc_discovered_response
+
+            async def generate_cc_discovered():
+                yield "event: start\ndata: {}\n\n"
+                try:
+                    async for chunk in stream_cc_discovered_response(disc_session_id, disc_project_path, message):
+                        yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
+                    yield "event: done\ndata: {}\n\n"
+                    try:
+                        from app.routes.sse import broadcast
+
+                        await broadcast("session-updated", {"key": session_key})
+                    except Exception as e:
+                        logger.warning(f"Failed to broadcast session-updated after CC discovered stream: {e}")
+                except Exception as e:
+                    logger.error(f"CC discovered streaming error: {e}")
+                    yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+            return StreamingResponse(
+                generate_cc_discovered(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",
+                    "Connection": "keep-alive",
+                },
+            )
+
+        # Fixed CC agent: prepend context then stream via cc_chat module
         message = await _prepend_context_if_available(session_key, agent_id, body, message)
         from app.services.cc_chat import stream_cc_response
 
@@ -534,8 +606,10 @@ async def get_chat_info(session_key: str):
     can_chat = bool(FIXED_AGENT_PATTERN.match(session_key))
 
     # For CC agents, look up name from DB instead of hardcoded map
-    source = await _get_agent_source(agent_id)
-    if source == "claude_code":
+    source = await _get_agent_source(agent_id, session_key)
+    if session_key.startswith("claude:"):
+        agent_name = f"Claude Session {agent_id[:8]}"
+    elif source == "claude_code":
         try:
             from app.db.database import get_db
 

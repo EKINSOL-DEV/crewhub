@@ -49,6 +49,22 @@ async def get_session_history(session_key: str, limit: Annotated[int, Query(ge=1
             "format": "standard",
         }
 
+    # CC fixed agent key — resolve to actual Claude session
+    if session_key.startswith("cc:"):
+        from ..services.cc_chat import _agent_sessions
+
+        agent_id = session_key[3:]
+        cc_session_id = _agent_sessions.get(agent_id)
+        if cc_session_id:
+            claude_key = f"claude:{cc_session_id}"
+            messages = await manager.get_session_history(claude_key, limit=limit)
+            return {
+                "messages": [m.to_dict() for m in messages],
+                "count": len(messages),
+                "format": "standard",
+            }
+        return {"messages": [], "count": 0, "format": "standard"}
+
     conn = manager.get_default_openclaw()
     if not conn:
         raise HTTPException(status_code=503, detail="No OpenClaw connection available")
