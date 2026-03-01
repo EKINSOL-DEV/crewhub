@@ -197,14 +197,15 @@ function Do-Install {
     }
     Write-Ok "Frontend built"
 
-    # Ensure serve is available
-    Write-Info "Checking for serve..."
-    $serveCheck = npm list serve 2>$null
-    if ($LASTEXITCODE -ne 0) {
+    # Ensure serve is available (check node_modules directly to avoid interactive prompts)
+    $serveBin = Join-Path $ProjectRoot "frontend\node_modules\.bin\serve.cmd"
+    if (-not (Test-Path $serveBin)) {
         Write-Info "Installing serve..."
         npm install --save-dev serve --legacy-peer-deps
+        Write-Ok "serve installed"
+    } else {
+        Write-Ok "serve already installed"
     }
-    Write-Ok "serve available"
 
     if (-not (Test-Path $LogDir)) {
         New-Item -ItemType Directory -Path $LogDir -Force | Out-Null

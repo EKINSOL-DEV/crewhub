@@ -130,11 +130,13 @@ do_install() {
     (cd "$PROJECT_ROOT/frontend" && npm run build) || { error "Frontend build failed"; exit 1; }
     ok "Frontend built"
 
-    # Ensure serve is available
-    if ! (cd "$PROJECT_ROOT/frontend" && npx serve --version) &>/dev/null; then
+    # Ensure serve is available (check node_modules directly to avoid npx interactive prompt)
+    if [[ ! -x "$PROJECT_ROOT/frontend/node_modules/.bin/serve" ]]; then
         info "Installing serve..."
         (cd "$PROJECT_ROOT/frontend" && npm install --save-dev serve --legacy-peer-deps) || { error "Failed to install serve"; exit 1; }
         ok "serve installed"
+    else
+        ok "serve already installed"
     fi
 
     mkdir -p "$LOG_DIR"
