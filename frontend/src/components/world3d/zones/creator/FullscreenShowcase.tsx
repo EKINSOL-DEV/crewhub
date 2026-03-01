@@ -98,7 +98,7 @@ export function FullscreenShowcase({ onClose }: Readonly<FullscreenShowcaseProps
         if (e.target === e.currentTarget) onClose()
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div className="psc-topbar">
