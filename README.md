@@ -147,13 +147,35 @@ Works with:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Claude Code (Recommended)
 
-- [Docker](https://docker.com) and Docker Compose (recommended)
-- OR Node.js 18+ and Python 3.11+
-- OpenClaw running on the same machine or accessible over the network
+The fastest way to get started. Requires Python 3.11+, Node.js 18+, and the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code).
 
-### Option 1: Docker (Recommended)
+#### Mac / Linux
+
+```bash
+git clone https://github.com/EKINSOL-DEV/crewhub.git
+cd crewhub
+./scripts/setup.sh   # One-time: checks prereqs, creates venv, installs deps
+./scripts/start.sh   # Start CrewHub
+```
+
+#### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/EKINSOL-DEV/crewhub.git
+cd crewhub
+.\scripts\setup.ps1   # One-time: checks prereqs, creates venv, installs deps
+.\scripts\start.ps1   # Start CrewHub
+```
+
+Open **http://localhost:5181** — the onboarding wizard will detect your Claude Code installation automatically.
+
+> **Why local?** Full Claude Code support (chat, prop generation, interactive sessions) requires the `claude` CLI on your host machine. Docker mode only supports read-only session monitoring.
+
+### Option 2: Docker (OpenClaw / Monitoring Only)
+
+Best for OpenClaw users or read-only Claude Code session monitoring.
 
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
@@ -163,20 +185,25 @@ make prod-up
 
 The dashboard will be available at **http://localhost:8446**. The onboarding wizard will guide you through connecting to your gateway.
 
-### Option 2: Local Development
+> **Note:** Docker mode cannot run the Claude CLI, so interactive features (sending messages, generating props) are not available. For full Claude Code support, use Option 1.
+
+### Option 3: Local Development (Make)
+
+If you prefer `make` and have already set up your environment manually:
 
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
-make dev
+make setup   # Same as ./scripts/setup.sh
+make dev     # Start both backend + frontend
 ```
 
 Frontend: http://localhost:5181
 Backend API: http://localhost:8091
 
-### Option 3: Demo Mode (No OpenClaw Needed)
+### Option 4: Demo Mode (No Setup Needed)
 
-Want to explore CrewHub without setting up OpenClaw? Run in demo mode with simulated agents:
+Want to explore CrewHub without any setup? Run in demo mode with simulated agents:
 
 ```bash
 docker compose -f docker-compose.demo.yml up
@@ -338,18 +365,32 @@ AGPL-3.0 — see [LICENSE](LICENSE)
 
 CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license.
 
-### Using without OpenClaw (Claude Code CLI)
+### Using with Claude Code (without OpenClaw)
 
-CrewHub can monitor your local Claude Code sessions without an OpenClaw gateway:
+CrewHub works as a full-featured dashboard for Claude Code sessions — no OpenClaw gateway required.
 
-1. **Install Claude Code**: `npm install -g @anthropic-ai/claude-code`
-2. **Start CrewHub**: The backend auto-detects the Claude CLI and begins watching `~/.claude/projects/` for sessions.
+**What you get:**
+- **Live session monitoring** — see all active Claude Code sessions in real-time
+- **Interactive chat** — send messages to Claude Code sessions directly from CrewHub
+- **Prop generation** — generate 3D props for your agents using Claude Code
+- **3D world view** — watch your Claude Code agents in the interactive 3D office
 
-**Docker users**: Mount your Claude data directory as a read-only volume:
+**Setup (recommended):**
+```bash
+./scripts/setup.sh   # Checks prereqs + installs everything
+./scripts/start.sh   # Starts CrewHub
+```
+
+The backend auto-detects the Claude CLI and watches `~/.claude/projects/` for active sessions.
+
+**Docker users (monitoring only):**
+Docker mode supports read-only session monitoring but cannot run the Claude CLI for interactive features. Mount your Claude data directory:
 ```yaml
 volumes:
   - ${HOME}/.claude:/root/.claude:ro
 ```
+
+For full interactive Claude Code support, use the local setup scripts instead of Docker.
 
 ---
 

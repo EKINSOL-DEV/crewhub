@@ -1,4 +1,4 @@
-.PHONY: up down dev dev-backend dev-frontend build logs clean prod-up prod-down prod-logs prod-build lint lint-fix lint-backend lint-backend-fix lint-frontend lint-frontend-fix
+.PHONY: up down dev dev-backend dev-frontend build logs clean prod-up prod-down prod-logs prod-build lint lint-fix lint-backend lint-backend-fix lint-frontend lint-frontend-fix setup
 
 # ============================================
 # PRODUCTION (Docker) - Branch: main
@@ -163,3 +163,11 @@ lint-frontend:
 
 lint-frontend-fix:
 	@cd frontend && npm run lint:fix && npm run format
+
+# ============================================
+# SETUP
+# ============================================
+
+# Run one-time setup (prerequisites check + install deps)
+setup:
+	@./scripts/setup.sh
