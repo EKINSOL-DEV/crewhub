@@ -40,8 +40,9 @@ function buildSSEUrl(token: string | null): string {
   const tokenParam = token ? `?token=${encodeURIComponent(token)}` : ''
 
   if (effectiveUrl) {
-    const backendHost = effectiveUrl.replace(/^https?:\/\//, '')
-    return `http://${backendHost}/api/events${tokenParam}`
+    // Preserve the original protocol (http/https) to avoid mixed-content errors
+    const base = effectiveUrl.replace(/\/+$/, '')
+    return `${base}/api/events${tokenParam}`
   }
   return `/api/events${tokenParam}`
 }
