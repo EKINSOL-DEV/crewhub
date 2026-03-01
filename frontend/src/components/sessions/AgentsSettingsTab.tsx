@@ -358,34 +358,32 @@ function AgentCard({
             </div>
           </div>
 
-          {/* Room dropdown (OpenClaw only) */}
-          {agent.source !== 'claude_code' && (
-            <div className="space-y-2">
-              <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Default Room</Label>
-              <select
-                value={roomId}
-                onChange={(e) => setRoomId(e.target.value)}
-                style={{
-                  width: '100%',
-                  height: '36px',
-                  borderRadius: '6px',
-                  border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
-                  background: HSL_BACKGROUND,
-                  color: HSL_FOREGROUND,
-                  padding: '0 8px',
-                  fontSize: '0.875rem',
-                }}
-              >
-                <option value={HEADQUARTERS}>🏠 Headquarters</option>
-                {rooms.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.icon ? `${r.icon} ` : ''}
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Room dropdown */}
+          <div className="space-y-2">
+            <Label className={CLS_TEXT_XS_FONT_MEDIUM}>Default Room</Label>
+            <select
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              style={{
+                width: '100%',
+                height: '36px',
+                borderRadius: '6px',
+                border: BORDER_1PX_SOLID_HSL_VAR_BORDER,
+                background: HSL_BACKGROUND,
+                color: HSL_FOREGROUND,
+                padding: '0 8px',
+                fontSize: '0.875rem',
+              }}
+            >
+              <option value={HEADQUARTERS}>🏠 Headquarters</option>
+              {rooms.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.icon ? `${r.icon} ` : ''}
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Project path (Claude Code only) */}
           {agent.source === 'claude_code' && (

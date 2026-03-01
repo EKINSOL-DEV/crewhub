@@ -376,19 +376,26 @@ function World3DViewInner({
   )
   const focusedRoomSessions = useMemo(() => {
     if (!focusState.focusedRoomId) return []
-    return visibleSessions.filter((s) => {
+    // Use allSessions (includes synthetic offline CC agents) instead of just visibleSessions
+    return allSessions.filter((s) => {
       const roomId =
         debugRoomMap?.get(s.key) ||
         getRoomForSession(s.key, {
           label: s.label,
           model: s.model,
           channel: s.lastChannel || s.channel,
-        }) ||
-        rooms[0]?.id ||
-        'headquarters'
+        })
+      // For CC agents, also check their default_room_id from the agent registry
+      if (!roomId) {
+        const runtime = agentRuntimesForPanel.find(
+          (r) => r.agent.agent_session_key === s.key || r.session?.key === s.key
+        )
+        const resolvedRoom = runtime?.agent.default_room_id || rooms[0]?.id || 'headquarters'
+        return resolvedRoom === focusState.focusedRoomId
+      }
       return roomId === focusState.focusedRoomId
     })
-  }, [focusState.focusedRoomId, visibleSessions, getRoomForSession, rooms, debugRoomMap])
+  }, [focusState.focusedRoomId, allSessions, getRoomForSession, rooms, debugRoomMap, agentRuntimesForPanel])
 
   const handleRoomPanelBotClick = useCallback(
     (session: CrewSession) => {
