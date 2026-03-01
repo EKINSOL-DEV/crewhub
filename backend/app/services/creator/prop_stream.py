@@ -558,11 +558,19 @@ async def _stream_via_claude_code(
     yield _sse_event("model", {"model": model_key, "modelLabel": model_label, "modelId": model_id})
     yield _sse_event("full_prompt", {"prompt": full_prompt})
 
+    # Map app model keys to CLI-friendly aliases (e.g. "opus", "sonnet")
+    _CLI_MODEL_ALIAS: dict[str, str] = {
+        "opus-4-6": "opus",
+        "sonnet-4-5": "sonnet",
+        "sonnet-4-6": "sonnet",
+    }
+    cli_model = _CLI_MODEL_ALIAS.get(model_key)
+
     try:
         process_id = await pm.spawn_task(
             message=full_prompt,
             project_path=project_path,
-            model=model_key if model_key != "default" else None,
+            model=cli_model,
             permission_mode="bypassPermissions",
         )
     except Exception as e:
@@ -573,10 +581,14 @@ async def _stream_via_claude_code(
     pm.set_process_callback(process_id, on_output)
     yield _sse_event("status", {"message": f"🧠 Claude Code ({model_label}) is thinking...", "phase": "thinking"})
 
+    poll_count = 0
     try:
         # Poll queue for streaming events until process completes
         while True:
+            poll_count += 1
+
             if await request.is_disconnected():
+                logger.warning(f"[PropGen:{gen_id}] Client disconnected at poll {poll_count}")
                 await pm.kill(process_id)
                 return
 
@@ -590,8 +602,10 @@ async def _stream_via_claude_code(
 
             cp = pm.get_process(process_id)
             if cp is None:
+                logger.info(f"[PropGen:{gen_id}] Process gone at poll {poll_count}")
                 break
             if cp.status in ("completed", "error", "killed") and queue.empty():
+                logger.info(f"[PropGen:{gen_id}] Process {cp.status} at poll {poll_count}")
                 # Drain remaining
                 while not queue.empty():
                     event = queue.get_nowait()
@@ -601,6 +615,7 @@ async def _stream_via_claude_code(
                 break
 
     finally:
+        logger.info(f"[PropGen:{gen_id}] Stream loop ended after {poll_count} polls")
         pm.remove_process_callback(process_id)
 
     # Assemble the raw text from all collected parts

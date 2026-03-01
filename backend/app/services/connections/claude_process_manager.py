@@ -109,7 +109,13 @@ class ClaudeProcessManager:
         if resolved_mode != "default":
             cmd.extend(["--permission-mode", resolved_mode])
 
-        cmd.extend(["--print", message])
+        # For long messages, pipe via stdin to avoid shell arg length limits.
+        # --print with no argument reads from stdin.
+        use_stdin = len(message) > 4000
+        if use_stdin:
+            cmd.append("--print")
+        else:
+            cmd.extend(["--print", message])
 
         cp = ClaudeProcess(
             process_id=process_id,
@@ -131,12 +137,20 @@ class ClaudeProcessManager:
 
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
+                stdin=asyncio.subprocess.PIPE if use_stdin else None,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=project_path,
                 env=env,
             )
             cp.proc = proc
+
+            # Feed message via stdin and close it so the CLI starts processing
+            if use_stdin and proc.stdin:
+                proc.stdin.write(message.encode())
+                await proc.stdin.drain()
+                proc.stdin.close()
+                await proc.stdin.wait_closed()
 
             # Start output streaming task
             asyncio.create_task(self._stream_output(process_id))
