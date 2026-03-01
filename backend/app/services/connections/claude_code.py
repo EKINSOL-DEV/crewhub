@@ -543,38 +543,42 @@ class ClaudeCodeConnection(AgentConnection):
             except Exception:
                 continue
 
-            # Find parent session's room by matching session_id prefix
-            parent_prefix = ws.parent_session_uuid[:8]
+            # Find parent session's room assignment.
+            # The parent could be a fixed CC agent (key = cc:<agent_id>) or
+            # a discovered session (key = claude:<session_id>).
             parent_room_id = None
 
             try:
                 from ...db.database import get_db
 
                 async with get_db() as db:
-                    # Look for any session_key starting with "claude:{parent_prefix}"
-                    # that has a room assignment
+                    # 1) Check if an agent owns this parent session UUID
                     async with db.execute(
-                        "SELECT room_id FROM session_room_assignments WHERE session_key LIKE ?",
-                        (f"claude:{parent_prefix}%",),
+                        "SELECT id FROM agents WHERE current_session_id = ?",
+                        (ws.parent_session_uuid,),
                     ) as cur:
-                        row = await cur.fetchone()
-                        if row:
-                            parent_room_id = row[0]
+                        agent_row = await cur.fetchone()
 
-                    # Also check agent sessions (cc:agent_id) that map to the parent
+                    if agent_row:
+                        agent_id = agent_row[0]
+                        async with db.execute(
+                            "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
+                            (f"cc:{agent_id}",),
+                        ) as cur:
+                            row = await cur.fetchone()
+                            if row:
+                                parent_room_id = row[0]
+
+                    # 2) Fallback: look for discovered session keys matching the parent UUID prefix
                     if not parent_room_id:
-                        from ...services.cc_chat import _agent_sessions
-
-                        for aid, sid in _agent_sessions.items():
-                            if sid.startswith(parent_prefix):
-                                async with db.execute(
-                                    "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
-                                    (f"cc:{aid}",),
-                                ) as cur:
-                                    row = await cur.fetchone()
-                                    if row:
-                                        parent_room_id = row[0]
-                                        break
+                        parent_prefix = ws.parent_session_uuid[:8]
+                        async with db.execute(
+                            "SELECT room_id FROM session_room_assignments WHERE session_key LIKE ?",
+                            (f"claude:{parent_prefix}%",),
+                        ) as cur:
+                            row = await cur.fetchone()
+                            if row:
+                                parent_room_id = row[0]
             except Exception as e:
                 logger.debug("Error looking up parent room for %s: %s", ws.session_id, e)
                 continue
