@@ -231,9 +231,9 @@ do_start() {
 
     trap 'do_stop; exit 0' SIGTERM SIGINT
 
-    # Start frontend (static server — doesn't need watchdog-level monitoring)
+    # Frontend is served by the backend (StaticFiles mount) — no separate process needed.
+    # Stop any leftover frontend process from older versions.
     stop_frontend
-    start_frontend || log "WARNING: Frontend failed to start"
 
     local restart_count=0
     local window_start
@@ -258,14 +258,6 @@ do_start() {
         # Stop any existing backend
         stop_backend
         sleep 1
-
-        # Restart frontend if it died
-        local fpid
-        fpid=$(read_pid "$FRONTEND_PID_FILE")
-        if [[ -z "$fpid" ]] || ! kill -0 "$fpid" 2>/dev/null; then
-            log "Frontend died — restarting..."
-            start_frontend || log "WARNING: Frontend restart failed"
-        fi
 
         # Start backend
         start_backend

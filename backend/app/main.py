@@ -7,8 +7,10 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.auth import init_api_keys
 from app.db.database import check_database_health, init_database
@@ -409,11 +411,33 @@ app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
 app.include_router(project_agents_router, prefix="/api/rooms", tags=["project-agents"])
 
 
-@app.get("/")
-async def root():
-    """Root endpoint."""
-    return {
-        "name": "CrewHub API",
-        "version": APP_VERSION,
-        "status": "running",
-    }
+# ── Static frontend serving (service / production mode) ─────────────
+# When the built frontend exists alongside the backend, serve it directly.
+# This eliminates the need for a separate static file server (npx serve / nginx)
+# and avoids the /api proxy problem: everything runs on a single origin.
+_FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if _FRONTEND_DIST.is_dir():
+    logger.info(f"Serving frontend from {_FRONTEND_DIST}")
+
+    # Serve static assets (JS, CSS, images) under /assets and other static files
+    app.mount("/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="frontend-assets")
+
+    # SPA fallback: any non-API route serves index.html
+    @app.get("/{path:path}")
+    async def spa_fallback(request: Request, path: str):
+        # Serve actual static files if they exist (favicon.ico, logo.svg, etc.)
+        file_path = _FRONTEND_DIST / path
+        if path and file_path.is_file():
+            return FileResponse(file_path)
+        # Otherwise serve index.html for SPA routing
+        return FileResponse(_FRONTEND_DIST / "index.html")
+else:
+    @app.get("/")
+    async def root():
+        """Root endpoint (no frontend build found)."""
+        return {
+            "name": "CrewHub API",
+            "version": APP_VERSION,
+            "status": "running",
+        }

@@ -232,19 +232,10 @@ do_install() {
 
     check_prereqs
 
-    # Build frontend
+    # Build frontend (backend serves it via StaticFiles mount)
     info "Building frontend..."
     (cd "$PROJECT_ROOT/frontend" && npm run build) || { error "Frontend build failed"; exit 1; }
     ok "Frontend built"
-
-    # Ensure serve is available
-    if [[ ! -x "$PROJECT_ROOT/frontend/node_modules/.bin/serve" ]]; then
-        info "Installing serve..."
-        (cd "$PROJECT_ROOT/frontend" && npm install --save-dev serve --legacy-peer-deps) || { error "Failed to install serve"; exit 1; }
-        ok "serve installed"
-    else
-        ok "serve already installed"
-    fi
 
     mkdir -p "$LOG_DIR"
 
@@ -286,8 +277,7 @@ do_install() {
     echo ""
     ok "CrewHub service installed and started!"
     echo ""
-    echo -e "  ${GREEN}Backend:${NC}  http://localhost:$BACKEND_PORT"
-    echo -e "  ${GREEN}Frontend:${NC} http://localhost:$FRONTEND_PORT"
+    echo -e "  ${GREEN}CrewHub:${NC} http://localhost:$BACKEND_PORT"
     echo ""
     echo -e "  The service will start automatically on login."
     echo -e "  Run ${BOLD}./scripts/service.sh status${NC} to check."
@@ -397,8 +387,7 @@ do_update() {
     echo ""
     ok "Update complete!"
     echo ""
-    echo -e "  ${GREEN}Backend:${NC}  http://localhost:$BACKEND_PORT"
-    echo -e "  ${GREEN}Frontend:${NC} http://localhost:$FRONTEND_PORT"
+    echo -e "  ${GREEN}CrewHub:${NC} http://localhost:$BACKEND_PORT"
     echo ""
 }
 
@@ -431,8 +420,7 @@ do_status() {
     fi
 
     echo ""
-    echo -e "  ${GREEN}Backend:${NC}  http://localhost:$BACKEND_PORT"
-    echo -e "  ${GREEN}Frontend:${NC} http://localhost:$FRONTEND_PORT"
+    echo -e "  ${GREEN}CrewHub:${NC} http://localhost:$BACKEND_PORT"
     echo ""
 }
 
