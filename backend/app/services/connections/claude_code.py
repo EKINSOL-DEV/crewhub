@@ -26,6 +26,7 @@ from .claude_transcript_parser import (
     ClaudeTranscriptParser,
     ParsedEvent,
     ProjectContextEvent,
+    ThinkingEvent,
     ToolResultEvent,
     ToolUseEvent,
     UserMessageEvent,
@@ -206,6 +207,15 @@ class ClaudeCodeConnection(AgentConnection):
             elif isinstance(ev, UserMessageEvent):
                 messages.append(
                     HistoryMessage(role="user", content=ev.content, timestamp=ts)
+                )
+            elif isinstance(ev, ThinkingEvent):
+                messages.append(
+                    HistoryMessage(
+                        role="assistant",
+                        content="",
+                        timestamp=ts,
+                        metadata={"type": "thinking", "thinking": ev.thinking},
+                    )
                 )
             elif isinstance(ev, ToolUseEvent):
                 messages.append(

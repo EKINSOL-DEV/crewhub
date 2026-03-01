@@ -276,6 +276,84 @@ def _build_history_message(idx: int, entry: dict, raw: bool) -> dict | None:  # 
     return payload
 
 
+def _group_cc_history(history_msgs: list, raw: bool) -> list[dict]:
+    """Group consecutive CC HistoryMessages into structured content blocks.
+
+    CC history arrives as one HistoryMessage per event (text, tool_use,
+    thinking, tool_result). This groups consecutive assistant events into a
+    single message with a structured content list so that
+    ``_extract_content_parts()`` can split them into tools/thinking/text.
+    """
+    results: list[dict] = []
+    # Accumulate content blocks for the current assistant turn
+    pending_blocks: list[dict] = []
+    pending_ts: int = 0
+    msg_counter = 0
+    # Map tool_use_id -> tool_name for resolving tool_result names
+    tool_id_to_name: dict[str, str] = {}
+
+    def flush():
+        nonlocal pending_blocks, pending_ts, msg_counter
+        if not pending_blocks:
+            return
+        entry = {
+            "message": {"role": "assistant", "content": pending_blocks},
+            "timestamp": pending_ts,
+        }
+        parsed = _build_history_message(msg_counter, entry, raw)
+        if parsed is not None:
+            results.append(parsed)
+        msg_counter += 1
+        pending_blocks = []
+        pending_ts = 0
+
+    for hm in history_msgs:
+        meta = hm.metadata or {}
+        meta_type = meta.get("type", "")
+
+        if hm.role == "user":
+            flush()
+            entry = {
+                "message": {"role": "user", "content": hm.content},
+                "timestamp": hm.timestamp,
+            }
+            parsed = _build_history_message(msg_counter, entry, raw)
+            if parsed is not None:
+                results.append(parsed)
+            msg_counter += 1
+
+        elif hm.role == "assistant":
+            if not pending_ts and hm.timestamp:
+                pending_ts = hm.timestamp
+
+            if meta_type == "tool_use":
+                tool_id_to_name[meta.get("tool_use_id", "")] = meta.get("tool_name", "unknown")
+                block: dict = {"type": "tool_use", "name": meta.get("tool_name", "unknown")}
+                if meta.get("input_data"):
+                    block["input"] = meta["input_data"]
+                pending_blocks.append(block)
+            elif meta_type == "thinking":
+                pending_blocks.append({"type": "thinking", "thinking": meta.get("thinking", "")})
+            else:
+                # Regular text
+                if hm.content:
+                    pending_blocks.append({"type": "text", "text": hm.content})
+
+        elif hm.role == "tool":
+            # Tool result — attach to the current assistant turn
+            tool_use_id = meta.get("tool_use_id", "")
+            tool_name = tool_id_to_name.get(tool_use_id, "tool")
+            pending_blocks.append({
+                "type": "tool_result",
+                "toolName": tool_name,
+                "content": hm.content,
+                "isError": meta.get("is_error", False),
+            })
+
+    flush()
+    return results
+
+
 # ── Routes ──────────────────────────────────────────────────────
 
 
@@ -311,18 +389,7 @@ async def get_chat_history(
             return {"messages": [], "hasMore": False, "oldestTimestamp": None}
 
         history_msgs = await cc_conn.get_session_history(claude_key, limit=max(limit * 3, 90))
-        messages = []
-        for idx, hm in enumerate(history_msgs):
-            entry = {
-                "message": {
-                    "role": hm.role,
-                    "content": hm.content,
-                },
-                "timestamp": hm.timestamp,
-            }
-            parsed = _build_history_message(idx, entry, raw)
-            if parsed is not None:
-                messages.append(parsed)
+        messages = _group_cc_history(history_msgs, raw)
     else:
         # OpenClaw agent
         manager = await get_connection_manager()
