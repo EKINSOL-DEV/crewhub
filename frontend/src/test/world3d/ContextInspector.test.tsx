@@ -185,7 +185,9 @@ describe('ContextInspector', () => {
     })
     const externalBtn = screen.getByText(/External/i)
     fireEvent.click(externalBtn)
-    const internalBtn = screen.getByText(/Internal/i)
+    // After switching to External, tree view may render "internal" as a value.
+    // Use role-based query to get the 🔒 Internal channel button specifically.
+    const internalBtn = screen.getByRole('button', { name: /Internal/i })
     fireEvent.click(internalBtn)
     await act(async () => {
       await Promise.resolve()
@@ -198,9 +200,10 @@ describe('ContextInspector', () => {
   it('shows tree, json, formatted view mode buttons', async () => {
     mockFetchSuccess()
     renderInspector()
-    expect(screen.getByText('tree')).toBeTruthy()
-    expect(screen.getByText('json')).toBeTruthy()
-    expect(screen.getByText('formatted')).toBeTruthy()
+    // Buttons render as "🌳 tree", "{} json", "📝 formatted" — match by role+name
+    expect(screen.getByRole('button', { name: /tree/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /json$/ })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /formatted/ })).toBeTruthy()
   })
 
   it('can switch to json view mode', async () => {
@@ -209,9 +212,9 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    const jsonBtn = screen.getByText('json')
+    const jsonBtn = screen.getByRole('button', { name: /json$/ })
     fireEvent.click(jsonBtn)
-    expect(screen.getByText('json')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /json$/ })).toBeTruthy()
   })
 
   it('can switch to formatted view mode', async () => {
@@ -220,9 +223,9 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    const formattedBtn = screen.getByText('formatted')
+    const formattedBtn = screen.getByRole('button', { name: /formatted/ })
     fireEvent.click(formattedBtn)
-    expect(screen.getByText('formatted')).toBeTruthy()
+    expect(screen.getByRole('button', { name: /formatted/ })).toBeTruthy()
   })
 
   it('can switch back to tree view mode', async () => {
@@ -231,9 +234,9 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    fireEvent.click(screen.getByText('json'))
-    fireEvent.click(screen.getByText('tree'))
-    expect(screen.getByText('tree')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: /json$/ }))
+    fireEvent.click(screen.getByRole('button', { name: /tree/ }))
+    expect(screen.getByRole('button', { name: /tree/ })).toBeTruthy()
   })
 
   // ─── Data Display ─────────────────────────────────────────────
@@ -261,9 +264,10 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    fireEvent.click(screen.getByText('formatted'))
+    fireEvent.click(screen.getByRole('button', { name: /formatted/ }))
     const body = document.body.innerHTML
-    expect(body).toContain('Headquarters') || expect(screen.getByText('formatted')).toBeTruthy()
+    expect(body).toContain('Headquarters') ||
+      expect(screen.getByRole('button', { name: /formatted/ })).toBeTruthy()
   })
 
   it('shows json content in json view', async () => {
@@ -272,7 +276,7 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    fireEvent.click(screen.getByText('json'))
+    fireEvent.click(screen.getByRole('button', { name: /json$/ }))
     const body = document.body.innerHTML
     // JSON view should show serialized data
     expect(body).toBeTruthy()
@@ -286,8 +290,9 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    const copyBtn = screen.queryByText(/Copy/i)
-    expect(copyBtn).toBeTruthy()
+    // Multiple Copy buttons may exist (Copy JSON + Copy Formatted)
+    const copyBtns = screen.queryAllByText(/Copy/i)
+    expect(copyBtns.length).toBeGreaterThan(0)
   })
 
   it('clicking Copy calls clipboard writeText', async () => {
@@ -296,10 +301,10 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    const copyBtn = screen.queryByText(/Copy/i)
-    if (copyBtn) {
+    const copyBtns = screen.queryAllByText(/Copy/i)
+    if (copyBtns.length > 0) {
       await act(async () => {
-        fireEvent.click(copyBtn)
+        fireEvent.click(copyBtns[0])
       })
       expect(mockWriteText).toHaveBeenCalled()
     }
@@ -311,16 +316,16 @@ describe('ContextInspector', () => {
     await act(async () => {
       await Promise.resolve()
     })
-    const copyBtn = screen.queryByText(/Copy/i)
-    if (copyBtn) {
+    const copyBtns = screen.queryAllByText(/Copy/i)
+    if (copyBtns.length > 0) {
       await act(async () => {
-        fireEvent.click(copyBtn)
+        fireEvent.click(copyBtns[0])
       })
       await act(async () => {
         await Promise.resolve()
       })
       const body = document.body.innerHTML
-      expect(body).toContain('Copied') || expect(copyBtn).toBeTruthy()
+      expect(body).toContain('Copied') || expect(copyBtns[0]).toBeTruthy()
     }
   })
 

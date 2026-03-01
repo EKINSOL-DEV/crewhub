@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
@@ -88,16 +87,17 @@ describe('LightingDebugPanel', () => {
 
   // ─── Panel Structure ──────────────────────────────────────────
 
-  it('shows "Lighting Debug" header', () => {
+  it('shows "Lighting Editor" header', () => {
     render(<LightingDebugPanel />)
-    expect(screen.getByText(/Lighting Debug/i)).toBeTruthy()
+    // Header text is "💡 Lighting Editor"
+    expect(screen.getByText(/Lighting Editor/i)).toBeTruthy()
   })
 
   it('shows minimize button', () => {
     render(<LightingDebugPanel />)
-    // The minimize button shows ▲ or ▼ or similar
-    const panel = document.body
-    expect(panel.innerHTML).toContain('▲') || expect(panel.innerHTML).toContain('▼')
+    // The minimize button has title="Minimize" and shows — (em dash)
+    const btn = document.querySelector('button[title="Minimize"]')
+    expect(btn).not.toBeNull()
   })
 
   it('shows Reset button', () => {
@@ -129,7 +129,9 @@ describe('LightingDebugPanel', () => {
 
   it('shows Shadows section', () => {
     render(<LightingDebugPanel />)
-    expect(screen.getByText(/Shadows/i)).toBeTruthy()
+    // Multiple "Shadows" elements exist (section header + toggle label)
+    const shadowEls = screen.getAllByText(/Shadows/i)
+    expect(shadowEls.length).toBeGreaterThan(0)
   })
 
   it('shows Tone Mapping section', () => {

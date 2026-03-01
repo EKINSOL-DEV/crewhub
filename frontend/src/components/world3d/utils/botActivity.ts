@@ -18,7 +18,8 @@ export function getAccurateBotStatus(
   // Claude Code sessions: use explicit status directly
   if (session.source === 'claude_code') {
     const status = session.status
-    if (status === 'responding' || status === 'tool_use' || status === 'waiting_permission') return 'active'
+    if (status === 'responding' || status === 'tool_use' || status === 'waiting_permission')
+      return 'active'
     if (status === 'waiting_input') return 'idle'
     // Synthetic session (no watcher data) — show idle, not offline
     if (!status) return 'idle'

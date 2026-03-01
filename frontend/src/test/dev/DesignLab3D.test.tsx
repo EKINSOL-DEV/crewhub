@@ -74,11 +74,12 @@ describe('DesignLab3D', () => {
 
   it('renders all 5 bots in the controls', () => {
     render(<DesignLab3D darkBg={false} />)
-    expect(screen.getByText(/Worker Bot/)).toBeTruthy()
-    expect(screen.getByText(/Thinker Bot/)).toBeTruthy()
-    expect(screen.getByText(/Cron Bot/)).toBeTruthy()
-    expect(screen.getByText(/Comms Bot/)).toBeTruthy()
-    expect(screen.getByText(/Dev Bot/)).toBeTruthy()
+    // Bot names appear in both the 3D scene labels and the controls panel
+    expect(screen.getAllByText(/Worker Bot/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Thinker Bot/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Cron Bot/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Comms Bot/).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Dev Bot/).length).toBeGreaterThan(0)
   })
 
   it('renders 3D canvas', () => {
@@ -164,30 +165,30 @@ describe('DesignLab3D', () => {
     render(<DesignLab3D darkBg={false} />)
     const sleepingBtns = screen.getAllByText('sleeping')
     fireEvent.click(sleepingBtns[0])
-    expect(screen.getByText(/Cron Bot/)).toBeTruthy()
+    expect(screen.getAllByText(/Cron Bot/).length).toBeGreaterThan(0)
   })
 
   it('can set all bots to working state', () => {
     render(<DesignLab3D darkBg={false} />)
     const workingBtns = screen.getAllByText('working')
     fireEvent.click(workingBtns[0])
-    expect(screen.getByText(/Worker Bot/)).toBeTruthy()
+    expect(screen.getAllByText(/Worker Bot/).length).toBeGreaterThan(0)
   })
 
   it('can set all bots to error state', () => {
     render(<DesignLab3D darkBg={false} />)
     const errorBtns = screen.getAllByText('error')
     fireEvent.click(errorBtns[0])
-    expect(screen.getByText(/Dev Bot/)).toBeTruthy()
+    expect(screen.getAllByText(/Dev Bot/).length).toBeGreaterThan(0)
   })
 
   // ─── Per-Bot Controls ─────────────────────────────────────────
 
   it('can expand a bot row to show bubble controls', () => {
     render(<DesignLab3D darkBg={false} />)
-    // Click Worker Bot header to expand
-    const workerText = screen.getByText(/Worker Bot/)
-    fireEvent.click(workerText)
+    // Click Worker Bot row header button (not the drei-text element in the 3D scene)
+    const workerBtn = screen.getAllByRole('button', { name: /Worker Bot/ })[0]
+    fireEvent.click(workerBtn)
     expect(screen.getByText(/Bubble/)).toBeTruthy()
   })
 
@@ -197,13 +198,14 @@ describe('DesignLab3D', () => {
     const activeBtns = screen.getAllByText('active')
     // Click second one (per-bot button after the "all bots" one)
     if (activeBtns.length > 1) fireEvent.click(activeBtns[1])
-    expect(screen.getByText(/Worker Bot/)).toBeTruthy()
+    expect(screen.getAllByText(/Worker Bot/).length).toBeGreaterThan(0)
   })
 
   it('can toggle bubble on after expanding a bot', () => {
     render(<DesignLab3D darkBg={false} />)
-    // Expand Worker Bot
-    fireEvent.click(screen.getByText(/Worker Bot/))
+    // Expand Worker Bot by clicking the row header button
+    const workerBtn = screen.getAllByRole('button', { name: /Worker Bot/ })[0]
+    fireEvent.click(workerBtn)
     // Find bubble toggle button
     const bubbleBtn = screen.getByText(/Bubble OFF|Bubble ON/)
     fireEvent.click(bubbleBtn)
@@ -212,15 +214,17 @@ describe('DesignLab3D', () => {
 
   it('can change bubble style to thought', () => {
     render(<DesignLab3D darkBg={false} />)
-    fireEvent.click(screen.getByText(/Worker Bot/))
+    const workerBtn = screen.getAllByRole('button', { name: /Worker Bot/ })[0]
+    fireEvent.click(workerBtn)
     const thoughtBtns = screen.getAllByText(/thought/)
     fireEvent.click(thoughtBtns[0])
-    expect(screen.getByText(/Worker Bot/)).toBeTruthy()
+    expect(screen.getAllByText(/Worker Bot/).length).toBeGreaterThan(0)
   })
 
   it('can type bubble text for a bot', () => {
     render(<DesignLab3D darkBg={false} />)
-    fireEvent.click(screen.getByText(/Worker Bot/))
+    const workerBtn = screen.getAllByRole('button', { name: /Worker Bot/ })[0]
+    fireEvent.click(workerBtn)
     const textInput = document.querySelector(
       'input[placeholder="Bubble text..."]'
     ) as HTMLInputElement
@@ -232,10 +236,11 @@ describe('DesignLab3D', () => {
 
   it('can collapse an expanded bot row', () => {
     render(<DesignLab3D darkBg={false} />)
-    fireEvent.click(screen.getByText(/Worker Bot/))
+    const workerBtn = screen.getAllByRole('button', { name: /Worker Bot/ })[0]
+    fireEvent.click(workerBtn)
     expect(screen.getByText(/Bubble/)).toBeTruthy()
     // Click again to collapse
-    fireEvent.click(screen.getByText(/Worker Bot/))
+    fireEvent.click(screen.getAllByRole('button', { name: /Worker Bot/ })[0])
     // Bubble controls should be gone
     const bubbles = screen.queryAllByText(/Bubble OFF/)
     expect(bubbles.length).toBe(0)

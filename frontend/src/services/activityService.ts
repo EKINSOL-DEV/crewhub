@@ -177,7 +177,10 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
         tools.push({ name: metadata.tool_name })
       }
       if (metadata?.type === 'tool_result') {
-        tools.push({ name: metadata.tool_name || 'tool', status: metadata.is_error ? 'error' : 'done' })
+        tools.push({
+          name: metadata.tool_name || 'tool',
+          status: metadata.is_error ? 'error' : 'done',
+        })
       }
       const role = m.role === 'assistant' ? 'assistant' : m.role === 'user' ? 'user' : 'system'
       const content = m.content || (tools.length > 0 ? '' : '[no content]')
@@ -185,7 +188,11 @@ function parseMessagesToLogEntries(messages: any[]): LogEntry[] {
         entries.push({
           role,
           content,
-          timestamp: m.timestamp ? (typeof m.timestamp === 'number' ? m.timestamp : new Date(m.timestamp).getTime()) : undefined,
+          timestamp: m.timestamp
+            ? typeof m.timestamp === 'number'
+              ? m.timestamp
+              : new Date(m.timestamp).getTime()
+            : undefined,
           tools,
         })
       }

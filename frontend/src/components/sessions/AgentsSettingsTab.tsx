@@ -954,8 +954,9 @@ function DeleteConfirmDialog({
               }}
             />
             <p style={{ margin: 0, fontSize: '0.8em', lineHeight: 1.5, opacity: 0.85 }}>
-              This agent is still active in {agent.source === 'claude_code' ? 'Claude Code' : 'OpenClaw'}. Only removing from CrewHub — the agent will
-              still run.
+              This agent is still active in{' '}
+              {agent.source === 'claude_code' ? 'Claude Code' : 'OpenClaw'}. Only removing from
+              CrewHub — the agent will still run.
             </p>
           </div>
         )}
@@ -1086,8 +1087,8 @@ export function AgentsSettingsTab() {
       >
         <h4 style={{ margin: '0 0 8px 0', fontSize: '0.95em' }}>💡 Creating Agents</h4>
         <p style={{ margin: '0 0 12px 0', fontSize: '0.9em', lineHeight: '1.5', opacity: 0.8 }}>
-          You can create OpenClaw agents by talking to your existing agent, or add Claude Code agents
-          that run directly via the Claude CLI.
+          You can create OpenClaw agents by talking to your existing agent, or add Claude Code
+          agents that run directly via the Claude CLI.
         </p>
         <details>
           <summary
