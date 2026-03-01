@@ -257,7 +257,7 @@ export function isWalkableAt(
   return !!gridData.botWalkableMask[g.z]?.[g.x]
 }
 
-/** Pick a walkable direction biased toward open space and room center */
+/** Pick a random walkable direction, filtering out dead-end directions near furniture */
 export function pickWalkableDir(
   currentX: number,
   currentZ: number,
@@ -271,12 +271,11 @@ export function pickWalkableDir(
 ): { x: number; z: number } | null {
   const cellSize = gridData ? gridData.blueprint.cellSize : 1
   const lookahead = SESSION_CONFIG.wanderLookahead
-  const centerGravity = SESSION_CONFIG.wanderCenterGravity
 
-  const scored: { dir: { x: number; z: number }; score: number }[] = []
+  // Collect all walkable directions, noting how many open cells ahead
+  const walkable: { dir: { x: number; z: number }; openCells: number }[] = []
 
   for (const d of DIRECTIONS) {
-    // First cell must be walkable
     if (
       !isWalkableAt(
         currentX + d.x * cellSize,
@@ -289,7 +288,7 @@ export function pickWalkableDir(
     )
       continue
 
-    // Count consecutive walkable cells ahead
+    // Count consecutive walkable cells ahead (for dead-end detection)
     let openCells = 1
     for (let i = 2; i <= lookahead; i++) {
       if (
@@ -308,41 +307,18 @@ export function pickWalkableDir(
       }
     }
 
-    // Linear openness score — enough to avoid furniture without herding all bots together
-    let score = 1 + openCells
-
-    // Center-gravity bias: gentle pull toward room center, only significant at edges
-    const toCenterX = roomCenterX - currentX
-    const toCenterZ = roomCenterZ - currentZ
-    const distFromCenter = Math.hypot(toCenterX, toCenterZ)
-    const halfRoomSize =
-      Math.max(roomBounds.maxX - roomBounds.minX, roomBounds.maxZ - roomBounds.minZ) / 2
-    if (distFromCenter > 0.1 && halfRoomSize > 0) {
-      const normX = toCenterX / distFromCenter
-      const normZ = toCenterZ / distFromCenter
-      const dirMag = Math.hypot(d.x, d.z)
-      const dot = (d.x / dirMag) * normX + (d.z / dirMag) * normZ
-      const distanceFactor = Math.min(1, distFromCenter / halfRoomSize)
-      score += Math.max(0, dot) * distanceFactor * centerGravity
-    }
-
-    // Large noise keeps movement non-deterministic — bots in the same spot diverge
-    score += Math.random() * 3
-
-    scored.push({ dir: d, score })
+    walkable.push({ dir: d, openCells })
   }
 
-  if (scored.length === 0) return null
+  if (walkable.length === 0) return null
 
-  // Weighted random selection
-  const totalWeight = scored.reduce((sum, s) => sum + s.score, 0)
-  let r = Math.random() * totalWeight
-  for (const s of scored) {
-    r -= s.score
-    if (r <= 0) return s.dir
-  }
+  // Prefer directions with 2+ open cells ahead (avoids bouncing along furniture edges)
+  // Fall back to all walkable if too few non-dead-end options
+  const preferred = walkable.filter((w) => w.openCells >= 2)
+  const candidates = preferred.length >= 2 ? preferred : walkable
 
-  return scored[scored.length - 1].dir
+  // Uniform random — no scoring bias, so bots at the same position diverge naturally
+  return candidates[Math.floor(Math.random() * candidates.length)].dir
 }
 
 /** Handle no-grid circular wandering (parking bots). Returns true if handled. */

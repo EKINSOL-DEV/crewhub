@@ -18,6 +18,8 @@ export function computeWanderWaypoints(
   const width = botWalkableMask[0].length
 
   // Build openness map: count walkable neighbors in 3x3 around each cell
+  // Exclude cells within 2 cells of grid edges to avoid placing waypoints in corners
+  const wallMargin = 2
   const openness: number[][] = []
   let candidates: { x: number; z: number; openness: number }[] = []
 
@@ -39,7 +41,9 @@ export function computeWanderWaypoints(
         }
       }
       openness[z][x] = count
-      if (count >= 7) {
+      const nearEdge =
+        x < wallMargin || x >= width - wallMargin || z < wallMargin || z >= depth - wallMargin
+      if (count >= 7 && !nearEdge) {
         candidates.push({ x, z, openness: count })
       }
     }
