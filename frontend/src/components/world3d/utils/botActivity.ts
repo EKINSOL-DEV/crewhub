@@ -170,7 +170,7 @@ export function getActivityText( // NOSONAR: complexity from legitimate activity
   if (session.source === 'claude_code') {
     switch (session.status) {
       case 'tool_use':
-        return '🔧 Using tools…'
+        return session.activityDetail ? `🔧 ${session.activityDetail}` : '🔧 Using tools…'
       case 'responding':
         return '💬 Responding…'
       case 'waiting_permission':

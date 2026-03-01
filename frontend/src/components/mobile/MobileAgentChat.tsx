@@ -16,6 +16,7 @@ import { ChatMessageBubble } from '@/components/chat/ChatMessageBubble'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 import { API_BASE } from '@/lib/api'
 import type { CrewSession } from '@/lib/api'
+import { sseManager } from '@/lib/sseManager'
 import { ActiveTasksBadge, ActiveTasksOverlay } from './ActiveTasksOverlay'
 import { type AgentStatus } from './AgentCameraView'
 import { getBotConfigFromSession } from '@/components/world3d/utils/botVariants'
@@ -425,6 +426,7 @@ interface ChatHeaderProps {
   readonly subagentSessions: CrewSession[]
   readonly onOpenSettings?: () => void
   readonly onShowTasks: () => void
+  readonly activityDetail?: string | null
 }
 
 function ChatHeader({
@@ -439,6 +441,7 @@ function ChatHeader({
   subagentSessions,
   onOpenSettings,
   onShowTasks,
+  activityDetail,
 }: ChatHeaderProps) {
   return (
     <header
@@ -489,7 +492,9 @@ function ChatHeader({
           {agentName}
         </div>
         <div style={{ fontSize: 11, color: isSending ? accentColor : VAR_MOBILE_TEXT_MUTED }}>
-          {isSending ? 'Thinking…' : 'Online'}
+          {isSending
+            ? (activityDetail || 'Thinking…')
+            : 'Online'}
         </div>
       </div>
       <ActiveTasksBadge count={subagentSessions.length} onClick={onShowTasks} />
@@ -975,6 +980,7 @@ export function MobileAgentChat({
   const [showTasks, setShowTasks] = useState(false)
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [activityDetail, setActivityDetail] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -1004,6 +1010,22 @@ export function MobileAgentChat({
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 200)
   }, [])
+
+  // Track CC activity detail from SSE events
+  useEffect(() => {
+    const handleUpdate = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.source === 'claude_code' && data.sessionKey === sessionKey) {
+          setActivityDetail(data.activity_detail || null)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    const unsub = sseManager.subscribe('session-updated', handleUpdate)
+    return () => unsub()
+  }, [sessionKey])
 
   const addFiles = useCallback((files: FileList | File[]) => {
     const newFiles = Array.from(files).map(createPendingFile)
@@ -1119,6 +1141,7 @@ export function MobileAgentChat({
         subagentSessions={subagentSessions}
         onOpenSettings={onOpenSettings}
         onShowTasks={() => setShowTasks(true)}
+        activityDetail={activityDetail}
       />
       {showTasks && (
         <ActiveTasksOverlay sessions={subagentSessions} onClose={() => setShowTasks(false)} />

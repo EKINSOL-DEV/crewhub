@@ -6,10 +6,23 @@
 
 import { API_BASE } from '@/lib/api'
 
+export interface QuestionOption {
+  label: string
+  description?: string
+}
+
+export interface QuestionData {
+  question: string
+  header?: string
+  options: QuestionOption[]
+  multiSelect?: boolean
+}
+
 export interface StreamCallbacks {
   onChunk: (text: string) => void
   onDone: () => void
   onError: (error: string) => void
+  onQuestion?: (questions: QuestionData[]) => void
 }
 
 // ── SSE Event Processing ──────────────────────────────────────
@@ -50,6 +63,15 @@ function processEventBatch(eventBlocks: string[], callbacks: StreamCallbacks): B
         if (parsed.text) callbacks.onChunk(parsed.text)
       } catch {
         // Skip malformed data
+      }
+    } else if (eventType === 'question' && dataLine && !batchDone) {
+      try {
+        const parsed = JSON.parse(dataLine)
+        if (callbacks.onQuestion && parsed.questions) {
+          callbacks.onQuestion(parsed.questions)
+        }
+      } catch {
+        // Skip malformed question data
       }
     } else if (eventType === 'done') {
       batchDone = true

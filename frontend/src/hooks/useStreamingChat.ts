@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { streamMessage } from '@/services/chatStreamService'
+import { streamMessage, type QuestionData } from '@/services/chatStreamService'
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
@@ -39,6 +39,8 @@ export interface UseStreamingChatReturn {
   hasMore: boolean
   isLoadingHistory: boolean
   loadOlderMessages: () => Promise<void>
+  /** Questions from the agent (AskUserQuestion) waiting for user reply */
+  pendingQuestions: QuestionData[] | null
 }
 
 const THROTTLE_MS = 80
@@ -89,6 +91,7 @@ export function useStreamingChat(
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [pendingQuestions, setPendingQuestions] = useState<QuestionData[] | null>(null)
 
   const messagesRef = useRef<ChatMessageData[]>([])
   const abortRef = useRef<AbortController | null>(null)
@@ -212,6 +215,7 @@ export function useStreamingChat(
       setStreamingMessageId(assistantId)
       setError(null)
 
+      setPendingQuestions(null)
       abortRef.current = streamMessage(sessionKey, trimmed, roomId, {
         onChunk: (chunk: string) => {
           pendingContentRef.current += chunk
@@ -275,6 +279,9 @@ export function useStreamingChat(
             }
           })()
         },
+        onQuestion: (questions: QuestionData[]) => {
+          setPendingQuestions(questions)
+        },
       })
     },
     [sessionKey, isSending, roomId, flushPendingContent]
@@ -300,5 +307,6 @@ export function useStreamingChat(
     hasMore,
     isLoadingHistory,
     loadOlderMessages,
+    pendingQuestions,
   }
 }

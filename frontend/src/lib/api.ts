@@ -20,6 +20,10 @@ export interface CrewSession {
   source?: string
   /** Project path for Claude Code sessions */
   projectPath?: string
+  /** Human-readable description of current tool activity */
+  activityDetail?: string
+  /** Name of the tool currently being used */
+  activityToolName?: string
   deliveryContext?: {
     channel?: string
     to?: string

@@ -19,13 +19,14 @@ from .base import (
     HistoryMessage,
     SessionInfo,
 )
-from .claude_session_watcher import ClaudeSessionWatcher
+from .claude_session_watcher import ClaudeSessionWatcher, _humanize_tool
 from .claude_transcript_parser import (
     AgentActivity,
     AssistantTextEvent,
     ClaudeTranscriptParser,
     ParsedEvent,
     ProjectContextEvent,
+    SubAgentProgressEvent,
     ThinkingEvent,
     ToolResultEvent,
     ToolUseEvent,
@@ -305,6 +306,19 @@ class ClaudeCodeConnection(AgentConnection):
                         },
                     )
                 )
+            elif isinstance(ev, SubAgentProgressEvent):
+                if ev.nested_event and isinstance(ev.nested_event, AssistantTextEvent):
+                    messages.append(
+                        HistoryMessage(
+                            role="assistant",
+                            content=ev.nested_event.text,
+                            timestamp=ts,
+                            metadata={
+                                "type": "subagent",
+                                "parent_tool_use_id": ev.parent_tool_use_id,
+                            },
+                        )
+                    )
 
         return messages[-limit:]
 
@@ -392,15 +406,16 @@ class ClaudeCodeConnection(AgentConnection):
             session_key = agent_key or f"claude:{session_id}"
 
             for ev in events[-5:]:  # Limit broadcast volume
+                event_data = {
+                    "sessionKey": session_key,
+                    "eventType": ev.event_type,
+                    "source": "claude_code",
+                }
+                if isinstance(ev, ToolUseEvent):
+                    event_data["toolName"] = ev.tool_name
+                    event_data["detail"] = _humanize_tool(ev.tool_name, ev.input_data)
                 asyncio.get_event_loop().create_task(
-                    broadcast(
-                        "session-event",
-                        {
-                            "sessionKey": session_key,
-                            "eventType": ev.event_type,
-                            "source": "claude_code",
-                        },
-                    )
+                    broadcast("session-event", event_data)
                 )
                 # Auto room assignment on project context
                 if isinstance(ev, ProjectContextEvent) and ev.project_name:
@@ -481,6 +496,10 @@ class ClaudeCodeConnection(AgentConnection):
                 }
                 if ws and ws.project_name:
                     payload["project_name"] = ws.project_name
+                if ws and ws.activity_detail:
+                    payload["activity_detail"] = ws.activity_detail
+                if ws and ws.activity_tool_name:
+                    payload["activity_tool_name"] = ws.activity_tool_name
                 asyncio.get_event_loop().create_task(broadcast("session-updated", payload))
         except Exception:
             pass

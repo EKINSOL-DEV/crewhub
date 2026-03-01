@@ -304,7 +304,30 @@ export function useSessionsStream(enabled: boolean = true) {
 
     const handleSessionUpdated = (event: MessageEvent) => {
       try {
-        const updatedSession: CrewSession = JSON.parse(event.data)
+        const data = JSON.parse(event.data)
+
+        // Thin CC activity update: merge into existing session instead of replacing
+        if (data.source === 'claude_code' && data.sessionKey && !data.key) {
+          setState((prev) => {
+            const idx = prev.sessions.findIndex((s) => s.key === data.sessionKey)
+            if (idx === -1) return prev
+            const updated = { ...prev.sessions[idx] }
+            if (data.status) updated.status = data.status
+            if (data.activity_detail !== undefined)
+              updated.activityDetail = data.activity_detail || undefined
+            if (data.activity_tool_name !== undefined)
+              updated.activityToolName = data.activity_tool_name || undefined
+            updated.updatedAt = Date.now()
+            const newSessions = [...prev.sessions]
+            newSessions[idx] = updated
+            sessionsFingerprintRef.current = computeSessionsFingerprint(newSessions)
+            return { ...prev, sessions: newSessions }
+          })
+          return
+        }
+
+        // Full session update (from polling/OpenClaw) — existing logic
+        const updatedSession: CrewSession = data
         // Accumulate updates and flush at most every 100ms to prevent
         // high-frequency SSE bursts from triggering per-event React re-renders.
         pendingUpdatesRef.current.set(updatedSession.key, updatedSession)

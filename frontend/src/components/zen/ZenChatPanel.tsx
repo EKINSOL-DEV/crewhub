@@ -12,6 +12,7 @@ import { ImageDropZone, ImagePreviews, type PendingImage } from './ImageDropZone
 import { API_BASE } from '@/lib/api'
 import type { Agent } from '@/hooks/useAgentsRegistry'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
+import { sseManager } from '@/lib/sseManager'
 
 interface ZenChatPanelProps {
   readonly sessionKey: string | null
@@ -232,12 +233,30 @@ export function ZenChatPanel({
   const [inputValue, setInputValue] = useState('')
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
   const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
+  const [activityDetail, setActivityDetail] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const isNearBottomRef = useRef(true)
   const prevMessageCount = useRef(0)
   const prevStreamingIdRef = useRef<string | null>(null)
+
+  // Track CC activity detail from SSE events
+  useEffect(() => {
+    if (!sessionKey) return
+    const handleUpdate = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.source === 'claude_code' && data.sessionKey === sessionKey) {
+          setActivityDetail(data.activity_detail || null)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    const unsub = sseManager.subscribe('session-updated', handleUpdate)
+    return () => unsub()
+  }, [sessionKey])
 
   // Process pending message when agent finishes
   useEffect(() => {
@@ -542,7 +561,7 @@ export function ZenChatPanel({
                 <span />
                 <span />
               </div>
-              <span>{agentName || 'Agent'} is thinking...</span>
+              <span>{activityDetail || `${agentName || 'Agent'} is thinking...`}</span>
             </div>
           )}
 

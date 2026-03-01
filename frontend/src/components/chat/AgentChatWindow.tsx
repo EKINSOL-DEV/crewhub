@@ -5,6 +5,7 @@ import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from './ChatMessageBubble'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
+import { sseManager } from '@/lib/sseManager'
 
 const BACKGROUND_0_15S_COLOR_0_15S = 'background 0.15s, color 0.15s'
 const SYSTEM_UI_SANS_SERIF = 'system-ui, sans-serif'
@@ -57,11 +58,13 @@ export function AgentChatWindow({
     loadOlderMessages,
     hasMore,
     isLoadingHistory,
+    pendingQuestions,
   } = useStreamingChat(sessionKey, showInternals)
 
   const [isDragging, setIsDragging] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [inputValue, setInputValue] = useState('')
+  const [activityDetail, setActivityDetail] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -115,6 +118,22 @@ export function AgentChatWindow({
   useEffect(() => {
     setTimeout(() => inputRef.current?.focus(), 150)
   }, [])
+
+  // Track CC activity detail from SSE events
+  useEffect(() => {
+    const handleUpdate = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.source === 'claude_code' && data.sessionKey === sessionKey) {
+          setActivityDetail(data.activity_detail || null)
+        }
+      } catch {
+        // ignore
+      }
+    }
+    const unsub = sseManager.subscribe('session-updated', handleUpdate)
+    return () => unsub()
+  }, [sessionKey])
 
   const handleSend = useCallback(() => {
     const text = inputValue.trim()
@@ -279,7 +298,9 @@ export function AgentChatWindow({
                 {agentName}
               </div>
               <div style={{ fontSize: 10, color: '#9ca3af' }}>
-                {isSending ? 'Thinking…' : 'Online'}
+                {isSending
+                  ? (activityDetail || 'Thinking…')
+                  : 'Online'}
               </div>
             </div>
 
@@ -407,6 +428,61 @@ export function AgentChatWindow({
                 }}
               >
                 {error}
+              </div>
+            )}
+
+            {/* Agent question UI (AskUserQuestion) */}
+            {pendingQuestions && pendingQuestions.length > 0 && (
+              <div
+                style={{
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: `${accentColor}10`,
+                  border: `1px solid ${accentColor}30`,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8,
+                  alignSelf: 'flex-start',
+                  maxWidth: '85%',
+                }}
+              >
+                {pendingQuestions.map((q, qi) => (
+                  <div key={qi} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>
+                      {q.question}
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {q.options.map((opt, oi) => (
+                        <button
+                          key={oi}
+                          onClick={() => sendMessage(opt.label)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: 6,
+                            border: `1px solid ${accentColor}40`,
+                            background: 'white',
+                            color: '#374151',
+                            fontSize: 12,
+                            cursor: 'pointer',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = `${accentColor}15`
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'white'
+                          }}
+                          title={opt.description}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                <div style={{ fontSize: 10, color: '#9ca3af', fontStyle: 'italic' }}>
+                  Or type a reply below
+                </div>
               </div>
             )}
 

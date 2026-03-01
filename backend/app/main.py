@@ -294,6 +294,11 @@ async def lifespan(app: FastAPI):
     _polling_task = asyncio.create_task(poll_sessions_loop())
     logger.info("Started sessions polling task")
 
+    # Start persistent CC session idle cleanup loop
+    from app.services.cc_chat import _idle_cleanup_loop
+
+    _idle_cleanup_task = asyncio.create_task(_idle_cleanup_loop())
+
     yield
 
     # Shutdown
@@ -303,6 +308,17 @@ async def lifespan(app: FastAPI):
             await _polling_task
         except asyncio.CancelledError:  # NOSONAR
             pass
+
+    _idle_cleanup_task.cancel()
+    try:
+        await _idle_cleanup_task
+    except asyncio.CancelledError:  # NOSONAR
+        pass
+
+    # Clean up persistent CC sessions
+    from app.services.cc_chat import cleanup_persistent_sessions
+
+    await cleanup_persistent_sessions()
 
     # Stop Connection Manager
     manager = await get_connection_manager()

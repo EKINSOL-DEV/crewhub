@@ -660,15 +660,29 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
                 },
             )
 
-        # Fixed CC agent: prepend context then stream via cc_chat module
+        # Fixed CC agent: prepend context then stream via persistent session
         message = await _prepend_context_if_available(session_key, agent_id, body, message)
-        from app.services.cc_chat import stream_cc_response
+        from app.services.cc_chat import stream_cc_persistent
 
         async def generate_cc():
             yield "event: start\ndata: {}\n\n"
             try:
-                async for chunk in stream_cc_response(agent_id, message):
-                    yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
+                async for chunk in stream_cc_persistent(agent_id, message):
+                    # Check for question markers from AskUserQuestion
+                    if "__QUESTION__" in chunk:
+                        parts = chunk.split("__QUESTION__")
+                        # Parts: ['prefix_text', json_data, 'suffix_text']
+                        for i, part in enumerate(parts):
+                            part = part.strip()
+                            if not part:
+                                continue
+                            # Odd indices are the JSON question data
+                            if i % 2 == 1:
+                                yield f"event: question\ndata: {part}\n\n"
+                            elif part:
+                                yield f"event: delta\ndata: {json.dumps({'text': part})}\n\n"
+                    else:
+                        yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
                 yield "event: done\ndata: {}\n\n"
                 try:
                     from app.routes.sse import broadcast
