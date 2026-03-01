@@ -227,6 +227,8 @@ Install CrewHub as a service that starts automatically on login, survives termin
 ./scripts/service.sh logs       # Tail the log file
 ```
 
+Uses launchd (macOS) or systemd (Linux) for auto-start on login.
+
 #### Windows (PowerShell)
 
 ```powershell

@@ -8,9 +8,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 LOG_DIR="$HOME/.crewhub"
-PLIST_NAME="com.crewhub.backend"
-PLIST_DIR="$HOME/Library/LaunchAgents"
-PLIST_PATH="$PLIST_DIR/$PLIST_NAME.plist"
 
 BOLD='\033[1m'
 GREEN='\033[0;32m'
@@ -26,6 +23,32 @@ info()  { echo -e "${BLUE}>>>${NC} $*"; }
 ok()    { echo -e "${GREEN}>>>${NC} $*"; }
 warn()  { echo -e "${YELLOW}>>>${NC} $*"; }
 error() { echo -e "${RED}>>>${NC} $*"; }
+
+# ------------------------------------------
+# Platform detection
+# ------------------------------------------
+detect_platform() {
+    case "$(uname -s)" in
+        Darwin) echo "macos" ;;
+        Linux)  echo "linux" ;;
+        *)      error "Unsupported platform: $(uname -s)"; exit 1 ;;
+    esac
+}
+
+PLATFORM="$(detect_platform)"
+
+# Platform-specific constants
+if [[ "$PLATFORM" == "macos" ]]; then
+    PLIST_NAME="com.crewhub.backend"
+    PLIST_DIR="$HOME/Library/LaunchAgents"
+    PLIST_PATH="$PLIST_DIR/$PLIST_NAME.plist"
+    LAUNCHD_DOMAIN="gui/$(id -u)"
+    LAUNCHD_TARGET="$LAUNCHD_DOMAIN/$PLIST_NAME"
+elif [[ "$PLATFORM" == "linux" ]]; then
+    SYSTEMD_DIR="$HOME/.config/systemd/user"
+    SYSTEMD_UNIT="crewhub.service"
+    SYSTEMD_PATH="$SYSTEMD_DIR/$SYSTEMD_UNIT"
+fi
 
 # ------------------------------------------
 # Prerequisite checks
@@ -53,21 +76,25 @@ check_prereqs() {
         ok=false
     fi
 
+    if [[ "$PLATFORM" == "linux" ]] && ! command -v systemctl &>/dev/null; then
+        error "systemctl not found (systemd required)"
+        ok=false
+    fi
+
     if [[ "$ok" != true ]]; then
         exit 1
     fi
 }
 
 # ------------------------------------------
-# Generate launchd plist with correct paths
+# macOS: Generate launchd plist
 # ------------------------------------------
 generate_plist() {
-    # Build PATH: include common locations + wherever node/python live
-    local node_dir
+    local node_dir python_dir env_path bash_path
     node_dir="$(dirname "$(command -v node)")"
-    local python_dir
     python_dir="$(dirname "$(command -v python3)")"
-    local env_path="/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:${node_dir}:${python_dir}"
+    env_path="/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:${node_dir}:${python_dir}"
+    bash_path="$(command -v bash)"
 
     mkdir -p "$PLIST_DIR"
     cat > "$PLIST_PATH" <<EOF
@@ -80,9 +107,9 @@ generate_plist() {
 
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>-c</string>
-        <string>exec ${PROJECT_ROOT}/scripts/watchdog.sh start</string>
+        <string>${bash_path}</string>
+        <string>${PROJECT_ROOT}/scripts/watchdog.sh</string>
+        <string>start</string>
     </array>
 
     <key>RunAtLoad</key>
@@ -117,10 +144,90 @@ EOF
 }
 
 # ------------------------------------------
+# Linux: Generate systemd user unit
+# ------------------------------------------
+generate_systemd_unit() {
+    local node_dir python_dir env_path
+    node_dir="$(dirname "$(command -v node)")"
+    python_dir="$(dirname "$(command -v python3)")"
+    env_path="/usr/local/bin:/usr/bin:/bin:${node_dir}:${python_dir}"
+
+    mkdir -p "$SYSTEMD_DIR"
+    cat > "$SYSTEMD_PATH" <<EOF
+[Unit]
+Description=CrewHub Background Service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=${PROJECT_ROOT}
+ExecStart=${PROJECT_ROOT}/scripts/watchdog.sh start
+ExecStop=${PROJECT_ROOT}/scripts/watchdog.sh stop
+Restart=on-failure
+RestartSec=10
+Environment=PATH=${env_path}
+Environment=HOME=${HOME}
+Environment=CREWHUB_PORT=${BACKEND_PORT}
+Environment=CREWHUB_FRONTEND_PORT=${FRONTEND_PORT}
+
+[Install]
+WantedBy=default.target
+EOF
+}
+
+# ------------------------------------------
+# macOS: launchd helpers (modern API)
+# ------------------------------------------
+launchd_unload() {
+    # Try modern API first, fall back to legacy
+    launchctl bootout "$LAUNCHD_TARGET" 2>/dev/null || \
+        launchctl unload "$PLIST_PATH" 2>/dev/null || true
+}
+
+launchd_load() {
+    # Try modern API first, fall back to legacy
+    if ! launchctl bootstrap "$LAUNCHD_DOMAIN" "$PLIST_PATH" 2>/dev/null; then
+        launchctl load "$PLIST_PATH" 2>/dev/null || true
+    fi
+}
+
+launchd_start() {
+    launchctl kickstart -k "$LAUNCHD_TARGET" 2>/dev/null || true
+}
+
+# ------------------------------------------
+# Start the watchdog directly (works from any context)
+# ------------------------------------------
+start_watchdog_direct() {
+    # Stop any existing watchdog first
+    if [[ -x "$SCRIPT_DIR/watchdog.sh" ]]; then
+        "$SCRIPT_DIR/watchdog.sh" stop 2>/dev/null || true
+    fi
+    sleep 1
+
+    # Start in background, detached from terminal
+    nohup "$SCRIPT_DIR/watchdog.sh" start >> "$LOG_DIR/backend.log" 2>&1 &
+    disown
+    sleep 3
+
+    # Verify it started
+    if [[ -f "$LOG_DIR/watchdog.pid" ]]; then
+        local wpid
+        wpid=$(cat "$LOG_DIR/watchdog.pid")
+        if kill -0 "$wpid" 2>/dev/null; then
+            ok "Watchdog running (PID $wpid)"
+            return 0
+        fi
+    fi
+    error "Watchdog failed to start — check $LOG_DIR/backend.log"
+    return 1
+}
+
+# ------------------------------------------
 # Install
 # ------------------------------------------
 do_install() {
-    info "Installing CrewHub as a background service..."
+    info "Installing CrewHub as a background service ($PLATFORM)..."
     echo ""
 
     check_prereqs
@@ -130,7 +237,7 @@ do_install() {
     (cd "$PROJECT_ROOT/frontend" && npm run build) || { error "Frontend build failed"; exit 1; }
     ok "Frontend built"
 
-    # Ensure serve is available (check node_modules directly to avoid npx interactive prompt)
+    # Ensure serve is available
     if [[ ! -x "$PROJECT_ROOT/frontend/node_modules/.bin/serve" ]]; then
         info "Installing serve..."
         (cd "$PROJECT_ROOT/frontend" && npm install --save-dev serve --legacy-peer-deps) || { error "Failed to install serve"; exit 1; }
@@ -141,16 +248,40 @@ do_install() {
 
     mkdir -p "$LOG_DIR"
 
-    # Generate plist
-    info "Generating launchd plist..."
-    generate_plist
-    ok "Plist written to $PLIST_PATH"
+    # Start the service now
+    info "Starting CrewHub..."
+    start_watchdog_direct
 
-    # Load service
-    # Unload first if already loaded (ignore errors)
-    launchctl unload "$PLIST_PATH" 2>/dev/null || true
-    launchctl load "$PLIST_PATH"
-    ok "Service loaded"
+    # Register for auto-start on login
+    if [[ "$PLATFORM" == "macos" ]]; then
+        info "Registering for auto-start on login (launchd)..."
+        generate_plist
+        launchd_unload
+        launchd_load
+        # Verify launchd can actually run the script (TCC may block ~/Documents)
+        sleep 2
+        if launchctl list "$PLIST_NAME" 2>/dev/null | grep -q '"PID"'; then
+            ok "Auto-start registered"
+        else
+            ok "Plist registered (auto-start on login)"
+            # Check if the project is in a TCC-protected directory
+            case "$PROJECT_ROOT" in
+                "$HOME/Documents"*|"$HOME/Desktop"*|"$HOME/Downloads"*)
+                    warn "Note: Your project is in a macOS-protected folder ($PROJECT_ROOT)."
+                    warn "Auto-start on login may require granting Full Disk Access to /bin/bash"
+                    warn "in System Settings > Privacy & Security > Full Disk Access."
+                    warn "The service is running now and will survive terminal closes."
+                    ;;
+            esac
+        fi
+
+    elif [[ "$PLATFORM" == "linux" ]]; then
+        info "Registering for auto-start on login (systemd)..."
+        generate_systemd_unit
+        systemctl --user daemon-reload
+        systemctl --user enable "$SYSTEMD_UNIT"
+        ok "Auto-start registered"
+    fi
 
     echo ""
     ok "CrewHub service installed and started!"
@@ -169,13 +300,25 @@ do_install() {
 do_uninstall() {
     info "Uninstalling CrewHub service..."
 
-    # Unload from launchd
-    if [[ -f "$PLIST_PATH" ]]; then
-        launchctl unload "$PLIST_PATH" 2>/dev/null || true
-        rm -f "$PLIST_PATH"
-        ok "Plist removed"
-    else
-        warn "Plist not found at $PLIST_PATH (already removed?)"
+    if [[ "$PLATFORM" == "macos" ]]; then
+        if [[ -f "$PLIST_PATH" ]]; then
+            launchd_unload
+            rm -f "$PLIST_PATH"
+            ok "Plist removed"
+        else
+            warn "Plist not found at $PLIST_PATH (already removed?)"
+        fi
+
+    elif [[ "$PLATFORM" == "linux" ]]; then
+        if [[ -f "$SYSTEMD_PATH" ]]; then
+            systemctl --user stop "$SYSTEMD_UNIT" 2>/dev/null || true
+            systemctl --user disable "$SYSTEMD_UNIT" 2>/dev/null || true
+            rm -f "$SYSTEMD_PATH"
+            systemctl --user daemon-reload
+            ok "Systemd unit removed"
+        else
+            warn "Unit not found at $SYSTEMD_PATH (already removed?)"
+        fi
     fi
 
     # Stop running processes via watchdog
@@ -200,9 +343,16 @@ do_update() {
     echo ""
 
     # Stop the service
-    if [[ -f "$PLIST_PATH" ]]; then
-        info "Stopping service..."
-        launchctl unload "$PLIST_PATH" 2>/dev/null || true
+    if [[ "$PLATFORM" == "macos" ]]; then
+        if [[ -f "$PLIST_PATH" ]]; then
+            info "Stopping service..."
+            launchd_unload
+        fi
+    elif [[ "$PLATFORM" == "linux" ]]; then
+        if [[ -f "$SYSTEMD_PATH" ]]; then
+            info "Stopping service..."
+            systemctl --user stop "$SYSTEMD_UNIT" 2>/dev/null || true
+        fi
     fi
 
     # Stop processes
@@ -230,15 +380,18 @@ do_update() {
     (cd "$PROJECT_ROOT/frontend" && npm run build) || { error "Frontend build failed"; exit 1; }
     ok "Frontend rebuilt"
 
-    # Regenerate plist (paths may have changed) and reload
-    if [[ -d "$PLIST_DIR" ]]; then
-        info "Reloading service..."
+    # Start the service
+    info "Starting CrewHub..."
+    start_watchdog_direct
+
+    # Update auto-start registration
+    if [[ "$PLATFORM" == "macos" && -d "$PLIST_DIR" ]]; then
         generate_plist
-        launchctl load "$PLIST_PATH"
-        ok "Service reloaded"
-    else
-        warn "No LaunchAgents directory — skipping service reload."
-        warn "Run './scripts/service.sh install' to set up the service."
+        launchd_unload
+        launchd_load
+    elif [[ "$PLATFORM" == "linux" && -d "$SYSTEMD_DIR" ]]; then
+        generate_systemd_unit
+        systemctl --user daemon-reload
     fi
 
     echo ""
@@ -256,11 +409,20 @@ do_status() {
     echo -e "${BOLD}CrewHub Service Status${NC}"
     echo ""
 
-    # Check launchd
-    if launchctl list "$PLIST_NAME" &>/dev/null; then
-        ok "launchd: loaded"
-    else
-        warn "launchd: not loaded"
+    if [[ "$PLATFORM" == "macos" ]]; then
+        if launchctl list "$PLIST_NAME" &>/dev/null; then
+            ok "launchd: loaded"
+        else
+            warn "launchd: not loaded"
+        fi
+    elif [[ "$PLATFORM" == "linux" ]]; then
+        local state
+        state=$(systemctl --user is-active "$SYSTEMD_UNIT" 2>/dev/null || echo "inactive")
+        if [[ "$state" == "active" ]]; then
+            ok "systemd: active"
+        else
+            warn "systemd: $state"
+        fi
     fi
 
     # Delegate to watchdog for process details
