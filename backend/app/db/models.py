@@ -24,6 +24,7 @@ class ProjectCreate(BaseModel):
     icon: Optional[str] = None
     color: Optional[str] = None
     folder_path: Optional[str] = None
+    docs_path: Optional[str] = None
 
 
 class ProjectUpdate(BaseModel):
@@ -35,6 +36,7 @@ class ProjectUpdate(BaseModel):
     color: Optional[str] = None
     status: Optional[str] = None
     folder_path: Optional[str] = None
+    docs_path: Optional[str] = None
 
 
 class ProjectResponse(BaseModel):

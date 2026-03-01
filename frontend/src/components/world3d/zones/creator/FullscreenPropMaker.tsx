@@ -30,7 +30,7 @@ import type {
   GenerationMode,
 } from './propMakerTypes'
 
-const APPLICATION_JSON = 'application/json'
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const
 const CORRECTION = 'correction'
 const SONNET_4_5 = 'sonnet-4-5'
 
@@ -301,7 +301,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/save-prop', {
         method: 'POST',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           name: previewName,
           propId: kebabName,
@@ -351,7 +351,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/props/quality-score', {
         method: 'POST',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ code }),
       })
       if (res.ok) setQualityScore(await res.json())
@@ -368,7 +368,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/props/iterate', {
         method: 'POST',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           code: previewCode,
           feedback: iterationFeedback.trim(),
@@ -405,7 +405,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
     try {
       const res = await fetch('/api/creator/props/style-transfer', {
         method: 'POST',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: JSON_HEADERS,
         body: JSON.stringify({
           code: previewCode,
           styleSource: selectedStyle,
@@ -455,7 +455,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       try {
         const res = await fetch('/api/creator/props/refine', {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify({ propId: generationId, changes }),
         })
         if (res.ok) {

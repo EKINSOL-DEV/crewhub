@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
-const APPLICATION_JSON = 'application/json'
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const
 const UNKNOWN_ERROR = 'Unknown error'
 
 export interface Project {
@@ -12,6 +12,7 @@ export interface Project {
   icon: string | null
   color: string | null
   folder_path: string | null
+  docs_path: string | null
   status: 'active' | 'paused' | 'completed' | 'archived'
   created_at: number
   updated_at: number
@@ -111,7 +112,7 @@ export function useProjects() {
       try {
         const response = await fetch(`${API_BASE}/projects`, {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify(project),
           signal: controller.signal,
         })
@@ -175,7 +176,7 @@ export function useProjects() {
       try {
         const response = await fetch(`${API_BASE}/projects/${projectId}`, {
           method: 'PUT',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify(updates),
         })
         if (!response.ok) {
@@ -221,7 +222,7 @@ export function useProjects() {
       try {
         const response = await fetch(`${API_BASE}/rooms/${roomId}/project`, {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify({ project_id: projectId }),
         })
         if (!response.ok) throw new Error('Failed to assign project to room')

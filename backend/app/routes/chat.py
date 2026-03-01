@@ -510,16 +510,9 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         # OpenClaw agent
         # Build context envelope for agent awareness
         try:
-            from app.db.database import get_db
             from app.services.context_envelope import build_crewhub_context, format_context_block
 
-            ctx_room_id = body.room_id
-            if not ctx_room_id:
-                async with get_db() as db:
-                    cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
-                    row = await cursor.fetchone()
-                    if row:
-                        ctx_room_id = row["default_room_id"]
+            ctx_room_id = await _resolve_room_id(session_key, agent_id, body.room_id)
 
             if ctx_room_id:
                 envelope = await build_crewhub_context(
@@ -557,19 +550,42 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
         return {"response": None, "tokens": 0, "success": False, "error": "No response from agent"}
 
 
+async def _resolve_room_id(session_key: str, agent_id: str, explicit_room_id: str | None) -> str | None:
+    """Resolve the room for context injection.
+
+    Priority: explicit room_id > session_room_assignments (dynamic) > default_room_id (static).
+    """
+    if explicit_room_id:
+        return explicit_room_id
+    try:
+        from app.db.database import get_db
+
+        async with get_db() as db:
+            # Check dynamic assignment first
+            cursor = await db.execute(
+                "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
+                (session_key,),
+            )
+            row = await cursor.fetchone()
+            if row:
+                return row["room_id"]
+
+            # Fall back to agent's default_room_id
+            cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
+            row = await cursor.fetchone()
+            if row:
+                return row["default_room_id"]
+    except Exception:
+        pass
+    return None
+
+
 async def _prepend_context_if_available(session_key: str, agent_id: str, body: SendMessageBody, message: str) -> str:
     """Prepend CrewHub context envelope to message if a room can be resolved."""
     try:
-        from app.db.database import get_db
         from app.services.context_envelope import build_crewhub_context, format_context_block
 
-        ctx_room_id = body.room_id
-        if not ctx_room_id:
-            async with get_db() as db:
-                cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
-                row = await cursor.fetchone()
-                if row:
-                    ctx_room_id = row["default_room_id"]
+        ctx_room_id = await _resolve_room_id(session_key, agent_id, body.room_id)
 
         if ctx_room_id:
             envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)

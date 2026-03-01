@@ -18,7 +18,7 @@ import { parseMeetingOutput, type ParsedActionItem } from '@/lib/parseMeetingOut
 import { showToast } from '@/lib/toast'
 import { API_BASE } from '@/lib/api'
 
-const APPLICATION_JSON = 'application/json'
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const
 const BORDER_1PX_SOLID_HSL_VAR_BORDER = '1px solid hsl(var(--border))'
 const HSL_CARD = 'hsl(var(--card))'
 const HSL_FOREGROUND = 'hsl(var(--foreground))'
@@ -66,7 +66,7 @@ function ActionItemCard({
         `${API_BASE}/meetings/${meetingId}/action-items/${item.id}/to-planner`,
         {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify({
             title: item.text,
             assignee: item.assignee,
@@ -96,7 +96,7 @@ function ActionItemCard({
     try {
       const res = await fetch(`${API_BASE}/meetings/${meetingId}/action-items/${item.id}/execute`, {
         method: 'POST',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ agent_id: item.assignee }),
       })
       if (res.ok) {
@@ -361,7 +361,7 @@ export function MeetingOutput({
           // No backend items — save parsed ones (creates them with parsed IDs)
           fetch(`${API_BASE}/meetings/${meetingId}/action-items`, {
             method: 'POST',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
+            headers: JSON_HEADERS,
             body: JSON.stringify({
               items: parsed.actionItems.map((ai) => ({
                 id: ai.id,

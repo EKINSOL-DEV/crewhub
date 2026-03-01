@@ -33,7 +33,7 @@ import type {
   OnboardingWizardProps,
 } from './onboardingTypes'
 
-const APPLICATION_JSON = 'application/json'
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const
 const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
@@ -146,7 +146,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         }
         await fetch('/api/connections', {
           method: 'POST',
-          headers: { 'Content-Type': APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify({ name: conn.name, type: conn.type, config, enabled: true }),
         })
       } catch {
@@ -161,7 +161,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     try {
       await fetch('/api/settings/crewhub-onboarded', {
         method: 'PUT',
-        headers: { 'Content-Type': APPLICATION_JSON },
+        headers: JSON_HEADERS,
         body: JSON.stringify({ value: 'true' }),
       })
     } catch {

@@ -5,8 +5,10 @@ HTTP concerns (exceptions, SSE broadcasts, response formatting).
 """
 
 import logging
+import os
 import re
 import time
+from pathlib import Path
 from typing import Optional
 
 from app.db.database import get_db
@@ -128,11 +130,18 @@ async def create_project(project: ProjectCreate) -> ProjectResponse:
             slug = re.sub(r"[^a-zA-Z0-9]+", "-", project.name).strip("-")
             folder_path = f"{base_path}/{slug}"
 
+        # Auto-detect docs_path from folder_path/docs if not explicitly set
+        docs_path = project.docs_path
+        if not docs_path and folder_path:
+            candidate = Path(os.path.expanduser(folder_path)).resolve() / "docs"
+            if candidate.is_dir():
+                docs_path = str(candidate)
+
         await db.execute(
             """INSERT INTO projects
-                   (id, name, description, icon, color, folder_path, status,
+                   (id, name, description, icon, color, folder_path, docs_path, status,
                     created_at, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)""",
             (
                 project_id,
                 project.name,
@@ -140,6 +149,7 @@ async def create_project(project: ProjectCreate) -> ProjectResponse:
                 project.icon,
                 project.color,
                 folder_path,
+                docs_path,
                 now,
                 now,
             ),
@@ -153,6 +163,7 @@ async def create_project(project: ProjectCreate) -> ProjectResponse:
             icon=project.icon,
             color=project.color,
             folder_path=folder_path,
+            docs_path=docs_path,
             status="active",
             created_at=now,
             updated_at=now,
