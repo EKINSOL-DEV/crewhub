@@ -183,6 +183,8 @@ class ClaudeCodeConnection(AgentConnection):
                             "updatedAt": last_ms,
                             "kind": "subagent" if ws.is_subagent else "session",
                             "projectPath": ws.project_path,
+                            "activityDetail": ws.activity_detail,
+                            "activityToolName": ws.activity_tool_name,
                         },
                     )
                 )
@@ -203,6 +205,8 @@ class ClaudeCodeConnection(AgentConnection):
                             "updatedAt": last_ms,
                             "kind": "subagent" if ws.is_subagent else "session",
                             "projectPath": ws.project_path,
+                            "activityDetail": ws.activity_detail,
+                            "activityToolName": ws.activity_tool_name,
                         },
                     )
                 )
