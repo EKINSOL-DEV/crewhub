@@ -12,7 +12,7 @@ import {
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
-const APPLICATION_JSON = 'application/json'
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const
 const UNKNOWN_ERROR = 'Unknown error'
 
 export type FloorStyle =
@@ -323,7 +323,7 @@ export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
       try {
         const response = await fetch(`${API_BASE}/rooms`, {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify({
             id: room.id,
             name: room.name,
@@ -360,7 +360,7 @@ export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
       try {
         const response = await fetch(`${API_BASE}/rooms/${roomId}`, {
           method: 'PUT',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify(updates),
         })
         if (!response.ok) throw new Error('Failed to update room')
@@ -394,7 +394,7 @@ export function RoomsProvider({ children }: Readonly<{ children: ReactNode }>) {
       try {
         const response = await fetch(`${API_BASE}/rooms/reorder`, {
           method: 'PUT',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: JSON_HEADERS,
           body: JSON.stringify(roomIds),
         })
         if (!response.ok) throw new Error('Failed to reorder rooms')
