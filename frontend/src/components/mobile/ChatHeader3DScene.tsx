@@ -28,7 +28,7 @@ import type { AvatarAnimation } from './ChatHeader3DAvatar'
 // Head (0.66 units) is slightly cropped at extremes, but bob is small. ✓
 const HEAD_WORLD_Y = 0.35
 const CAM_Z = 0.65
-const DEBUG_CAMERA = false // set true to re-enable tuning overlay
+const DEBUG_CAMERA = false as const // set true to re-enable tuning overlay
 
 // ── Full-body Bot (head shown by camera framing) ───────────────
 

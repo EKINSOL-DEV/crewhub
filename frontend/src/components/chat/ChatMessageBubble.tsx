@@ -208,7 +208,7 @@ export function ThinkingBlock({ content, zenMode }: ThinkingBlockProps) {
   }
 
   // Inline-styles version (for float/mobile variants)
-  const displayText = isExpanded ? content : content.slice(0, 200)
+  const displayText = isExpanded ? content : content.slice(0, 500)
   return (
     <div
       style={{
@@ -509,7 +509,7 @@ function ZenMessageContent({
       {showThinking && msg.thinking && msg.thinking.length > 0 && (
         <div className="zen-thinking-blocks">
           {msg.thinking.map((thought, i) => (
-            <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} zenMode />
+            <ThinkingBlock key={i} content={thought} zenMode />
           ))}
         </div>
       )}
@@ -615,7 +615,7 @@ function InlineMessageContent({
       {showThinking && msg.thinking && msg.thinking.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
           {msg.thinking.map((thought, i) => (
-            <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} />
+            <ThinkingBlock key={i} content={thought} />
           ))}
         </div>
       )}
