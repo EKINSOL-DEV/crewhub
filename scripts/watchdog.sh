@@ -33,7 +33,7 @@ HEALTH_CHECK_TIMEOUT=10
 mkdir -p "$LOG_DIR"
 
 log() {
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$BACKEND_LOG"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$BACKEND_LOG"
     return 0
 }
 
@@ -74,30 +74,36 @@ ensure_frontend_built() {
     return 0
 }
 
+# Start backend in a subshell so cd doesn't affect the main script.
+# Writes PID to BACKEND_PID_FILE; caller reads it from there.
 start_backend() {
     log "Starting CrewHub backend on ${HOST}:${PORT}..."
-    cd "$BACKEND_DIR"
-    source venv/bin/activate
-    export CREWHUB_PORT="$PORT"
-    export CREWHUB_DB_PATH="${CREWHUB_DB_PATH:-$HOME/.crewhub/crewhub.db}"
-    export OPENCLAW_GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-ws://localhost:18789}"
-    python3 -m uvicorn app.main:app --host "$HOST" --port "$PORT" >> "$BACKEND_LOG" 2>&1 &
+    (
+        cd "$BACKEND_DIR"
+        source venv/bin/activate
+        export CREWHUB_PORT="$PORT"
+        export CREWHUB_DB_PATH="${CREWHUB_DB_PATH:-$HOME/.crewhub/crewhub.db}"
+        export OPENCLAW_GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-ws://localhost:18789}"
+        exec python3 -m uvicorn app.main:app --host "$HOST" --port "$PORT" >> "$BACKEND_LOG" 2>&1
+    ) &
     local pid=$!
     echo "$pid" > "$BACKEND_PID_FILE"
     log "Backend started with PID $pid"
-    echo "$pid"
     return 0
 }
 
+# Start frontend in a subshell so cd doesn't affect the main script.
+# Writes PID to FRONTEND_PID_FILE; caller reads it from there.
 start_frontend() {
     ensure_frontend_built || return 1
     log "Starting CrewHub frontend on port ${FRONTEND_PORT}..."
-    cd "$FRONTEND_DIR"
-    npx serve dist -l "$FRONTEND_PORT" -s >> "$FRONTEND_LOG" 2>&1 &
+    (
+        cd "$FRONTEND_DIR"
+        exec npx serve dist -l "$FRONTEND_PORT" -s >> "$FRONTEND_LOG" 2>&1
+    ) &
     local pid=$!
     echo "$pid" > "$FRONTEND_PID_FILE"
     log "Frontend started with PID $pid (port $FRONTEND_PORT)"
-    echo "$pid"
     return 0
 }
 
@@ -200,6 +206,15 @@ do_status() {
     return 0
 }
 
+read_pid() {
+    local pid_file="$1"
+    if [[ -f "$pid_file" ]]; then
+        cat "$pid_file"
+    else
+        echo ""
+    fi
+}
+
 do_start() {
     # Check if already running
     if [[ -f "$PID_FILE" ]]; then
@@ -218,8 +233,7 @@ do_start() {
 
     # Start frontend (static server — doesn't need watchdog-level monitoring)
     stop_frontend
-    local frontend_pid
-    frontend_pid=$(start_frontend) || log "WARNING: Frontend failed to start"
+    start_frontend || log "WARNING: Frontend failed to start"
 
     local restart_count=0
     local window_start
@@ -246,24 +260,23 @@ do_start() {
         sleep 1
 
         # Restart frontend if it died
-        if [[ -f "$FRONTEND_PID_FILE" ]]; then
-            local fpid
-            fpid=$(cat "$FRONTEND_PID_FILE")
-            if ! kill -0 "$fpid" 2>/dev/null; then
-                log "Frontend died — restarting..."
-                frontend_pid=$(start_frontend) || log "WARNING: Frontend restart failed"
-            fi
+        local fpid
+        fpid=$(read_pid "$FRONTEND_PID_FILE")
+        if [[ -z "$fpid" ]] || ! kill -0 "$fpid" 2>/dev/null; then
+            log "Frontend died — restarting..."
+            start_frontend || log "WARNING: Frontend restart failed"
         fi
 
         # Start backend
+        start_backend
         local backend_pid
-        backend_pid=$(start_backend)
+        backend_pid=$(read_pid "$BACKEND_PID_FILE")
 
         # Wait for backend to be healthy
         local healthy=false
         for i in $(seq 1 12); do
             sleep 5
-            if ! kill -0 "$backend_pid" 2>/dev/null; then
+            if [[ -z "$backend_pid" ]] || ! kill -0 "$backend_pid" 2>/dev/null; then
                 break
             fi
             if check_health; then
@@ -273,7 +286,7 @@ do_start() {
         done
 
         if ! $healthy; then
-            if kill -0 "$backend_pid" 2>/dev/null; then
+            if [[ -n "$backend_pid" ]] && kill -0 "$backend_pid" 2>/dev/null; then
                 log "WARNING: Backend running but health check failing"
             fi
         else
@@ -284,7 +297,7 @@ do_start() {
         fi
 
         # Monitor loop
-        while kill -0 "$backend_pid" 2>/dev/null; do
+        while [[ -n "$backend_pid" ]] && kill -0 "$backend_pid" 2>/dev/null; do
             sleep "$HEALTH_CHECK_INTERVAL"
 
             if ! kill -0 "$backend_pid" 2>/dev/null; then
@@ -305,10 +318,12 @@ do_start() {
         done
 
         # Process died
-        wait "$backend_pid" 2>/dev/null
+        if [[ -n "$backend_pid" ]]; then
+            wait "$backend_pid" 2>/dev/null || true
+        fi
         local exit_code=$?
-        log "Backend exited with code $exit_code (PID $backend_pid)"
-        log_crash "$exit_code" "$backend_pid"
+        log "Backend exited with code $exit_code (PID ${backend_pid:-unknown})"
+        log_crash "$exit_code" "${backend_pid:-unknown}"
 
         restart_count=$((restart_count + 1))
         local backoff=$(( BACKOFF_BASE ** restart_count ))
