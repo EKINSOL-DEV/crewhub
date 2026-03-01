@@ -58,6 +58,15 @@ export function StepReady({ connections, onGoDashboard }: StepReadyProps) {
         </p>
       )}
 
+      {/* Agent creation hint */}
+      <div className="w-full rounded-lg border border-dashed border-muted-foreground/30 p-4 text-left space-y-1">
+        <p className="text-sm font-medium">Next step: Create your first Agent</p>
+        <p className="text-xs text-muted-foreground">
+          Click on a room in the 3D world and use the <strong>+</strong> button, or go
+          to <strong>Settings &gt; Agents</strong>.
+        </p>
+      </div>
+
       <Button size="lg" className="w-full gap-3 h-14 text-lg" onClick={onGoDashboard}>
         <Rocket className="h-5 w-5" /> Go to dashboard
       </Button>

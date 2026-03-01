@@ -13,6 +13,7 @@ import { DragStatusIndicator } from './DragStatusIndicator'
 import { BotInfoPanel } from './BotInfoPanel'
 import { BotQuickActions } from './BotQuickActions'
 import { RoomInfoPanel } from './RoomInfoPanel'
+import { AddAgentModal, fetchRooms as fetchAgentRooms, fetchConnectionTypes } from '@/components/sessions/AddAgentModal'
 import { ContextInspector } from './ContextInspector'
 import { ProjectDocsPanel } from './ProjectDocsPanel'
 import { useRooms } from '@/hooks/useRooms'
@@ -211,6 +212,9 @@ function World3DViewInner({
   } | null>(null)
   const [hqBoardOpen, setHqBoardOpen] = useState(false)
   const [tasksWindowOpen, setTasksWindowOpen] = useState(false)
+  const [addAgentForRoom, setAddAgentForRoom] = useState<string | null>(null)
+  const [addAgentRooms, setAddAgentRooms] = useState<Array<{ id: string; name: string; icon: string | null }>>([])
+  const [addAgentConnTypes, setAddAgentConnTypes] = useState<Set<string>>(new Set())
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
@@ -577,6 +581,26 @@ function World3DViewInner({
               }}
               onOpenHQBoard={() => setHqBoardOpen(true)}
               onOpenContext={(roomId, roomName) => setContextInspector({ roomId, roomName })}
+              onAddAgent={async (roomId) => {
+                const [r, ct] = await Promise.all([fetchAgentRooms(), fetchConnectionTypes()])
+                setAddAgentRooms(r)
+                setAddAgentConnTypes(ct)
+                setAddAgentForRoom(roomId)
+              }}
+            />
+          )}
+
+          {/* Add Agent Modal (opened from room panel) */}
+          {addAgentForRoom && (
+            <AddAgentModal
+              rooms={addAgentRooms}
+              availableConnectionTypes={addAgentConnTypes}
+              defaultRoomId={addAgentForRoom}
+              onClose={() => setAddAgentForRoom(null)}
+              onCreated={() => {
+                setAddAgentForRoom(null)
+                window.dispatchEvent(new CustomEvent('agents-updated'))
+              }}
             />
           )}
 

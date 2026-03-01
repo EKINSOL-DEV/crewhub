@@ -13,6 +13,7 @@ interface RoomInfoTabProps {
   readonly isActivelyRunning: (key: string) => boolean
   readonly displayNames: Map<string, string | null>
   readonly onBotClick?: (session: CrewSession) => void
+  readonly onAddAgent?: () => void
 }
 
 function getAccurateBotStatus(session: CrewSession, isActive: boolean): BotStatus {
@@ -64,6 +65,7 @@ export function RoomInfoTab({
   isActivelyRunning,
   displayNames,
   onBotClick,
+  onAddAgent,
 }: Readonly<RoomInfoTabProps>) {
   const botData = sessions
     .map((s) => {
@@ -119,12 +121,48 @@ export function RoomInfoTab({
 
       {/* Agent List */}
       <div>
-        <SectionHeader>🤖 Agents in Room</SectionHeader>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <SectionHeader>Agents in Room</SectionHeader>
+          {onAddAgent && (
+            <button
+              onClick={onAddAgent}
+              title="Add Agent to this room"
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: 6,
+                border: '1px solid rgba(0,0,0,0.1)',
+                background: 'rgba(0,0,0,0.03)',
+                color: '#6b7280',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 14,
+                fontWeight: 600,
+                lineHeight: 1,
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(79,70,229,0.1)'
+                e.currentTarget.style.color = '#4f46e5'
+                e.currentTarget.style.borderColor = 'rgba(79,70,229,0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0,0,0,0.03)'
+                e.currentTarget.style.color = '#6b7280'
+                e.currentTarget.style.borderColor = 'rgba(0,0,0,0.1)'
+              }}
+            >
+              +
+            </button>
+          )}
+        </div>
         {botData.length === 0 ? (
           <div
             style={{
               marginTop: 8,
-              padding: '12px 14px',
+              padding: '16px 14px',
               background: 'rgba(0,0,0,0.03)',
               borderRadius: 10,
               fontSize: 13,
@@ -133,6 +171,27 @@ export function RoomInfoTab({
             }}
           >
             No agents in this room
+            {onAddAgent && (
+              <>
+                {' \u2014 '}
+                <button
+                  onClick={onAddAgent}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#4f46e5',
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    padding: 0,
+                    textDecoration: 'underline',
+                    textUnderlineOffset: '2px',
+                  }}
+                >
+                  Add one
+                </button>
+              </>
+            )}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>

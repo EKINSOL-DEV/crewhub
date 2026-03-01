@@ -38,6 +38,7 @@ interface RoomInfoPanelProps {
   ) => void
   readonly onOpenHQBoard?: () => void
   readonly onOpenContext?: (roomId: string, roomName: string) => void
+  readonly onAddAgent?: (roomId: string) => void
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -100,6 +101,7 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
   onOpenTaskBoard,
   onOpenHQBoard,
   onOpenContext,
+  onAddAgent,
 }: Readonly<RoomInfoPanelProps>) {
   const panelRef = useRef<HTMLDivElement>(null)
   const roomColor = room.color || '#4f46e5'
@@ -466,6 +468,7 @@ export const RoomInfoPanel = memo(function RoomInfoPanel({
             isActivelyRunning={isActivelyRunning}
             displayNames={displayNames}
             onBotClick={onBotClick}
+            onAddAgent={onAddAgent ? () => onAddAgent(room.id) : undefined}
           />
         )}
         {activeInfoTab === 'project' &&
