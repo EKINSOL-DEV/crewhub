@@ -69,11 +69,15 @@ describe('useSessionsStream', () => {
   })
 
   it('applies SSE session events', async () => {
+    vi.useFakeTimers()
     mocks.mockGetSessions.mockResolvedValue({
       sessions: [{ key: 's1', updatedAt: 1, totalTokens: 1 }],
     })
 
     const { result } = renderHook(() => useSessionsStream(true))
+    await act(async () => {
+      await vi.runAllTimersAsync()
+    })
     await waitFor(() => expect(result.current.loading).toBe(false))
 
     act(() => {
@@ -83,10 +87,14 @@ describe('useSessionsStream', () => {
     })
     expect(result.current.sessions.map((s) => s.key)).toEqual(['s1', 's2'])
 
+    // session-updated is throttled (100ms debounce), so advance timers to flush
     act(() => {
       eventHandlers.get('session-updated')?.({
         data: JSON.stringify({ key: 's2', updatedAt: 9, totalTokens: 99 }),
       } as MessageEvent)
+    })
+    await act(async () => {
+      vi.advanceTimersByTime(150)
     })
     expect(result.current.sessions.find((s) => s.key === 's2')?.totalTokens).toBe(99)
 
@@ -103,6 +111,8 @@ describe('useSessionsStream', () => {
       } as MessageEvent)
     })
     expect(result.current.sessions.map((s) => s.key)).toEqual(['sx'])
+
+    vi.useRealTimers()
   })
 
   it('sets error when fetch fails', async () => {

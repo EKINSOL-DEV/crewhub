@@ -129,7 +129,8 @@ describe('App routing and shells', () => {
     render(<App />)
     expect(await screen.findByText('CrewHub')).toBeInTheDocument()
     expect(screen.getByText('Multi-agent orchestration')).toBeInTheDocument()
-    expect(screen.getByText('No Active Sessions')).toBeInTheDocument()
+    // Default tab is 'active' (3D view), which renders the ZoneRenderer
+    expect(screen.getByText('Zone Renderer')).toBeInTheDocument()
   })
 
   it('routes to dev designs path', () => {

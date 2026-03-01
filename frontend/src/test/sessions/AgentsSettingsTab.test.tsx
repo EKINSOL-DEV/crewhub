@@ -313,7 +313,7 @@ describe('AgentsSettingsTab', () => {
     expect(await screen.findByText('Ghost Agent')).toBeInTheDocument()
     expect(screen.getByText('Not in OpenClaw')).toBeInTheDocument()
     // Stale count warning in header
-    expect(screen.getByText(/1 agent not found in OpenClaw gateway/i)).toBeInTheDocument()
+    expect(screen.getByText(/1 agent not found in their source/i)).toBeInTheDocument()
   })
 
   it('shows Pinned badge for pinned agents', async () => {
