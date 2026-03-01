@@ -12,6 +12,7 @@ export interface Project {
   icon: string | null
   color: string | null
   folder_path: string | null
+  docs_path: string | null
   status: 'active' | 'paused' | 'completed' | 'archived'
   created_at: number
   updated_at: number

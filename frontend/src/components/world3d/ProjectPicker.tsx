@@ -23,6 +23,7 @@ interface ProjectPickerProps {
     icon?: string
     color?: string
     folder_path?: string
+    docs_path?: string
   }) => Promise<{ success: boolean; project?: Project }>
   readonly onClose: () => void
 }
@@ -158,6 +159,13 @@ export function ProjectPicker({
     return `${projectsBasePath}/${slug}`
   }, [newName, projectsBasePath])
 
+  // Track whether selected folder has docs
+  const selectedFolderHasDocs = useMemo(() => {
+    const fp = newFolderPath.trim()
+    if (!fp) return false
+    return discoveredFolders.some((f) => f.path === fp && f.has_docs)
+  }, [newFolderPath, discoveredFolders])
+
   const handleCreate = useCallback(async () => {
     if (!newName.trim()) return
     setIsCreating(true)
@@ -165,6 +173,7 @@ export function ProjectPicker({
 
     try {
       const folderPath = newFolderPath.trim() || undefined
+      // Backend auto-detects docs/ subfolder, but we can also pass it explicitly
       const result = await onCreate({
         name: newName.trim(),
         icon: newIcon,
@@ -468,9 +477,14 @@ export function ProjectPicker({
                   ))}
               </div>
             )}
-            {!discoveredFolders.length && (
+            {selectedFolderHasDocs && (
+              <div style={{ fontSize: 10, color: '#059669', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span>📝</span> docs/ folder detected — will be available in the docs browser
+              </div>
+            )}
+            {!discoveredFolders.length && !selectedFolderHasDocs && (
               <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>
-                Path to project files for the docs browser
+                Path to project files — a docs/ subfolder will auto-link to the docs browser
               </div>
             )}
           </div>

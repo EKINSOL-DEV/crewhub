@@ -36,7 +36,7 @@ async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
     Priority: project.docs_path > PROJECT_DATA_PATH/{project.name}/
     """
     async with get_db() as db:
-        async with db.execute("SELECT name, docs_path FROM projects WHERE id = ?", (project_id,)) as cursor:
+        async with db.execute("SELECT name, docs_path, folder_path FROM projects WHERE id = ?", (project_id,)) as cursor:
             row = await cursor.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Project not found")
@@ -47,9 +47,18 @@ async def _get_project_docs_path(project_id: str) -> tuple[Path, str]:
     if row.get("docs_path"):
         docs_dir = Path(os.path.expanduser(row["docs_path"])).resolve()
     else:
-        # Default: PROJECT_DATA_PATH / project_name
-        base = Path(os.path.expanduser(settings.project_data_path)).resolve()
-        docs_dir = base / project_name
+        # Smart fallback: check folder_path/docs before generic data path
+        folder_path = row.get("folder_path")
+        if folder_path:
+            candidate = Path(os.path.expanduser(folder_path)).resolve() / "docs"
+            if candidate.is_dir():
+                docs_dir = candidate
+            else:
+                base = Path(os.path.expanduser(settings.project_data_path)).resolve()
+                docs_dir = base / project_name
+        else:
+            base = Path(os.path.expanduser(settings.project_data_path)).resolve()
+            docs_dir = base / project_name
 
     return docs_dir, project_name
 
