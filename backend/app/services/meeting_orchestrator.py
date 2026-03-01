@@ -47,7 +47,7 @@ from app.services.meeting_service import (
 
 logger = logging.getLogger(__name__)
 
-TURN_TIMEOUT = 30.0
+TURN_TIMEOUT = 120.0  # CC agents need time to spawn process + generate response
 MAX_RETRIES_PER_TURN = 1
 
 
@@ -294,7 +294,7 @@ class MeetingOrchestrator:
             except Exception as exc:
                 logger.warning(f"Turn attempt {attempt + 1} failed for {participant['name']}: {exc}")
                 if attempt < MAX_RETRIES_PER_TURN:
-                    await asyncio.sleep(2)
+                    await asyncio.sleep(5)
         return "[no response]"
 
     async def _get_bot_response(self, participant: dict, prompt: str) -> Optional[str]:
@@ -347,7 +347,7 @@ class MeetingOrchestrator:
                 response = await manager.send_message(
                     session_key=participant["session_key"],
                     message=synthesis_prompt,
-                    timeout=60.0,
+                    timeout=180.0,
                 )
                 if response:
                     return response
