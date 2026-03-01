@@ -510,5 +510,108 @@ class ClaudeCodeConnection(AgentConnection):
             from ...routes.sse import broadcast
 
             asyncio.get_event_loop().create_task(broadcast("sessions-changed", {"source": "claude_code"}))
+
+            # Auto-assign subagents to their parent's room
+            if self._watcher:
+                asyncio.get_event_loop().create_task(self._inherit_parent_rooms())
         except Exception:
             pass
+
+    async def _inherit_parent_rooms(self) -> None:
+        """Assign subagent sessions to the same room as their parent session."""
+        if not self._watcher:
+            return
+
+        watched = self._watcher.get_watched_sessions()
+        for ws in watched.values():
+            if not ws.is_subagent or not ws.parent_session_uuid:
+                continue
+
+            session_key = f"claude:{ws.session_id}"
+
+            # Check if already assigned
+            try:
+                from ...db.database import get_db
+
+                async with get_db() as db:
+                    async with db.execute(
+                        "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
+                        (session_key,),
+                    ) as cur:
+                        if await cur.fetchone():
+                            continue  # Already assigned
+            except Exception:
+                continue
+
+            # Find parent session's room by matching session_id prefix
+            parent_prefix = ws.parent_session_uuid[:8]
+            parent_room_id = None
+
+            try:
+                from ...db.database import get_db
+
+                async with get_db() as db:
+                    # Look for any session_key starting with "claude:{parent_prefix}"
+                    # that has a room assignment
+                    async with db.execute(
+                        "SELECT room_id FROM session_room_assignments WHERE session_key LIKE ?",
+                        (f"claude:{parent_prefix}%",),
+                    ) as cur:
+                        row = await cur.fetchone()
+                        if row:
+                            parent_room_id = row[0]
+
+                    # Also check agent sessions (cc:agent_id) that map to the parent
+                    if not parent_room_id:
+                        from ...services.cc_chat import _agent_sessions
+
+                        for aid, sid in _agent_sessions.items():
+                            if sid.startswith(parent_prefix):
+                                async with db.execute(
+                                    "SELECT room_id FROM session_room_assignments WHERE session_key = ?",
+                                    (f"cc:{aid}",),
+                                ) as cur:
+                                    row = await cur.fetchone()
+                                    if row:
+                                        parent_room_id = row[0]
+                                        break
+            except Exception as e:
+                logger.debug("Error looking up parent room for %s: %s", ws.session_id, e)
+                continue
+
+            if not parent_room_id:
+                continue
+
+            # Assign subagent to parent's room
+            try:
+                import time as _time
+
+                from ...db.database import get_db
+
+                async with get_db() as db:
+                    now = int(_time.time() * 1000)
+                    await db.execute(
+                        """INSERT INTO session_room_assignments (session_key, room_id, assigned_at)
+                           VALUES (?, ?, ?)
+                           ON CONFLICT(session_key) DO UPDATE SET room_id = excluded.room_id, assigned_at = excluded.assigned_at""",
+                        (session_key, parent_room_id, now),
+                    )
+                    await db.commit()
+
+                from ...routes.sse import broadcast
+
+                await broadcast(
+                    "rooms-refresh",
+                    {
+                        "action": "assignment_changed",
+                        "session_key": session_key,
+                        "room_id": parent_room_id,
+                    },
+                )
+                logger.info(
+                    "Auto-assigned subagent %s to parent's room %s",
+                    ws.session_id,
+                    parent_room_id,
+                )
+            except Exception as e:
+                logger.debug("Failed to assign subagent %s to parent room: %s", ws.session_id, e)

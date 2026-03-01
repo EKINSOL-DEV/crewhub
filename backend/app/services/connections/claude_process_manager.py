@@ -207,6 +207,7 @@ class ClaudeProcessManager:
         process_id = str(uuid.uuid4())
         cmd = [
             self.cli_path,
+            "-p",  # print mode required for --input-format stream-json
             "--output-format", "stream-json",
             "--input-format", "stream-json",
             "--verbose",
@@ -265,6 +266,7 @@ class ClaudeProcessManager:
                 "type": "user",
                 "message": {"role": "user", "content": message},
                 "session_id": cp.result_session_id or cp.session_id or "default",
+                "parent_tool_use_id": None,
             }) + "\n"
             cp.proc.stdin.write(payload.encode())
             await cp.proc.stdin.drain()

@@ -61,6 +61,21 @@ async function fetchRooms(): Promise<Room[]> {
   return (data.rooms ?? data) as Room[]
 }
 
+async function fetchConnectionTypes(): Promise<Set<string>> {
+  try {
+    const res = await fetch(`${API_BASE}/connections`)
+    if (!res.ok) return new Set()
+    const data = await res.json()
+    const types = new Set<string>()
+    for (const conn of data.connections ?? []) {
+      if (conn.enabled) types.add(conn.type)
+    }
+    return types
+  } catch {
+    return new Set()
+  }
+}
+
 async function updateAgent(agentId: string, updates: Partial<Agent>): Promise<void> {
   const res = await fetch(`${API_BASE}/agents/${agentId}`, {
     method: 'PUT',
@@ -124,14 +139,19 @@ function ColorSphere({ color, size = 48 }: Readonly<{ color: string; readonly si
 
 function AddAgentModal({
   rooms,
+  availableConnectionTypes,
   onClose,
   onCreated,
 }: Readonly<{
   readonly rooms: Room[]
+  readonly availableConnectionTypes: Set<string>
   readonly onClose: () => void
   readonly onCreated: () => void
 }>) {
-  const [source, setSource] = useState<'openclaw' | 'claude_code'>('openclaw')
+  const hasOpenClaw = availableConnectionTypes.has('openclaw')
+  const hasClaudeCode = availableConnectionTypes.has('claude_code')
+  const defaultSource = hasOpenClaw ? 'openclaw' : hasClaudeCode ? 'claude_code' : 'openclaw'
+  const [source, setSource] = useState<'openclaw' | 'claude_code'>(defaultSource)
   const [name, setName] = useState('')
   const [agentId, setAgentId] = useState('')
   const [icon, setIcon] = useState('🤖')
@@ -308,8 +328,12 @@ function AddAgentModal({
                 fontSize: '0.875rem',
               }}
             >
-              <option value="openclaw">OpenClaw</option>
-              <option value="claude_code">Claude Code</option>
+              <option value="openclaw" disabled={!hasOpenClaw}>
+                OpenClaw{!hasOpenClaw ? ' (no connection)' : ''}
+              </option>
+              <option value="claude_code" disabled={!hasClaudeCode}>
+                Claude Code{!hasClaudeCode ? ' (no connection)' : ''}
+              </option>
             </select>
           </div>
 
@@ -999,6 +1023,7 @@ function DeleteConfirmDialog({
 export function AgentsSettingsTab() {
   const [agents, setAgents] = useState<Agent[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
+  const [connectionTypes, setConnectionTypes] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null)
@@ -1006,9 +1031,14 @@ export function AgentsSettingsTab() {
 
   const loadAgents = useCallback(async () => {
     try {
-      const [agentData, roomData] = await Promise.all([fetchAgents(), fetchRooms()])
+      const [agentData, roomData, connTypes] = await Promise.all([
+        fetchAgents(),
+        fetchRooms(),
+        fetchConnectionTypes(),
+      ])
       setAgents(agentData)
       setRooms(roomData)
+      setConnectionTypes(connTypes)
     } catch {
       toast({ title: 'Failed to load agents', variant: DESTRUCTIVE })
     } finally {
@@ -1140,6 +1170,7 @@ export function AgentsSettingsTab() {
       {showAddModal && (
         <AddAgentModal
           rooms={rooms}
+          availableConnectionTypes={connectionTypes}
           onClose={() => setShowAddModal(false)}
           onCreated={loadAgents}
         />

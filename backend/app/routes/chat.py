@@ -660,14 +660,14 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
                 },
             )
 
-        # Fixed CC agent: prepend context then stream via persistent session
+        # Fixed CC agent: prepend context then stream via spawn_task/--print
         message = await _prepend_context_if_available(session_key, agent_id, body, message)
-        from app.services.cc_chat import stream_cc_persistent
+        from app.services.cc_chat import stream_cc_response
 
         async def generate_cc():
             yield "event: start\ndata: {}\n\n"
             try:
-                async for chunk in stream_cc_persistent(agent_id, message):
+                async for chunk in stream_cc_response(agent_id, message):
                     # Check for question markers from AskUserQuestion
                     if "__QUESTION__" in chunk:
                         parts = chunk.split("__QUESTION__")
