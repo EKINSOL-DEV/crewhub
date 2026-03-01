@@ -308,10 +308,10 @@ export function pickWalkableDir(
       }
     }
 
-    // Quadratic openness score
-    let score = openCells * openCells
+    // Linear openness score — enough to avoid furniture without herding all bots together
+    let score = 1 + openCells
 
-    // Center-gravity bias: pull toward room center, stronger at edges
+    // Center-gravity bias: gentle pull toward room center, only significant at edges
     const toCenterX = roomCenterX - currentX
     const toCenterZ = roomCenterZ - currentZ
     const distFromCenter = Math.hypot(toCenterX, toCenterZ)
@@ -326,8 +326,8 @@ export function pickWalkableDir(
       score += Math.max(0, dot) * distanceFactor * centerGravity
     }
 
-    // Non-deterministic noise
-    score += Math.random() * 0.5
+    // Large noise keeps movement non-deterministic — bots in the same spot diverge
+    score += Math.random() * 3
 
     scored.push({ dir: d, score })
   }
