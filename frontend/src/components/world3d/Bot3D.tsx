@@ -399,10 +399,26 @@ export const Bot3D = memo(function Bot3D({
     }
 
     // Override wander target from animation system (coffee, sleep)
+    // Clamp targets to room bounds — interaction points (coffee machines,
+    // sleep corners) can be at grid positions outside the room bounds margin,
+    // making them unreachable. Without clamping, bots walk to the boundary
+    // edge and get stuck permanently (never arriving within 0.4 of target).
     const hasAnimTarget = anim.targetX !== null && anim.targetZ !== null
     if (hasAnimTarget) {
-      state.targetX = anim.targetX!
-      state.targetZ = anim.targetZ!
+      if (roomBounds) {
+        const inset = 0.3 // small inset so arrival check (dist < 0.4) succeeds
+        state.targetX = Math.max(
+          roomBounds.minX + inset,
+          Math.min(roomBounds.maxX - inset, anim.targetX!)
+        )
+        state.targetZ = Math.max(
+          roomBounds.minZ + inset,
+          Math.min(roomBounds.maxZ - inset, anim.targetZ!)
+        )
+      } else {
+        state.targetX = anim.targetX!
+        state.targetZ = anim.targetZ!
+      }
     }
 
     if (!gridData) {
