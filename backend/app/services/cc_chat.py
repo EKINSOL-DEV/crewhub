@@ -8,12 +8,16 @@ yields text deltas that the chat route wraps in SSE events.
 import asyncio
 import json
 import logging
+import time
 from collections.abc import AsyncGenerator
 from typing import Optional
 
 from app.db.database import get_db
 
 logger = logging.getLogger(__name__)
+
+# ── Constants ─────────────────────────────────────────────────────
+STREAM_TOTAL_TIMEOUT = 600  # 10 minutes max for a streaming loop
 
 # ── Session tracking ───────────────────────────────────────────────
 # Maps agent_id → last known session_id so subsequent chats use --resume.
@@ -54,31 +58,13 @@ def _get_process_manager():
     return _get_process_manager._instance
 
 
-# ── Streaming response ─────────────────────────────────────────────
+# ── Shared helpers ─────────────────────────────────────────────────
 
 
-async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str, None]:
-    """Async generator that spawns/resumes a Claude Code process and yields text deltas.
-
-    The caller (chat route) wraps each yielded string in an SSE `delta` event.
-    """
-    config = await get_agent_config(agent_id)
-    project_path = config.get("project_path")
-    permission_mode = config.get("permission_mode", "default")
-    model = config.get("default_model")
-
-    if not project_path:
-        yield "[Error: No project_path configured for this agent]"
-        return
-
-    session_id = _agent_sessions.get(agent_id)
-    pm = _get_process_manager()
-
-    # Queue for streaming output from the subprocess callback
-    queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
+def _make_output_parser(queue: asyncio.Queue, agent_id: str | None = None):
+    """Create an on_output callback that parses JSONL and pushes text deltas."""
 
     def on_output(process_id: str, line: str) -> None:
-        """Parse JSONL line and push text deltas into queue."""
         try:
             data = json.loads(line)
         except (json.JSONDecodeError, ValueError):
@@ -109,27 +95,39 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
                 if text:
                     queue.put_nowait(text)
 
+        # Surface error events from Claude Code
+        elif event_type == "error":
+            error_msg = data.get("error", {})
+            if isinstance(error_msg, dict):
+                text = error_msg.get("message", str(error_msg))
+            else:
+                text = str(error_msg)
+            queue.put_nowait(f"[Error: {text}]")
+
         # Capture session_id from result event for future --resume
         elif event_type == "result":
+            if data.get("is_error"):
+                error_text = data.get("error", "unknown error")
+                queue.put_nowait(f"[Error: {error_text}]")
             sid = data.get("session_id")
-            if sid:
+            if sid and agent_id:
                 _agent_sessions[agent_id] = sid
 
-    # Spawn the process
-    process_id = await pm.spawn_task(
-        message=message,
-        session_id=session_id,
-        project_path=project_path,
-        model=model,
-        permission_mode=permission_mode,
-    )
+    return on_output
 
-    # Register per-process callback
-    pm.set_process_callback(process_id, on_output)
+
+async def _stream_process(pm, process_id: str, queue: asyncio.Queue) -> AsyncGenerator[str, None]:
+    """Async generator with timeout, cleanup, and queue draining."""
+    start_time = time.monotonic()
 
     try:
-        # Yield text deltas as they arrive, until process completes
         while True:
+            # Check total timeout
+            elapsed = time.monotonic() - start_time
+            if elapsed >= STREAM_TOTAL_TIMEOUT:
+                yield "[Error: streaming timeout exceeded]"
+                break
+
             cp = pm.get_process(process_id)
             if cp is None:
                 break
@@ -151,13 +149,53 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
                         yield chunk
                 break
 
-        # Capture session_id from the process result if not already captured
-        cp = pm.get_process(process_id)
-        if cp and cp.result_session_id:
-            _agent_sessions[agent_id] = cp.result_session_id
-
     finally:
         pm.remove_process_callback(process_id)
+        # Kill orphan process on disconnect
+        cp = pm.get_process(process_id)
+        if cp and cp.status == "running":
+            await pm.kill(process_id)
+
+
+# ── Streaming response ─────────────────────────────────────────────
+
+
+async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str, None]:
+    """Async generator that spawns/resumes a Claude Code process and yields text deltas.
+
+    The caller (chat route) wraps each yielded string in an SSE `delta` event.
+    """
+    config = await get_agent_config(agent_id)
+    project_path = config.get("project_path")
+    permission_mode = config.get("permission_mode", "default")
+    model = config.get("default_model")
+
+    if not project_path:
+        yield "[Error: No project_path configured for this agent]"
+        return
+
+    session_id = _agent_sessions.get(agent_id)
+    pm = _get_process_manager()
+
+    queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
+    on_output = _make_output_parser(queue, agent_id=agent_id)
+
+    process_id = await pm.spawn_task(
+        message=message,
+        session_id=session_id,
+        project_path=project_path,
+        model=model,
+        permission_mode=permission_mode,
+    )
+    pm.set_process_callback(process_id, on_output)
+
+    async for chunk in _stream_process(pm, process_id, queue):
+        yield chunk
+
+    # Capture session_id from the process result if not already captured
+    cp = pm.get_process(process_id)
+    if cp and cp.result_session_id:
+        _agent_sessions[agent_id] = cp.result_session_id
 
 
 # ── Blocking (non-streaming) send ──────────────────────────────────
@@ -178,31 +216,7 @@ async def stream_cc_discovered_response(session_id: str, project_path: str, mess
     """Stream response for a discovered (non-agent) CC session."""
     pm = _get_process_manager()
     queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
-
-    def on_output(process_id: str, line: str) -> None:
-        try:
-            data = json.loads(line)
-        except (json.JSONDecodeError, ValueError):
-            return
-        if not isinstance(data, dict):
-            return
-        event_type = data.get("type", "")
-        if event_type == "assistant":
-            content = data.get("message", {}).get("content", [])
-            if isinstance(content, list):
-                for block in content:
-                    if isinstance(block, dict) and block.get("type") == "text":
-                        text = block.get("text", "")
-                        if text:
-                            queue.put_nowait(text)
-            elif isinstance(content, str) and content:
-                queue.put_nowait(content)
-        elif event_type == "content_block_delta":
-            delta = data.get("delta", {})
-            if isinstance(delta, dict) and delta.get("type") == "text_delta":
-                text = delta.get("text", "")
-                if text:
-                    queue.put_nowait(text)
+    on_output = _make_output_parser(queue)
 
     process_id = await pm.spawn_task(
         message=message,
@@ -211,25 +225,8 @@ async def stream_cc_discovered_response(session_id: str, project_path: str, mess
     )
     pm.set_process_callback(process_id, on_output)
 
-    try:
-        while True:
-            cp = pm.get_process(process_id)
-            if cp is None:
-                break
-            try:
-                chunk = await asyncio.wait_for(queue.get(), timeout=1.0)
-                if chunk is not None:
-                    yield chunk
-            except TimeoutError:
-                pass
-            if cp.status in ("completed", "error", "killed") and queue.empty():
-                while not queue.empty():
-                    chunk = queue.get_nowait()
-                    if chunk is not None:
-                        yield chunk
-                break
-    finally:
-        pm.remove_process_callback(process_id)
+    async for chunk in _stream_process(pm, process_id, queue):
+        yield chunk
 
 
 async def send_cc_discovered_blocking(session_id: str, project_path: str, message: str) -> str:

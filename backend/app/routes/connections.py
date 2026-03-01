@@ -221,15 +221,35 @@ async def detect_claude_code():
     claude_dir_exists = claude_dir.exists()
     session_count = 0
     if projects_exists:
-        for proj in projects_dir.iterdir():
-            if proj.is_dir():
-                session_count += sum(1 for f in os.listdir(proj) if f.endswith(".jsonl"))
-    # Consider Claude Code "found" if either:
-    # - the CLI binary is available (native install), OR
-    # - ~/.claude directory is mounted/present (Docker with volume mount)
-    found = cli_path is not None or claude_dir_exists
+        try:
+            for proj in projects_dir.iterdir():
+                if proj.is_dir():
+                    session_count += sum(1 for f in os.listdir(proj) if f.endswith(".jsonl"))
+        except PermissionError:
+            logger.warning("Permission denied reading Claude projects directory")
+
+    has_cli = cli_path is not None
+    has_sessions = session_count > 0
+
+    # Require actual evidence: CLI binary or session data
+    found = has_cli or has_sessions
+
+    # Granular status for frontend handling
+    if has_cli and has_sessions:
+        detect_status = "ready"
+    elif has_cli:
+        detect_status = "cli_only"
+    elif has_sessions:
+        detect_status = "data_only"
+    elif claude_dir_exists:
+        detect_status = "dir_only"
+    else:
+        detect_status = "not_found"
+
     return {
         "found": found,
+        "status": detect_status,
+        "cli_available": has_cli,
         "cli_path": cli_path,
         "projects_dir_exists": projects_exists,
         "claude_dir_exists": claude_dir_exists,

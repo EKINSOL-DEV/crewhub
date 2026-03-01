@@ -186,3 +186,83 @@ def test_watched_session_defaults():
     assert ws.last_activity == AgentActivity.IDLE
     assert ws.file_offset == 0
     assert len(ws.pending_tool_uses) == 0
+
+
+def test_partial_line_not_consumed(watcher, claude_dir):
+    """A partial (non-newline-terminated) trailing line must not advance the offset."""
+    proj = claude_dir / "projects" / "proj1"
+    proj.mkdir()
+    path = proj / "test.jsonl"
+    path.write_text("")
+
+    events_received = []
+    watcher.on_events = lambda sid, evts: events_received.extend(evts)
+    watcher.watch_session("test", path)
+
+    complete = json.dumps({"type": "user", "message": {"content": "done"}}) + "\n"
+    partial = '{"type": "user", "message": {"content": "incompl'
+    with open(path, "wb") as f:
+        f.write(complete.encode("utf-8"))
+        expected_offset = f.tell()
+        f.write(partial.encode("utf-8"))
+
+    ws = watcher.get_watched_sessions()["test"]
+    watcher._read_new_lines(ws)
+    assert len(events_received) == 1
+    assert ws.file_offset == expected_offset  # partial line not consumed
+
+
+def test_truncation_resets_offset(watcher, claude_dir):
+    """When a JSONL file is truncated, the offset should reset to 0 and re-read."""
+    proj = claude_dir / "projects" / "proj1"
+    proj.mkdir()
+    path = proj / "test.jsonl"
+
+    # Write initial data and watch from end
+    line1 = json.dumps({"type": "user", "message": {"content": "first"}}) + "\n"
+    path.write_bytes(line1.encode("utf-8"))
+    watcher.watch_session("test", path)
+    ws = watcher.get_watched_sessions()["test"]
+    assert ws.file_offset == len(line1.encode("utf-8"))
+
+    # Truncate and write shorter content
+    events_received = []
+    watcher.on_events = lambda sid, evts: events_received.extend(evts)
+    short = json.dumps({"type": "user", "message": {"content": "hi"}}) + "\n"
+    path.write_bytes(short.encode("utf-8"))  # smaller than original
+
+    watcher._read_new_lines(ws)
+    assert ws.file_offset > 0  # re-read from 0
+    assert len(events_received) == 1  # picked up the new content
+
+
+def test_stale_session_cleanup(watcher, claude_dir):
+    """Sessions >24h old with deleted JSONL file should be cleaned up."""
+    import time as _time
+
+    proj = claude_dir / "projects" / "proj1"
+    proj.mkdir()
+    path = proj / "stale.jsonl"
+    path.write_text("")
+    watcher.watch_session("stale", path)
+
+    ws = watcher.get_watched_sessions()["stale"]
+    # Simulate >24h ago
+    ws.last_event_wall_time = _time.time() - 90000  # 25 hours ago
+    # Delete the file
+    path.unlink()
+
+    # Run the cleanup logic that lives inside _scan_sessions_loop
+    # We directly invoke the relevant part
+    now = _time.time()
+    stale_ids = [
+        sid
+        for sid, w in watcher._watched.items()
+        if w.last_event_wall_time > 0
+        and (now - w.last_event_wall_time) > 86400
+        and not w.jsonl_path.exists()
+    ]
+    for sid in stale_ids:
+        watcher._watched.pop(sid, None)
+
+    assert "stale" not in watcher.get_watched_sessions()

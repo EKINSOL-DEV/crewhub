@@ -79,6 +79,7 @@ class ClaudeSessionWatcher:
 
     async def start(self):
         self._running = True
+        self._loop = asyncio.get_running_loop()
         self._try_start_watchdog()
         self._tasks.append(asyncio.create_task(self._poll_files_loop()))
         self._tasks.append(asyncio.create_task(self._scan_sessions_loop()))
@@ -100,12 +101,12 @@ class ClaudeSessionWatcher:
             from watchdog.observers import Observer
 
             watcher = self
+            loop = getattr(self, "_loop", None)
 
             class JsonlHandler(FileSystemEventHandler):
                 def on_modified(self, event):
-                    if event.src_path.endswith(".jsonl"):
+                    if event.src_path.endswith(".jsonl") and loop is not None:
                         try:
-                            loop = asyncio.get_event_loop()
                             loop.call_soon_threadsafe(watcher._check_file, Path(event.src_path))
                         except RuntimeError:
                             pass
@@ -245,10 +246,17 @@ class ClaudeSessionWatcher:
             size = ws.jsonl_path.stat().st_size
         except OSError:
             return
+        if size < ws.file_offset:
+            logger.warning(
+                "JSONL file truncated for session %s (size=%d < offset=%d), resetting",
+                ws.session_id,
+                size,
+                ws.file_offset,
+            )
+            ws.file_offset = 0
         if size <= ws.file_offset:
             return
-        events = self._parser.parse_file(str(ws.jsonl_path), ws.file_offset)
-        ws.file_offset = size
+        events, ws.file_offset = self._parser.parse_file(str(ws.jsonl_path), ws.file_offset)
         if events:
             self._update_activity(ws, events)
             if self.on_events:
@@ -257,6 +265,10 @@ class ClaudeSessionWatcher:
     async def _scan_sessions_loop(self):
         while self._running:
             try:
+                # Lazy watchdog start: directory may not have existed at startup
+                if self._fs_observer is None and self.projects_dir.exists():
+                    self._try_start_watchdog()
+
                 found_new = False
                 for project_dir in self.discover_project_dirs():
                     for session_id, jsonl_path, is_subagent in self.discover_sessions(project_dir):
@@ -267,6 +279,19 @@ class ClaudeSessionWatcher:
                             found_new = True
                 if found_new and self.on_sessions_changed:
                     self.on_sessions_changed()
+
+                # Cleanup stale sessions: >24h old with deleted JSONL file
+                now = time.time()
+                stale_ids = [
+                    sid
+                    for sid, ws in self._watched.items()
+                    if ws.last_event_wall_time > 0
+                    and (now - ws.last_event_wall_time) > 86400
+                    and not ws.jsonl_path.exists()
+                ]
+                for sid in stale_ids:
+                    logger.info("Removing stale session %s", sid)
+                    self._watched.pop(sid, None)
             except Exception as e:
                 logger.error(f"Error scanning sessions: {e}")
             await asyncio.sleep(SESSION_SCAN_INTERVAL_MS / 1000.0)

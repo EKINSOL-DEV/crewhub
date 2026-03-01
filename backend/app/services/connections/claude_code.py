@@ -190,7 +190,7 @@ class ClaudeCodeConnection(AgentConnection):
         if not ws or not ws.jsonl_path.exists():
             return []
 
-        events = self._parser.parse_file(str(ws.jsonl_path))
+        events, _ = self._parser.parse_file(str(ws.jsonl_path))
         messages: list[HistoryMessage] = []
         for ev in events:
             ts = _extract_timestamp(ev)

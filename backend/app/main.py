@@ -433,6 +433,7 @@ if _FRONTEND_DIST.is_dir():
         # Otherwise serve index.html for SPA routing
         return FileResponse(_FRONTEND_DIST / "index.html")
 else:
+
     @app.get("/")
     async def root():
         """Root endpoint (no frontend build found)."""

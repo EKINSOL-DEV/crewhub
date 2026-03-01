@@ -6,6 +6,7 @@ type MinionSession = CrewSession
 type MinionContentBlock = SessionContentBlock
 import { getTaskEmoji, generateFriendlyName } from './friendlyNames'
 import { SESSION_CONFIG } from './sessionConfig'
+import { isCCActive, DISPLAYABLE_CC_STATUSES } from './ccStatus'
 
 const SUPERVISING = 'supervising'
 
@@ -411,17 +412,13 @@ function hasTerminalStatus(status: string | undefined): boolean {
     'active',
     'idle',
     '',
-    // Claude Code active statuses
-    'responding',
-    'tool_use',
-    'waiting_input',
-    'waiting_permission',
+    // Claude Code statuses (sourced from ccStatus via DISPLAYABLE_CC_STATUSES)
+    ...DISPLAYABLE_CC_STATUSES,
   ])
   return !nonTerminal.has(status)
 }
 
-// Claude Code statuses that indicate the session is actively working — never park
-const CC_BUSY_STATUSES = new Set(['responding', 'tool_use', 'waiting_permission'])
+// Claude Code active check — sourced from ccStatus
 
 export function shouldBeInParkingLane(
   session: MinionSession,
@@ -436,7 +433,7 @@ export function shouldBeInParkingLane(
   // The backend already filters CC sessions to a 30-min recency window,
   // so any session present here is recent enough to display.
   if (session.key.startsWith('claude:')) {
-    if (session.status && CC_BUSY_STATUSES.has(session.status)) return false
+    if (isCCActive(session.status)) return false
     // CC subagents park quickly (2 min) like OpenClaw subagents
     if (session.kind === 'subagent') {
       return getIdleTimeSeconds(session) > idleThresholdSeconds

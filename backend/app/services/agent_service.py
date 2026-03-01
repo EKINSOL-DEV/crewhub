@@ -8,6 +8,7 @@ Gateway sync helpers also live here since they feed the DB.
 import logging
 import os
 import time
+from pathlib import Path
 from typing import Optional
 
 from fastapi import HTTPException
@@ -15,6 +16,19 @@ from fastapi import HTTPException
 from app.db.database import get_db
 
 MSG_AGENT_NOT_FOUND = "Agent not found"
+
+# Known valid permission modes (case-insensitive)
+_VALID_PERMISSION_MODES = {
+    "full-auto",
+    "bypass",
+    "bypasspermissions",
+    "accept-edits",
+    "acceptedits",
+    "dont-ask",
+    "dontask",
+    "plan",
+    "default",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +113,33 @@ def _build_agent_dict(row, display_name: Optional[str], is_stale: bool) -> dict:
         "updated_at": row["updated_at"],
         "is_stale": is_stale,
     }
+
+
+def _validate_project_path(project_path: str) -> str:
+    """Validate and resolve a project_path. Returns resolved absolute path.
+
+    Raises HTTPException 400 if the path does not point to an existing directory.
+    """
+    resolved = Path(project_path).expanduser().resolve()
+    if not resolved.is_dir():
+        raise HTTPException(
+            status_code=400,
+            detail=f"project_path is not a valid directory: {project_path}",
+        )
+    return str(resolved)
+
+
+def _validate_permission_mode(mode: str) -> str:
+    """Validate permission_mode against known values (case-insensitive).
+
+    Raises HTTPException 400 for unknown values. Returns the original string.
+    """
+    if mode.lower() not in _VALID_PERMISSION_MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown permission_mode: '{mode}'. Valid modes: {', '.join(sorted(_VALID_PERMISSION_MODES))}",
+        )
+    return mode
 
 
 # ── Gateway sync ──────────────────────────────────────────────────────────────
@@ -260,6 +301,11 @@ async def create_agent(
     permission_mode: str = "default",
 ) -> dict:
     """Insert a new agent. Raises 409 if agent_id already exists."""
+    if project_path:
+        project_path = _validate_project_path(project_path)
+    if permission_mode:
+        _validate_permission_mode(permission_mode)
+
     now = int(time.time() * 1000)
 
     # CC agents get a cc:<id> session key; OpenClaw agents get agent:<id>:main
@@ -311,6 +357,11 @@ async def update_agent(agent_id: str, updates: dict) -> dict:
     """Apply a partial update to an agent. Raises 400 if empty, 404 if not found."""
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    if "project_path" in updates and updates["project_path"]:
+        updates["project_path"] = _validate_project_path(updates["project_path"])
+    if "permission_mode" in updates and updates["permission_mode"]:
+        _validate_permission_mode(updates["permission_mode"])
 
     now = int(time.time() * 1000)
     updates["updated_at"] = now

@@ -79,6 +79,25 @@ class ProjectContextEvent(ParsedEvent):
     project_name: str = ""
 
 
+@dataclass
+class SummaryEvent(ParsedEvent):
+    event_type: str = "summary"
+    summary: str = ""
+
+
+@dataclass
+class BashProgressEvent(ParsedEvent):
+    event_type: str = "bash_progress"
+    command: str = ""
+    output: str = ""
+
+
+@dataclass
+class HookProgressEvent(ParsedEvent):
+    event_type: str = "hook_progress"
+    hook_name: str = ""
+
+
 def project_name_from_cwd(cwd: str) -> str:
     """Extract project name from a working directory path.
 
@@ -92,6 +111,9 @@ def project_name_from_cwd(cwd: str) -> str:
 
 class ClaudeTranscriptParser:
     """Parse Claude Code JSONL transcript lines into typed events."""
+
+    def __init__(self) -> None:
+        self._last_cwd: str = ""
 
     def parse_line(self, line: str) -> list[ParsedEvent]:
         """Parse a single JSONL line. Returns list of events."""
@@ -111,11 +133,16 @@ class ClaudeTranscriptParser:
             events.extend(self._parse_system(record))
         elif record_type == "progress":
             events.extend(self._parse_progress(record))
+        elif record_type == "summary":
+            events.extend(self._parse_summary(record))
+        elif record_type in ("file-history-snapshot", "queue-operation"):
+            pass
 
         # Claude Code v2.x embeds cwd on every line rather than a system/init event
         if not any(isinstance(e, ProjectContextEvent) for e in events):
             cwd = record.get("cwd", "")
-            if cwd:
+            if cwd and cwd != self._last_cwd:
+                self._last_cwd = cwd
                 events.append(
                     ProjectContextEvent(
                         cwd=cwd,
@@ -185,11 +212,32 @@ class ClaudeTranscriptParser:
                 ]
         return []
 
+    def _parse_summary(self, record: dict) -> list[ParsedEvent]:
+        return [SummaryEvent(summary=record.get("summary", ""), raw=record)]
+
     def _parse_progress(self, record: dict) -> list[ParsedEvent]:
         parent_id = record.get("parentToolUseID", "")
         nested = record.get("data", {})
+        nested_type = nested.get("type", "")
+
+        if nested_type == "bash_progress":
+            return [
+                BashProgressEvent(
+                    command=nested.get("command", ""),
+                    output=nested.get("output", ""),
+                    raw=record,
+                )
+            ]
+        if nested_type == "hook_progress":
+            return [
+                HookProgressEvent(
+                    hook_name=nested.get("hookName", ""),
+                    raw=record,
+                )
+            ]
+
         nested_events = []
-        if nested.get("type") == "agent_progress":
+        if nested_type == "agent_progress":
             inner_msg = nested.get("message", {})
             if inner_msg.get("type") == "assistant":
                 nested_events = self._parse_assistant(inner_msg)
@@ -201,13 +249,28 @@ class ClaudeTranscriptParser:
             )
         ]
 
-    def parse_file(self, path: str, offset: int = 0) -> list[ParsedEvent]:
-        """Parse a JSONL file from byte offset. Returns events."""
-        events = []
-        with open(path) as f:
+    def parse_file(self, path: str, offset: int = 0) -> tuple[list[ParsedEvent], int]:
+        """Parse a JSONL file from byte offset.
+
+        Returns (events, new_byte_offset). Only complete lines (terminated
+        by ``\\n``) are consumed so a partial trailing line is left for the
+        next call.
+        """
+        events: list[ParsedEvent] = []
+        with open(path, "rb") as f:
             f.seek(offset)
-            for line in f:
-                line = line.strip()
-                if line:
-                    events.extend(self.parse_line(line))
-        return events
+            raw = f.read()
+        if not raw:
+            return [], offset
+        # Only consume up to the last complete line
+        last_nl = raw.rfind(b"\n")
+        if last_nl == -1:
+            return [], offset  # no complete line yet
+        consumed = raw[: last_nl + 1]
+        new_offset = offset + len(consumed)
+        text = consumed.decode("utf-8", errors="replace")
+        for line in text.splitlines():
+            line = line.strip()
+            if line:
+                events.extend(self.parse_line(line))
+        return events, new_offset

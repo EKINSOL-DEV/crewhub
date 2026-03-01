@@ -1,6 +1,7 @@
 import { shouldBeInParkingLane } from './minionUtils'
 import type { CrewSession } from './api'
 import { SESSION_CONFIG } from './sessionConfig'
+import { DISPLAYABLE_CC_STATUSES } from './ccStatus'
 
 // Statuses that count as "active" for display purposes.
 // Sessions with other statuses (archived, pruned, etc.) are hard-filtered out
@@ -11,11 +12,8 @@ const ACTIVE_STATUSES = new Set<string | undefined>([
   'idle',
   '',
   undefined,
-  // Claude Code statuses
-  'responding',
-  'tool_use',
-  'waiting_input',
-  'waiting_permission',
+  // Claude Code statuses (sourced from ccStatus)
+  ...DISPLAYABLE_CC_STATUSES,
 ])
 
 /**

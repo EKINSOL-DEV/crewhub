@@ -440,6 +440,10 @@ export interface ClaudeCodeDetectResult {
   cli_path: string | null
   projects_dir_exists: boolean
   session_count: number
+  /** Detection status: 'found' | 'not_found' | 'dir_only' */
+  status: string
+  /** Whether the CLI binary is available on PATH */
+  cli_available: boolean
 }
 
 export async function detectClaudeCode(): Promise<ClaudeCodeDetectResult> {

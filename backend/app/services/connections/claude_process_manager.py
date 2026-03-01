@@ -7,6 +7,7 @@ Phase 2: enables sending messages to Claude Code sessions via subprocess.
 import asyncio
 import json
 import logging
+import os
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -31,12 +32,36 @@ _PERMISSION_MODE_MAP: dict[str, str] = {
 
 _VALID_PERMISSION_MODES = {"acceptEdits", "bypassPermissions", "default", "dontAsk", "plan"}
 
+_ENV_WHITELIST = {
+    "PATH",
+    "HOME",
+    "USER",
+    "SHELL",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "TERM",
+    "TMPDIR",
+    "XDG_CONFIG_HOME",
+    "XDG_DATA_HOME",
+    "ANTHROPIC_API_KEY",
+    "CLAUDE_CODE_USE_BEDROCK",
+    "AWS_PROFILE",
+    "AWS_REGION",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+}
+
 
 def _resolve_permission_mode(mode: str) -> str:
     """Resolve a permission mode string to a valid Claude CLI value."""
-    if mode in _VALID_PERMISSION_MODES:
-        return mode
-    resolved = _PERMISSION_MODE_MAP.get(mode)
+    lower = mode.lower()
+    # Check valid modes case-insensitively
+    for valid in _VALID_PERMISSION_MODES:
+        if lower == valid.lower():
+            return valid
+    resolved = _PERMISSION_MODE_MAP.get(lower)
     if resolved:
         return resolved
     logger.warning("Unknown permission mode '%s', falling back to 'default'", mode)
@@ -65,6 +90,8 @@ class ClaudeProcessManager:
     Spawns `claude` processes with --output-format stream-json,
     captures output, and routes it back through SSE.
     """
+
+    CLEANUP_DELAY = 300  # seconds (5 minutes)
 
     def __init__(self, cli_path: str = "claude"):
         self.cli_path = cli_path
@@ -126,14 +153,13 @@ class ClaudeProcessManager:
         self._processes[process_id] = cp
 
         try:
-            import os
             import time
 
             cp.started_at = time.time()
             cp.status = "running"
 
-            # Strip env vars that prevent nested Claude Code sessions
-            env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+            # Whitelist env vars to avoid leaking secrets to subprocesses
+            env = {k: v for k, v in os.environ.items() if k in _ENV_WHITELIST or k.startswith("CLAUDE_")}
 
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -147,10 +173,14 @@ class ClaudeProcessManager:
 
             # Feed message via stdin and close it so the CLI starts processing
             if use_stdin and proc.stdin:
-                proc.stdin.write(message.encode())
-                await proc.stdin.drain()
-                proc.stdin.close()
-                await proc.stdin.wait_closed()
+                try:
+                    proc.stdin.write(message.encode())
+                    await proc.stdin.drain()
+                    proc.stdin.close()
+                    await proc.stdin.wait_closed()
+                except (BrokenPipeError, ConnectionResetError, OSError) as exc:
+                    logger.error("stdin write failed for %s: %s", process_id, exc)
+                    cp.status = "error"
 
             # Start output streaming task
             asyncio.create_task(self._stream_output(process_id))
@@ -178,7 +208,7 @@ class ClaudeProcessManager:
             cp.proc.stdin.write(payload.encode())
             await cp.proc.stdin.drain()
             return True
-        except Exception as e:
+        except (BrokenPipeError, ConnectionResetError, OSError) as e:
             logger.error("Failed to send message to %s: %s", process_id, e)
             return False
 
@@ -206,6 +236,13 @@ class ClaudeProcessManager:
 
     def list_processes(self) -> list[ClaudeProcess]:
         return list(self._processes.values())
+
+    def _remove_completed_process(self, process_id: str) -> None:
+        """Remove a process from tracking if it is in a terminal state."""
+        cp = self._processes.get(process_id)
+        if cp and cp.status in ("completed", "error", "killed"):
+            self._processes.pop(process_id, None)
+            self._process_callbacks.pop(process_id, None)
 
     async def _stream_output(self, process_id: str) -> None:
         """Read stdout from process and route events."""
@@ -259,10 +296,17 @@ class ClaudeProcessManager:
             # Clean up per-process callback
             self._process_callbacks.pop(process_id, None)
 
+            # Schedule removal from tracking after delay
+            loop = asyncio.get_event_loop()
+            loop.call_later(self.CLEANUP_DELAY, self._remove_completed_process, process_id)
+
         except Exception as e:
             cp.status = "error"
             self._process_callbacks.pop(process_id, None)
             logger.error("Error streaming output from %s: %s", process_id, e)
+            # Schedule removal from tracking after delay
+            loop = asyncio.get_event_loop()
+            loop.call_later(self.CLEANUP_DELAY, self._remove_completed_process, process_id)
 
     async def cleanup(self) -> None:
         """Kill all running processes."""

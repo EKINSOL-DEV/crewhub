@@ -1,6 +1,7 @@
 import { useRef, useEffect, useCallback } from 'react'
 import type { CrewSession } from '@/lib/api'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
+import { isCCActive } from '@/lib/ccStatus'
 
 /**
  * Shared hook that tracks token changes to detect actively running sessions.
@@ -38,8 +39,7 @@ export function useSessionActivity(sessions: CrewSession[]) {
       // Claude Code sessions have explicit status — no heuristics needed
       const session = sessions.find((s) => s.key === sessionKey)
       if (session?.source === 'claude_code') {
-        const activeStatuses = ['responding', 'tool_use', 'waiting_permission']
-        return activeStatuses.includes(session.status ?? '')
+        return isCCActive(session.status)
       }
 
       const tracked = tokenTrackingRef.current.get(sessionKey)

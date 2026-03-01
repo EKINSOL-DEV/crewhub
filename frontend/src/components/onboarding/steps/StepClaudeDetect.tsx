@@ -4,7 +4,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, XCircle, Loader2, RefreshCw, ArrowRight } from 'lucide-react'
+import { CheckCircle2, XCircle, Loader2, RefreshCw, ArrowRight, AlertTriangle } from 'lucide-react'
 import { detectClaudeCode, type ClaudeCodeDetectResult } from '@/lib/api'
 
 interface StepClaudeDetectProps {
@@ -70,7 +70,34 @@ export function StepClaudeDetect({ onContinue }: StepClaudeDetectProps) {
           </div>
         )}
 
-        {!loading && result && !result.found && (
+        {!loading && result?.status === 'dir_only' && (
+          <div className="flex flex-col items-center gap-4">
+            <AlertTriangle className="h-12 w-12 text-yellow-500" />
+            <div>
+              <p className="font-semibold text-lg text-yellow-600">
+                Claude Code Partially Detected
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                The Claude Code projects directory was found, so session monitoring will work.
+                However, the CLI is not installed, so chat features will not be available.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">Install it with:</p>
+              <code className="block bg-muted px-3 py-2 rounded text-xs mt-2">
+                npm install -g @anthropic-ai/claude-code
+              </code>
+            </div>
+            <div className="flex gap-2 mt-2">
+              <Button variant="outline" onClick={detect} className="gap-2">
+                <RefreshCw className="h-4 w-4" /> Retry
+              </Button>
+              <Button onClick={onContinue} className="gap-2">
+                Continue Anyway <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!loading && result && !result.found && result.status !== 'dir_only' && (
           <div className="flex flex-col items-center gap-4">
             <XCircle className="h-12 w-12 text-red-500" />
             <div>
