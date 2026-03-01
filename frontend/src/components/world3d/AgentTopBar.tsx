@@ -488,7 +488,8 @@ function buildRecentSubagentEntries(
 
   for (const session of sessions) {
     if (session.key === BOSS_SESSION_KEY || session.key.startsWith('debug:')) continue
-    if (isSubagent(session.key) && now - session.updatedAt < RECENT_MS) {
+    const isRecent = now - session.updatedAt < RECENT_MS
+    if (isRecent && (isSubagent(session.key) || session.key.startsWith('claude:'))) {
       entries.push(makeEntry(session, helpers))
     }
   }
@@ -930,7 +931,8 @@ export function AgentTopBar({
 
   // Hidden in first-person and bot-focus modes
   if (state.level === 'firstperson' || state.level === 'bot') return null
-  if (!bossSession) return null
+  // Hide when there are no sessions at all (no agents to show)
+  if (!bossSession && fixedAgents.length === 0 && recentSubagents.length === 0 && !pinnedSession) return null
 
   return (
     <div
@@ -959,14 +961,16 @@ export function AgentTopBar({
         />
       )}
 
-      {/* Assistent (center, always visible) */}
-      <AgentPortraitButton
-        config={bossConfig}
-        name="Assistent"
-        isActive={bossIsActive}
-        onClick={handleBossClick}
-        title="Fly to Assistent"
-      />
+      {/* Assistent (center, visible when session exists) */}
+      {bossSession && (
+        <AgentPortraitButton
+          config={bossConfig}
+          name="Assistent"
+          isActive={bossIsActive}
+          onClick={handleBossClick}
+          title="Fly to Assistent"
+        />
+      )}
 
       {/* Agent Picker (right of Assistent) */}
       <div style={{ position: 'relative' }}>
