@@ -508,8 +508,8 @@ export function TaskBoardOverlay({
 
         {/* Create Task Modal */}
         {showCreateForm && (
-          <button
-            type="button"
+          <div
+            role="presentation"
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={(e) => {
               if (e.target === e.currentTarget) setShowCreateForm(false)
@@ -530,13 +530,13 @@ export function TaskBoardOverlay({
                 isLoading={formLoading}
               />
             </div>
-          </button>
+          </div>
         )}
 
         {/* Edit Task Modal */}
         {editingTask && (
-          <button
-            type="button"
+          <div
+            role="presentation"
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]"
             onClick={(e) => {
               if (e.target === e.currentTarget) setEditingTask(null)
@@ -566,7 +566,7 @@ export function TaskBoardOverlay({
                 isLoading={formLoading}
               />
             </div>
-          </button>
+          </div>
         )}
 
         {pendingDropTask && (
