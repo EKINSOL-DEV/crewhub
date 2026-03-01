@@ -4,7 +4,8 @@ set -euo pipefail
 # ============================================
 # CrewHub Start Script (Mac / Linux)
 # ============================================
-# Starts backend and frontend for local development.
+# Starts backend and frontend for local use.
+# Uses production ports (8090/5181) by default.
 # Usage: ./scripts/start.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,6 +16,10 @@ GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 RED='\033[0;31m'
 NC='\033[0m'
+
+# Default ports (override with env vars)
+BACKEND_PORT="${CREWHUB_PORT:-8090}"
+FRONTEND_PORT="${VITE_DEV_PORT:-5181}"
 
 backend_pid=""
 frontend_pid=""
@@ -49,7 +54,7 @@ fi
 # Start backend
 # ------------------------------------------
 echo -e "${BOLD}============================================${NC}"
-echo -e "${BOLD}  CrewHub Development Server${NC}"
+echo -e "${BOLD}  CrewHub${NC}"
 echo -e "${BOLD}============================================${NC}"
 echo ""
 
@@ -57,20 +62,12 @@ echo ""
     cd "$PROJECT_ROOT/backend"
     source venv/bin/activate
 
-    # Load env vars from .env.development
-    if [[ -f .env.development ]]; then
-        set -a
-        while IFS='=' read -r key value; do
-            # Skip comments and empty lines
-            [[ -z "$key" || "$key" =~ ^# ]] && continue
-            # Expand ~ in values
-            value=$(eval echo "$value")
-            export "$key=$value"
-        done < .env.development
-        set +a
-    fi
+    # Set defaults for local run
+    export CREWHUB_PORT="$BACKEND_PORT"
+    export CREWHUB_DB_PATH="${CREWHUB_DB_PATH:-$(eval echo '~/.crewhub/crewhub.db')}"
+    export OPENCLAW_GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-ws://localhost:18789}"
 
-    python -m uvicorn app.main:app --reload --port "${CREWHUB_PORT:-8091}"
+    python -m uvicorn app.main:app --reload --port "$BACKEND_PORT"
 ) &
 backend_pid=$!
 
@@ -80,23 +77,16 @@ backend_pid=$!
 (
     cd "$PROJECT_ROOT/frontend"
 
-    # Load env vars from .env.development
-    if [[ -f .env.development ]]; then
-        set -a
-        while IFS='=' read -r key value; do
-            [[ -z "$key" || "$key" =~ ^# ]] && continue
-            export "$key=$value"
-        done < .env.development
-        set +a
-    fi
+    # Point Vite proxy at the backend port
+    export VITE_API_URL="http://127.0.0.1:$BACKEND_PORT"
 
-    npm run dev -- --port "${VITE_DEV_PORT:-5181}"
+    npm run dev -- --port "$FRONTEND_PORT"
 ) &
 frontend_pid=$!
 
 echo ""
-echo -e "  ${GREEN}Backend:${NC}  http://localhost:${CREWHUB_PORT:-8091}"
-echo -e "  ${GREEN}Frontend:${NC} http://localhost:${VITE_DEV_PORT:-5181}"
+echo -e "  ${GREEN}Backend:${NC}  http://localhost:$BACKEND_PORT"
+echo -e "  ${GREEN}Frontend:${NC} http://localhost:$FRONTEND_PORT"
 echo ""
 echo -e "  Press ${BOLD}Ctrl+C${NC} to stop both services."
 echo ""

@@ -1,4 +1,4 @@
-.PHONY: up down dev dev-backend dev-frontend build logs clean prod-up prod-down prod-logs prod-build lint lint-fix lint-backend lint-backend-fix lint-frontend lint-frontend-fix setup
+.PHONY: up down dev dev-backend dev-frontend build logs clean prod-up prod-down prod-logs prod-build lint lint-fix lint-backend lint-backend-fix lint-frontend lint-frontend-fix setup service-install service-uninstall service-update service-status service-logs
 
 # ============================================
 # PRODUCTION (Docker) - Branch: main
@@ -163,6 +163,30 @@ lint-frontend:
 
 lint-frontend-fix:
 	@cd frontend && npm run lint:fix && npm run format
+
+# ============================================
+# SERVICE MANAGEMENT
+# ============================================
+
+# Install CrewHub as a background service (starts on login)
+service-install:
+	@./scripts/service.sh install
+
+# Remove the CrewHub background service
+service-uninstall:
+	@./scripts/service.sh uninstall
+
+# Pull updates, rebuild, and restart the service
+service-update:
+	@./scripts/service.sh update
+
+# Show service and process status
+service-status:
+	@./scripts/service.sh status
+
+# Tail the service log file
+service-logs:
+	@./scripts/service.sh logs
 
 # ============================================
 # SETUP

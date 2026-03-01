@@ -1,7 +1,8 @@
 # ============================================
 # CrewHub Start Script (Windows PowerShell)
 # ============================================
-# Starts backend and frontend for local development.
+# Starts backend and frontend for local use.
+# Uses production ports (8090/5181) by default.
 # Usage: .\scripts\start.ps1
 
 $ErrorActionPreference = "Stop"
@@ -24,54 +25,30 @@ if (-not (Test-Path (Join-Path $ProjectRoot "frontend\node_modules"))) {
 }
 
 # ------------------------------------------
-# Load env vars from .env.development
-# ------------------------------------------
-function Import-EnvFile {
-    param([string]$Path)
-    if (Test-Path $Path) {
-        Get-Content $Path | ForEach-Object {
-            if ($_ -match '^([^#][^=]+)=(.*)$') {
-                $key = $Matches[1].Trim()
-                $value = $Matches[2].Trim()
-                # Expand ~ to user home
-                $value = $value -replace '^~', $env:USERPROFILE
-                [Environment]::SetEnvironmentVariable($key, $value, "Process")
-            }
-        }
-    }
-}
-
-# ------------------------------------------
 # Start services
 # ------------------------------------------
 Write-Host ""
 Write-Host "============================================" -ForegroundColor White
-Write-Host "  CrewHub Development Server" -ForegroundColor White
+Write-Host "  CrewHub" -ForegroundColor White
 Write-Host "============================================" -ForegroundColor White
 Write-Host ""
 
-$backendPort = if ($env:CREWHUB_PORT) { $env:CREWHUB_PORT } else { "8091" }
+# Default ports (override with env vars)
+$backendPort = if ($env:CREWHUB_PORT) { $env:CREWHUB_PORT } else { "8090" }
 $frontendPort = if ($env:VITE_DEV_PORT) { $env:VITE_DEV_PORT } else { "5181" }
-
-# Load backend env
-Import-EnvFile (Join-Path $ProjectRoot "backend\.env.development")
-if ($env:CREWHUB_PORT) { $backendPort = $env:CREWHUB_PORT }
 
 # Start backend as a job
 $backendJob = Start-Job -ScriptBlock {
     param($root, $port)
     Set-Location (Join-Path $root "backend")
 
-    # Load env vars
-    if (Test-Path ".env.development") {
-        Get-Content ".env.development" | ForEach-Object {
-            if ($_ -match '^([^#][^=]+)=(.*)$') {
-                $key = $Matches[1].Trim()
-                $value = $Matches[2].Trim()
-                $value = $value -replace '^~', $env:USERPROFILE
-                [Environment]::SetEnvironmentVariable($key, $value, "Process")
-            }
-        }
+    # Set defaults for local run
+    [Environment]::SetEnvironmentVariable("CREWHUB_PORT", $port, "Process")
+    if (-not $env:CREWHUB_DB_PATH) {
+        [Environment]::SetEnvironmentVariable("CREWHUB_DB_PATH", (Join-Path $env:USERPROFILE ".crewhub\crewhub.db"), "Process")
+    }
+    if (-not $env:OPENCLAW_GATEWAY_URL) {
+        [Environment]::SetEnvironmentVariable("OPENCLAW_GATEWAY_URL", "ws://localhost:18789", "Process")
     }
 
     $venvPython = Join-Path $root "backend\venv\Scripts\python.exe"
@@ -80,22 +57,14 @@ $backendJob = Start-Job -ScriptBlock {
 
 # Start frontend as a job
 $frontendJob = Start-Job -ScriptBlock {
-    param($root, $port)
+    param($root, $port, $backendPort)
     Set-Location (Join-Path $root "frontend")
 
-    # Load env vars
-    if (Test-Path ".env.development") {
-        Get-Content ".env.development" | ForEach-Object {
-            if ($_ -match '^([^#][^=]+)=(.*)$') {
-                $key = $Matches[1].Trim()
-                $value = $Matches[2].Trim()
-                [Environment]::SetEnvironmentVariable($key, $value, "Process")
-            }
-        }
-    }
+    # Point Vite proxy at the backend port
+    [Environment]::SetEnvironmentVariable("VITE_API_URL", "http://127.0.0.1:$backendPort", "Process")
 
     npm run dev -- --port $port
-} -ArgumentList $ProjectRoot, $frontendPort
+} -ArgumentList $ProjectRoot, $frontendPort, $backendPort
 
 Write-Host "  Backend:  http://localhost:$backendPort" -ForegroundColor Green
 Write-Host "  Frontend: http://localhost:$frontendPort" -ForegroundColor Green

@@ -213,6 +213,32 @@ Open **http://localhost:3000** — you'll see a fully interactive 3D world with 
 
 > 💡 Or try it online at **[demo.crewhub.dev](https://demo.crewhub.dev)**
 
+### Run as a Background Service (Optional)
+
+Install CrewHub as a service that starts automatically on login, survives terminal closes, and auto-restarts on crashes:
+
+#### Mac / Linux
+
+```bash
+./scripts/service.sh install    # Install and start
+./scripts/service.sh status     # Check status
+./scripts/service.sh update     # Pull updates and restart
+./scripts/service.sh uninstall  # Remove service
+./scripts/service.sh logs       # Tail the log file
+```
+
+#### Windows (PowerShell)
+
+```powershell
+.\scripts\service.ps1 install
+.\scripts\service.ps1 status
+.\scripts\service.ps1 update
+.\scripts\service.ps1 uninstall
+.\scripts\service.ps1 logs
+```
+
+Backend: http://localhost:8090 | Frontend: http://localhost:8446
+
 ---
 
 ## 🧙 Onboarding
