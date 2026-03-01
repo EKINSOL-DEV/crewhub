@@ -1,11 +1,20 @@
 import { shouldBeInParkingLane } from './minionUtils'
 import type { CrewSession } from './api'
 import { SESSION_CONFIG } from './sessionConfig'
+import { DISPLAYABLE_CC_STATUSES } from './ccStatus'
 
 // Statuses that count as "active" for display purposes.
 // Sessions with other statuses (archived, pruned, etc.) are hard-filtered out
 // as an extra safeguard on top of backend filtering (Issue 2 fix).
-const ACTIVE_STATUSES = new Set<string | undefined>(['active', 'idle', '', undefined])
+const ACTIVE_STATUSES = new Set<string | undefined>([
+  // OpenClaw statuses
+  'active',
+  'idle',
+  '',
+  undefined,
+  // Claude Code statuses (sourced from ccStatus)
+  ...DISPLAYABLE_CC_STATUSES,
+])
 
 /**
  * Split sessions into visible (in rooms) and parked (parking lane / break area).

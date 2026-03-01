@@ -101,13 +101,39 @@ export function LogViewer({ session, open, onOpenChange }: LogViewerProps) {
         setError(null)
       }
       const response = await api.getMinionHistory(session.key, 100)
-      // Transform messages - handle both direct messages and wrapped {message, timestamp} format
+      // Transform messages - handle direct, wrapped, and standardized formats
       const transformedMessages = (response.messages || []).map((item: any) => {
+        // OpenClaw wrapped format: {message: {role, content}, timestamp}
         if (item.message)
           return {
             ...item.message,
             timestamp: item.timestamp ? new Date(item.timestamp).getTime() : undefined,
           }
+        // Standardized format from Claude Code: {role, content: string, metadata}
+        if (item.role && typeof item.content === 'string') {
+          const blocks: any[] = []
+          const metadata = item.metadata
+          if (metadata?.type === 'tool_use' && metadata.tool_name) {
+            blocks.push({
+              type: 'tool_use',
+              name: metadata.tool_name,
+              arguments: metadata.input_data,
+            })
+          } else if (metadata?.type === 'tool_result') {
+            blocks.push({ type: 'tool_result', text: item.content })
+          } else if (item.content.trim()) {
+            blocks.push({ type: 'text', text: item.content })
+          }
+          return {
+            role: item.role,
+            content: blocks,
+            timestamp: item.timestamp
+              ? typeof item.timestamp === 'number'
+                ? item.timestamp
+                : new Date(item.timestamp).getTime()
+              : undefined,
+          }
+        }
         return item
       }) as MinionMessage[]
       setMessages(transformedMessages)

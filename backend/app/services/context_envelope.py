@@ -52,13 +52,17 @@ def _compute_hash(envelope: dict) -> str:
 
 
 async def _fetch_participants(db: aiosqlite.Connection, room_id: str) -> list:
-    """Fetch agent participants assigned to the given room."""
+    """Fetch agent participants assigned to the given room.
+
+    Uses session_room_assignments (dynamic) with fallback to default_room_id (static).
+    """
     participants: list[dict] = []
     async with db.execute(
         """SELECT a.id, a.name, a.agent_session_key, d.display_name
            FROM agents a
            LEFT JOIN session_display_names d ON a.agent_session_key = d.session_key
-           WHERE a.default_room_id = ?""",
+           LEFT JOIN session_room_assignments sra ON a.agent_session_key = sra.session_key
+           WHERE COALESCE(sra.room_id, a.default_room_id) = ?""",
         (room_id,),
     ) as cur:
         async for row in cur:

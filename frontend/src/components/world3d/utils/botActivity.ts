@@ -7,6 +7,7 @@ import type { CrewSession } from '@/lib/api'
 import type { BotStatus } from '../botConstants'
 import { SESSION_CONFIG } from '@/lib/sessionConfig'
 import { hasActiveSubagents } from '@/lib/minionUtils'
+import { isCCActive } from '@/lib/ccStatus'
 
 // ─── Bot Status ────────────────────────────────────────────────
 
@@ -15,6 +16,18 @@ export function getAccurateBotStatus(
   isActive: boolean,
   allSessions?: CrewSession[]
 ): BotStatus {
+  // Claude Code sessions: use explicit status directly
+  if (session.source === 'claude_code') {
+    const status = session.status
+    if (isCCActive(status)) return 'active'
+    if (status === 'waiting_input') return 'idle'
+    // Synthetic session (no watcher data) — show idle, not offline
+    if (!status) return 'idle'
+    // idle/unknown: age-based
+    const idleMs = Date.now() - session.updatedAt
+    if (idleMs < SESSION_CONFIG.botSleepingThresholdMs) return 'sleeping'
+    return 'offline'
+  }
   if (isActive) return 'active'
   const idleMs = Date.now() - session.updatedAt
   if (idleMs < SESSION_CONFIG.botIdleThresholdMs) return 'idle'
@@ -153,6 +166,22 @@ export function getActivityText( // NOSONAR: complexity from legitimate activity
   isActive: boolean,
   allSessions?: CrewSession[]
 ): string {
+  // Claude Code sessions: use explicit status for activity text
+  if (session.source === 'claude_code') {
+    switch (session.status) {
+      case 'tool_use':
+        return '🔧 Using tools…'
+      case 'responding':
+        return '💬 Responding…'
+      case 'waiting_permission':
+        return '🔐 Waiting for permission…'
+      case 'waiting_input':
+        return '⏳ Waiting for input'
+      default:
+        return '💤 Idle'
+    }
+  }
+
   if (!isActive && allSessions && hasActiveSubagents(session, allSessions)) {
     const agentId = (session.key || '').split(':')[1]
     const now = Date.now()

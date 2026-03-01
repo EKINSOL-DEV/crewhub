@@ -16,6 +16,8 @@ interface ActionsTabProps {
   readonly onAssignmentChanged?: () => void
 }
 
+const FONT_FAMILY = 'system-ui, sans-serif'
+
 export function ActionsTab({
   session,
   displayName,
@@ -30,6 +32,10 @@ export function ActionsTab({
   const { isDemoMode } = useDemoMode()
   const [isMoving, setIsMoving] = useState(false)
   const [moveError, setMoveError] = useState<string | null>(null)
+  const [showAddAgent, setShowAddAgent] = useState(false)
+  const [agentName, setAgentName] = useState('')
+  const [isAddingAgent, setIsAddingAgent] = useState(false)
+  const [addAgentError, setAddAgentError] = useState<string | null>(null)
 
   const handleMoveToRoom = async (targetRoomId: string) => {
     if (!session || isDemoMode) return
@@ -100,7 +106,7 @@ export function ActionsTab({
         cursor: opts?.disabled ? 'not-allowed' : 'pointer',
         fontSize: 13,
         fontWeight: 600,
-        fontFamily: 'system-ui, sans-serif',
+        fontFamily: FONT_FAMILY,
         transition: 'opacity 0.15s',
         opacity: opts?.disabled ? 0.5 : 1,
       }}
@@ -114,6 +120,43 @@ export function ActionsTab({
       {label}
     </button>
   )
+
+  const handleAddAsAgent = async () => {
+    if (!agentName.trim()) return
+    setIsAddingAgent(true)
+    setAddAgentError(null)
+    try {
+      const slug = agentName
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9_-]/g, '')
+      const sessionId = session.key.replace('claude:', '')
+      const response = await fetch(`${API_BASE}/agents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: slug,
+          name: agentName.trim(),
+          source: 'claude_code',
+          agent_session_key: `cc:${slug}`,
+          project_path: session.projectPath || null,
+          initial_session_id: sessionId,
+        }),
+      })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.detail || 'Failed to create agent')
+      }
+      setShowAddAgent(false)
+      setAgentName('')
+    } catch (err) {
+      setAddAgentError(err instanceof Error ? err.message : 'Failed to create agent')
+      setTimeout(() => setAddAgentError(null), 4000)
+    } finally {
+      setIsAddingAgent(false)
+    }
+  }
 
   let selectCursor: string
   if (isDemoMode) {
@@ -146,7 +189,7 @@ export function ActionsTab({
               cursor: selectCursor,
               appearance: 'none',
               WebkitAppearance: 'none',
-              fontFamily: 'system-ui, sans-serif',
+              fontFamily: FONT_FAMILY,
               outline: 'none',
             }}
           >
@@ -190,17 +233,68 @@ export function ActionsTab({
           {canChat &&
             actionButton(
               '💬 Open Chat',
-              () => openChat(session.key, displayName, botConfig.icon, botConfig.color),
+              () =>
+                openChat(session.key, displayName, botConfig.icon, botConfig.color, session.kind),
               { primary: true }
             )}
           {actionButton('📋 Open Full Log', () => onOpenLog(session), { primary: !canChat })}
         </div>
       </div>
 
-      {/* Agent Control (future) */}
+      {/* Agent Control */}
       <div>
         {sectionLabel('Agent Control')}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {session.key.startsWith('claude:') &&
+            session.kind !== 'subagent' &&
+            !showAddAgent &&
+            actionButton('➕ Add as Agent', () => setShowAddAgent(true))}
+          {showAddAgent && (
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                padding: 12,
+                background: 'rgba(0, 0, 0, 0.03)',
+                borderRadius: 10,
+                border: '1px solid rgba(0, 0, 0, 0.06)',
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Agent name..."
+                value={agentName}
+                onChange={(e) => setAgentName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddAsAgent()}
+                autoFocus
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  border: '1px solid rgba(0, 0, 0, 0.1)',
+                  fontSize: 13,
+                  fontFamily: FONT_FAMILY,
+                  outline: 'none',
+                  background: '#fff',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 6 }}>
+                {actionButton(isAddingAgent ? 'Creating...' : '✓ Save', handleAddAsAgent, {
+                  primary: true,
+                  disabled: !agentName.trim() || isAddingAgent,
+                })}
+                {actionButton('Cancel', () => {
+                  setShowAddAgent(false)
+                  setAgentName('')
+                })}
+              </div>
+              {addAgentError && (
+                <div style={{ fontSize: 11, color: '#dc2626', fontWeight: 500 }}>
+                  {addAgentError}
+                </div>
+              )}
+            </div>
+          )}
           {actionButton('⏸️ Pause Session', () => {}, { disabled: true })}
           {actionButton('🔄 Restart Agent', () => {}, { disabled: true })}
         </div>

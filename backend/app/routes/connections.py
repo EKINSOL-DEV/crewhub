@@ -207,6 +207,56 @@ def _db_to_response(
 # ============================================================================
 
 
+@router.get("/claude-code/detect")
+async def detect_claude_code():
+    """Detect if Claude Code CLI is available locally."""
+    import os
+    import shutil
+    from pathlib import Path
+
+    cli_path = shutil.which("claude")
+    claude_dir = Path.home() / ".claude"
+    projects_dir = claude_dir / "projects"
+    projects_exists = projects_dir.exists()
+    claude_dir_exists = claude_dir.exists()
+    session_count = 0
+    if projects_exists:
+        try:
+            for proj in projects_dir.iterdir():
+                if proj.is_dir():
+                    session_count += sum(1 for f in os.listdir(proj) if f.endswith(".jsonl"))
+        except PermissionError:
+            logger.warning("Permission denied reading Claude projects directory")
+
+    has_cli = cli_path is not None
+    has_sessions = session_count > 0
+
+    # Require actual evidence: CLI binary or session data
+    found = has_cli or has_sessions
+
+    # Granular status for frontend handling
+    if has_cli and has_sessions:
+        detect_status = "ready"
+    elif has_cli:
+        detect_status = "cli_only"
+    elif has_sessions:
+        detect_status = "data_only"
+    elif claude_dir_exists:
+        detect_status = "dir_only"
+    else:
+        detect_status = "not_found"
+
+    return {
+        "found": found,
+        "status": detect_status,
+        "cli_available": has_cli,
+        "cli_path": cli_path,
+        "projects_dir_exists": projects_exists,
+        "claude_dir_exists": claude_dir_exists,
+        "session_count": session_count,
+    }
+
+
 @router.get("", response_model=ConnectionListResponse)
 async def list_connections():
     """

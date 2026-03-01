@@ -6,6 +6,7 @@ type MinionSession = CrewSession
 type MinionContentBlock = SessionContentBlock
 import { getTaskEmoji, generateFriendlyName } from './friendlyNames'
 import { SESSION_CONFIG } from './sessionConfig'
+import { isCCActive, DISPLAYABLE_CC_STATUSES } from './ccStatus'
 
 const SUPERVISING = 'supervising'
 
@@ -401,12 +402,23 @@ function isWithinAnnouncementRoutingGrace(
 }
 
 function isFixedAgent(key: string): boolean {
-  return /^agent:[a-zA-Z0-9_-]+:main$/.test(key)
+  return /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$/.test(key)
 }
 
 function hasTerminalStatus(status: string | undefined): boolean {
-  return !!status && !['active', 'idle', ''].includes(status)
+  if (!status) return false
+  // Non-terminal statuses from OpenClaw and Claude Code
+  const nonTerminal = new Set([
+    'active',
+    'idle',
+    '',
+    // Claude Code statuses (sourced from ccStatus via DISPLAYABLE_CC_STATUSES)
+    ...DISPLAYABLE_CC_STATUSES,
+  ])
+  return !nonTerminal.has(status)
 }
+
+// Claude Code active check — sourced from ccStatus
 
 export function shouldBeInParkingLane(
   session: MinionSession,
@@ -416,6 +428,19 @@ export function shouldBeInParkingLane(
 ): boolean {
   if (isFixedAgent(session.key)) return false
   if (hasTerminalStatus(session.status)) return true
+
+  // Claude Code sessions: use their explicit status rather than updatedAt heuristics.
+  // The backend already filters CC sessions to a 30-min recency window,
+  // so any session present here is recent enough to display.
+  if (session.key.startsWith('claude:')) {
+    if (isCCActive(session.status)) return false
+    // CC subagents park quickly (2 min) like OpenClaw subagents
+    if (session.kind === 'subagent') {
+      return getIdleTimeSeconds(session) > idleThresholdSeconds
+    }
+    // Top-level CC sessions: park only after the sleeping threshold (30 min)
+    return getIdleTimeSeconds(session) > SESSION_CONFIG.statusSleepingThresholdMs / 1000
+  }
 
   const status = getSessionStatus(session, allSessions)
   if (status === SUPERVISING) return false

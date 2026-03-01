@@ -1,24 +1,20 @@
 {
   "id": "headquarters",
-  "name": "Headquarters — Command Center",
+  "name": "Headquarters \u2014 Command Center",
   "gridWidth": 26,
   "gridDepth": 26,
   "cellSize": 0.6,
   "placements": [
     {
-      "propId": "meeting-table",
-      "x": 13,
-      "z": 13,
-      "span": { "w": 4, "d": 4 },
-      "comment": "Central command table — hologram meeting area"
-    },
-    {
       "propId": "desk-with-monitor",
       "x": 4,
       "z": 22,
       "rotation": 180,
-      "span": { "w": 2, "d": 2 },
-      "comment": "Commander desk — back-left"
+      "span": {
+        "w": 2,
+        "d": 2
+      },
+      "comment": "Commander desk \u2014 back-left"
     },
     {
       "propId": "work-point",
@@ -32,8 +28,11 @@
       "x": 22,
       "z": 22,
       "rotation": 180,
-      "span": { "w": 2, "d": 2 },
-      "comment": "Second command station — back-right"
+      "span": {
+        "w": 2,
+        "d": 2
+      },
+      "comment": "Second command station \u2014 back-right"
     },
     {
       "propId": "work-point",
@@ -47,16 +46,22 @@
       "x": 4,
       "z": 4,
       "rotation": 0,
-      "span": { "w": 2, "d": 2 },
-      "comment": "Monitoring station — front-left"
+      "span": {
+        "w": 2,
+        "d": 2
+      },
+      "comment": "Monitoring station \u2014 front-left"
     },
     {
       "propId": "desk-with-monitor",
       "x": 22,
       "z": 4,
       "rotation": 0,
-      "span": { "w": 2, "d": 2 },
-      "comment": "Monitoring station — front-right"
+      "span": {
+        "w": 2,
+        "d": 2
+      },
+      "comment": "Monitoring station \u2014 front-right"
     },
     {
       "propId": "notice-board",
@@ -116,19 +121,38 @@
     }
   ],
   "doorPositions": [
-    { "x": 13, "z": 25, "facing": "south" }
+    {
+      "x": 13,
+      "z": 25,
+      "facing": "south"
+    }
   ],
-  "walkableCenter": { "x": 13, "z": 13 },
+  "walkableCenter": {
+    "x": 13,
+    "z": 13
+  },
   "interactionPoints": {
     "work": [
-      { "x": 4, "z": 21 },
-      { "x": 22, "z": 21 }
+      {
+        "x": 4,
+        "z": 21
+      },
+      {
+        "x": 22,
+        "z": 21
+      }
     ],
     "coffee": [
-      { "x": 23, "z": 12 }
+      {
+        "x": 23,
+        "z": 12
+      }
     ],
     "sleep": [
-      { "x": 1, "z": 20 }
+      {
+        "x": 1,
+        "z": 20
+      }
     ]
   }
 }

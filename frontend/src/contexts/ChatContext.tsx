@@ -27,7 +27,13 @@ export interface ChatWindowState {
 
 export interface ChatContextValue {
   windows: ChatWindowState[]
-  openChat: (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string) => void
+  openChat: (
+    sessionKey: string,
+    agentName: string,
+    agentIcon?: string,
+    agentColor?: string,
+    kind?: string
+  ) => void
   closeChat: (sessionKey: string) => void
   minimizeChat: (sessionKey: string) => void
   restoreChat: (sessionKey: string) => void
@@ -95,7 +101,7 @@ function saveStoredWindows(windows: ChatWindowState[]): void {
 
 // ── Helpers ────────────────────────────────────────────────────
 
-const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+const FIXED_AGENT_RE = /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+|claude:[a-zA-Z0-9_-]+)$/
 
 function isFixedAgent(key: string): boolean {
   return FIXED_AGENT_RE.test(key)
@@ -121,9 +127,10 @@ function getDefaultPosition(index: number): { x: number; y: number } {
 
 function getInitialWindows(): ChatWindowState[] {
   const stored = loadStoredWindows()
-  // Only restore chat windows for fixed agents (agent:*:main)
+  // Only restore chat windows for persistent agents (agent:*:main, cc:*) — not transient claude:* sessions
+  const PERSISTENT_AGENT_RE = /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$/
   return stored
-    .filter((w) => isFixedAgent(w.sessionKey))
+    .filter((w) => PERSISTENT_AGENT_RE.test(w.sessionKey))
     .map((w, i) => ({
       ...w,
       zIndex: getNextZIndex(),
@@ -156,8 +163,16 @@ export function ChatProvider({ children }: Readonly<{ children: ReactNode }>) {
   }, [windows])
 
   const openChat = useCallback(
-    (sessionKey: string, agentName: string, agentIcon?: string, agentColor?: string) => {
-      // Only allow chat for fixed agents (agent:*:main)
+    (
+      sessionKey: string,
+      agentName: string,
+      agentIcon?: string,
+      agentColor?: string,
+      kind?: string
+    ) => {
+      // Don't allow chat for subagents
+      if (kind === 'subagent') return
+      // Only allow chat for eligible sessions
       if (!isFixedAgent(sessionKey)) return
 
       setWindows((prev) => {

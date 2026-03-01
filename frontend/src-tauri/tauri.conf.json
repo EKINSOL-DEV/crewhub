@@ -1,7 +1,10 @@
 {
     "$schema": "https://schema.tauri.app/config/2",
     "productName": "CrewHub",
-    "version": "0.18.5",
+
+
+    "version": "0.19.0",
+
     "identifier": "dev.crewhub.app",
     "build": {
         "beforeDevCommand": "npm run dev",

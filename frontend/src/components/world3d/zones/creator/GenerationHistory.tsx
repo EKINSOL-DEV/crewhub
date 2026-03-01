@@ -37,7 +37,7 @@ function PropDeleteDialog({ state, onConfirm, onCancel }: PropDeleteDialogProps)
         if (e.target === e.currentTarget) onCancel()
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onCancel()
+        if (e.key === 'Escape') onCancel()
       }}
     >
       <div className="fpm-delete-dialog">

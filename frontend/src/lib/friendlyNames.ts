@@ -113,6 +113,7 @@ function isFixedWhatsAppPayload(payload: string): boolean {
  * Temporary subagents should be excluded.
  */
 export function isFixedAgent(sessionKey: string): boolean {
+  if (sessionKey.startsWith('cc:')) return true
   if (containsKnownPhone(sessionKey)) return true
 
   if (sessionKey.startsWith('agent:')) return isFixedAgentKey(sessionKey)
@@ -166,6 +167,12 @@ function parseWhatsAppSessionKey(payload: string): string {
 
 export function formatSessionKeyAsName(sessionKey: string, label?: string): string {
   if (label) return label
+
+  // Claude Code agents: cc:<id> → capitalize id
+  if (sessionKey.startsWith('cc:')) {
+    const id = sessionKey.slice(3)
+    return id.charAt(0).toUpperCase() + id.slice(1)
+  }
 
   // Known phone numbers (direct or embedded)
   for (const [phone, name] of Object.entries(KNOWN_PHONES)) {

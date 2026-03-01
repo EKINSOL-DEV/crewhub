@@ -13,6 +13,7 @@ import { sseManager } from '@/lib/sseManager'
 export interface ToolCallData {
   name: string
   status: string
+  label?: string
   input?: Record<string, unknown>
   result?: string
 }

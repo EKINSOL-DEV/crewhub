@@ -157,7 +157,8 @@ export function getBotConfigFromSession(
 /**
  * Determine if a session is a subagent (smaller bot).
  */
-export function isSubagent(sessionKey: string): boolean {
+export function isSubagent(sessionKey: string, kind?: string): boolean {
+  if (kind === 'subagent') return true
   return sessionKey.includes(':subagent:') || sessionKey.includes(':spawn:')
 }
 

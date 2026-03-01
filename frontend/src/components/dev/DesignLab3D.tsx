@@ -574,7 +574,7 @@ function BotScene({
 
   useEffect(() => {
     const light = sceneDirLightRef.current
-    if (!light) return
+    if (!light?.shadow) return
     light.shadow.mapSize.set(2048, 2048)
     const cam = light.shadow.camera as THREE.OrthographicCamera
     cam.far = 30

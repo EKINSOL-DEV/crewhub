@@ -7,8 +7,10 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.auth import init_api_keys
 from app.db.database import check_database_health, init_database
@@ -45,6 +47,7 @@ from app.routes.creator import router as creator_router
 from app.routes.docs import router as docs_router
 from app.routes.meetings import router as meetings_router
 from app.routes.personas import router as personas_router
+from app.routes.project_agents import router as project_agents_router
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.prop_placement import router as prop_placement_router
 from app.routes.self_routes import router as self_router
@@ -202,6 +205,54 @@ async def load_connections_from_db():
                 )
             except Exception as e:
                 logger.error(f"Failed to create default OpenClaw connection: {e}")
+
+    # Auto-register Claude Code connection if CLI is available
+    import shutil
+    from pathlib import Path
+
+    claude_cli = shutil.which("claude")
+    claude_dir = Path.home() / ".claude"
+    if claude_dir.exists():  # cli_path optional — works via ~/.claude mount in Docker too
+        # Only auto-register if the user has already completed onboarding
+        # (prevents skipping the wizard on a fresh install)
+        already_onboarded = False
+        try:
+            from app.db.database import get_db
+
+            async with get_db() as db:
+                async with db.execute("SELECT value FROM settings WHERE key = 'crewhub-onboarded'") as cur:
+                    row = await cur.fetchone()
+                    already_onboarded = row is not None and row[0] == "true"
+        except Exception:
+            pass
+        # Check if a claude_code connection already exists
+        existing = [c for c in manager.get_connections().values() if c.connection_type.value == "claude_code"]
+        if already_onboarded and not existing:
+            logger.info(f"Claude Code detected (cli={claude_cli}, dir={claude_dir}) — auto-registering connection")
+            try:
+                import json as _json
+                import time as _time
+
+                from app.db.database import get_db
+
+                conn_id = "auto-claude-code"
+                now = int(_time.time() * 1000)
+                config = {"cli_path": claude_cli or "", "data_dir": str(claude_dir)}
+                async with get_db() as db:
+                    await db.execute(
+                        "INSERT OR IGNORE INTO connections (id, name, type, config, enabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (conn_id, "Claude Code", "claude_code", _json.dumps(config), True, now, now),
+                    )
+                    await db.commit()
+                await manager.add_connection(
+                    connection_id=conn_id,
+                    connection_type="claude_code",
+                    config=config,
+                    name="Claude Code",
+                    auto_connect=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to auto-register Claude Code: {e}")
         else:
             logger.info("No OpenClaw connections in DB and no env credentials — skipping default connection")
 
@@ -356,12 +407,38 @@ app.include_router(prop_placement_router)
 # Phase 7: Group Chat Threads
 app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
 
+# Project agents (agent templates per room)
+app.include_router(project_agents_router, prefix="/api/rooms", tags=["project-agents"])
 
-@app.get("/")
-async def root():
-    """Root endpoint."""
-    return {
-        "name": "CrewHub API",
-        "version": APP_VERSION,
-        "status": "running",
-    }
+
+# ── Static frontend serving (service / production mode) ─────────────
+# When the built frontend exists alongside the backend, serve it directly.
+# This eliminates the need for a separate static file server (npx serve / nginx)
+# and avoids the /api proxy problem: everything runs on a single origin.
+_FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
+
+if _FRONTEND_DIST.is_dir():
+    logger.info(f"Serving frontend from {_FRONTEND_DIST}")
+
+    # Serve static assets (JS, CSS, images) under /assets and other static files
+    app.mount("/assets", StaticFiles(directory=_FRONTEND_DIST / "assets"), name="frontend-assets")
+
+    # SPA fallback: any non-API route serves index.html
+    @app.get("/{path:path}")
+    async def spa_fallback(request: Request, path: str):
+        # Serve actual static files if they exist (favicon.ico, logo.svg, etc.)
+        file_path = _FRONTEND_DIST / path
+        if path and file_path.is_file():
+            return FileResponse(file_path)
+        # Otherwise serve index.html for SPA routing
+        return FileResponse(_FRONTEND_DIST / "index.html")
+else:
+
+    @app.get("/")
+    async def root():
+        """Root endpoint (no frontend build found)."""
+        return {
+            "name": "CrewHub API",
+            "version": APP_VERSION,
+            "status": "running",
+        }

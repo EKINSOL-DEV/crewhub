@@ -32,20 +32,46 @@ async def list_sessions():
 async def get_session_history(session_key: str, limit: Annotated[int, Query(ge=1, le=500)] = 50):
     """Get message history for a specific session.
 
-    Returns raw JSONL entries for backward compatibility.
+    For Claude Code sessions (claude:* keys), returns standardized HistoryMessage dicts.
+    For OpenClaw sessions, returns raw JSONL entries for backward compatibility.
 
     Args:
-        session_key: URL-encoded session key (e.g., agent:main:main)
+        session_key: URL-encoded session key (e.g., agent:main:main or claude:<id>)
         limit: Maximum number of messages to return (1-500)
     """
     manager = await get_connection_manager()
+
+    if session_key.startswith("claude:"):
+        messages = await manager.get_session_history(session_key, limit=limit)
+        return {
+            "messages": [m.to_dict() for m in messages],
+            "count": len(messages),
+            "format": "standard",
+        }
+
+    # CC fixed agent key — resolve to actual Claude session
+    if session_key.startswith("cc:"):
+        from ..services.cc_chat import _agent_sessions
+
+        agent_id = session_key[3:]
+        cc_session_id = _agent_sessions.get(agent_id)
+        if cc_session_id:
+            claude_key = f"claude:{cc_session_id}"
+            messages = await manager.get_session_history(claude_key, limit=limit)
+            return {
+                "messages": [m.to_dict() for m in messages],
+                "count": len(messages),
+                "format": "standard",
+            }
+        return {"messages": [], "count": 0, "format": "standard"}
+
     conn = manager.get_default_openclaw()
     if not conn:
         raise HTTPException(status_code=503, detail="No OpenClaw connection available")
 
     history = await conn.get_session_history_raw(session_key, limit)
 
-    return {"messages": history, "count": len(history)}
+    return {"messages": history, "count": len(history), "format": "raw"}
 
 
 @router.patch(

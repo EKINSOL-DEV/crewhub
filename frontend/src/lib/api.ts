@@ -16,6 +16,10 @@ export interface CrewSession {
   transcriptPath?: string
   /** OpenClaw session status — may be "archived", "pruned", etc. for non-active sessions */
   status?: string
+  /** Source connection type: 'openclaw' | 'claude_code' */
+  source?: string
+  /** Project path for Claude Code sessions */
+  projectPath?: string
   deliveryContext?: {
     channel?: string
     to?: string
@@ -427,4 +431,23 @@ export const apiKeyApi = {
       headers: { 'X-API-Key': rawKey, 'Content-Type': 'application/json' },
     }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
   },
+}
+
+// ── Claude Code detection ─────────────────────────────────────
+
+export interface ClaudeCodeDetectResult {
+  found: boolean
+  cli_path: string | null
+  projects_dir_exists: boolean
+  session_count: number
+  /** Detection status: 'found' | 'not_found' | 'dir_only' */
+  status: string
+  /** Whether the CLI binary is available on PATH */
+  cli_available: boolean
+}
+
+export async function detectClaudeCode(): Promise<ClaudeCodeDetectResult> {
+  const res = await fetch(`${API_BASE}/connections/claude-code/detect`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
 }

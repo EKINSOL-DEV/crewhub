@@ -50,6 +50,10 @@ async def test_db(tmp_path, monkeypatch):
             CREATE TABLE session_display_names (
                 session_key TEXT PRIMARY KEY, display_name TEXT NOT NULL, updated_at INTEGER
             );
+            CREATE TABLE session_room_assignments (
+                session_key TEXT PRIMARY KEY, room_id TEXT NOT NULL, assigned_at INTEGER NOT NULL,
+                FOREIGN KEY (room_id) REFERENCES rooms(id)
+            );
 
             INSERT INTO rooms VALUES ('dev-room', 'Dev Room', 0, 'proj-1', {now}, {now});
             INSERT INTO rooms VALUES ('hq', 'Headquarters', 1, NULL, {now}, {now});
@@ -189,6 +193,31 @@ def test_canonical_json_deterministic():
     a = {"z": 1, "a": 2, "m": [3, 1]}
     b = {"a": 2, "m": [3, 1], "z": 1}
     assert _canonical_json(a) == _canonical_json(b)
+
+
+@pytest.mark.asyncio
+async def test_dynamic_room_assignment_affects_participants(test_db):
+    """Agents moved via session_room_assignments should appear in the new room."""
+    # Move 'Main' agent from hq to dev-room dynamically
+    async with aiosqlite.connect(test_db) as db:
+        now = int(time.time() * 1000)
+        await db.execute(
+            "INSERT INTO session_room_assignments VALUES (?, ?, ?)",
+            ("agent:main:main", "dev-room", now),
+        )
+        await db.commit()
+
+    envelope = await build_crewhub_context(room_id="dev-room", channel="crewhub-ui")
+    assert envelope is not None
+    handles = [p["handle"] for p in envelope["participants"]]
+    assert "Main" in handles, "Dynamically assigned agent should appear in room"
+    assert "Dev" in handles, "Default-assigned agent should still appear"
+
+    # Main should no longer appear in hq
+    hq_envelope = await build_crewhub_context(room_id="hq", channel="crewhub-ui")
+    assert hq_envelope is not None
+    hq_handles = [p["handle"] for p in hq_envelope.get("participants", [])]
+    assert "Main" not in hq_handles, "Dynamically moved agent should not appear in old room"
 
 
 def test_compute_hash_excludes_self():

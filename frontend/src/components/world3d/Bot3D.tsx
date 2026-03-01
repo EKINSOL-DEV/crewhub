@@ -588,21 +588,46 @@ export const Bot3D = memo(function Bot3D({
           >
             <div
               style={{
-                background: 'rgba(0,0,0,0.6)',
-                color: '#fff',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontSize: '11px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                fontFamily: 'system-ui, sans-serif',
-                textAlign: 'center',
-                maxWidth: '120px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '2px',
               }}
             >
-              {name}
+              <div
+                style={{
+                  background: 'rgba(0,0,0,0.6)',
+                  color: '#fff',
+                  padding: '2px 8px',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  fontFamily: 'system-ui, sans-serif',
+                  textAlign: 'center',
+                  maxWidth: '120px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {name}
+              </div>
+              {session?.source && (
+                <div
+                  style={{
+                    background: session.source === 'claude_code' ? '#8B5CF6' : '#FF6B35',
+                    color: '#fff',
+                    padding: '1px 6px',
+                    borderRadius: '3px',
+                    fontSize: '9px',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'system-ui, sans-serif',
+                  }}
+                >
+                  {session.source === 'claude_code' ? 'Claude Code' : 'OpenClaw'}
+                </div>
+              )}
             </div>
           </Html>
         )}

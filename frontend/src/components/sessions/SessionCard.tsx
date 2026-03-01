@@ -19,13 +19,14 @@ import {
 } from '@/lib/minionUtils'
 import { cn } from '@/lib/utils'
 import { EditableSessionName } from './EditableSessionName'
+import { SourceBadge } from '@/components/ui/SourceBadge'
 
 interface SessionCardProps {
   readonly session: CrewSession
   readonly onViewLogs?: (session: CrewSession) => void
 }
 
-const FIXED_AGENT_RE = /^agent:[a-zA-Z0-9_-]+:main$/
+const FIXED_AGENT_RE = /^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+)$/
 
 export const SessionCard = memo(function SessionCard({ session, onViewLogs }: SessionCardProps) {
   const status = getSessionStatus(session)
@@ -80,6 +81,7 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
               >
                 {sessionType.type}
               </Badge>
+              <SourceBadge source={session.source} />
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className={statusInfo.color}>

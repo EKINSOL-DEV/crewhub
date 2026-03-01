@@ -12,6 +12,7 @@ services:
       - CREWHUB_DB_PATH=/data/crewhub.db
     volumes:
       - demo-data:/data
+      - ${HOME}/.claude:/root/.claude:ro
     restart: unless-stopped
     container_name: crewhub-demo-backend
 

@@ -15,6 +15,7 @@ services:
       - ~/.crewhub:/root/.crewhub
       - ~/.openclaw/media:/root/.openclaw/media
       - ~/.openclaw/agents:/root/.openclaw/agents
+      - ${HOME}/.claude:/root/.claude:ro
       # Project documents (read-only mount for Phase 2 markdown viewer)
       # - /path/to/your/project-data:/mnt/project-data:ro
     extra_hosts:

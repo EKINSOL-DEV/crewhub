@@ -76,7 +76,7 @@ describe('MobileSettingsPanel', () => {
 
     it('renders app version info', () => {
       renderSettings()
-      expect(screen.getByText('v0.12.0')).toBeInTheDocument()
+      expect(screen.getByText('v0.19.0')).toBeInTheDocument()
     })
 
     it('shows theme options: Dark, Light, System', () => {

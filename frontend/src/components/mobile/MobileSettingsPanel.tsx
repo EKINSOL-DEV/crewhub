@@ -31,7 +31,7 @@ const VAR_MOBILE_TEXT_SECONDARY = 'var(--mobile-text-secondary, #94a3b8)'
 export type AppTheme = 'dark' | 'light' | 'system'
 export type FontSize = 'compact' | 'normal' | 'large'
 
-const APP_VERSION = '0.12.0'
+const APP_VERSION = '0.19.0'
 
 // Zen theme IDs for light/dark selection
 const ZEN_DARK_THEME = 'tokyo-night'

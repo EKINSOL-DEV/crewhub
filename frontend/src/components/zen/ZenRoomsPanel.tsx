@@ -5,6 +5,7 @@
 
 import { useCallback, useState } from 'react'
 import { useRoomsContext, type Room } from '@/contexts/RoomsContext'
+import { ProjectAgentsPanel } from './ProjectAgentsPanel'
 
 interface ZenRoomsPanelProps {
   readonly selectedRoomId?: string
@@ -213,6 +214,9 @@ export function ZenRoomsPanel({ selectedRoomId, onSelectRoom }: ZenRoomsPanelPro
           />
         ))}
       </div>
+
+      {/* Agent templates for selected room */}
+      {selectedRoomId && <ProjectAgentsPanel roomId={selectedRoomId} />}
 
       {/* Footer with count */}
       <div className="zen-rooms-footer">

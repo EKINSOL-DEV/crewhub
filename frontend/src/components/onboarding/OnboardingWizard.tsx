@@ -3,8 +3,8 @@
  * OnboardingWizard — First-run experience for CrewHub.
  *
  * 6-step wizard:
- *  1. Welcome
- *  2. Auto-Scan
+ *  1. Connection Mode
+ *  2. Auto-Scan / Claude Detect
  *  3. Configure Connections
  *  4. Room Setup (optional)
  *  5. Persona
@@ -15,25 +15,30 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { scanForRuntimes, testConnection, type DiscoveryCandidate } from '@/lib/api'
-import { OpenClawWizard } from './OpenClawWizard'
 import { RoomSetupStep } from './RoomSetupStep'
 import { PersonaStep } from './PersonaStep'
 import type { PersonaConfig } from '@/lib/personaTypes'
 import { updatePersona } from '@/lib/personaApi'
 import { StepProgress } from './steps/StepProgress'
-import { StepWelcome } from './steps/StepWelcome'
 import { StepScan } from './steps/StepScan'
 import { StepConfigure } from './steps/StepConfigure'
 import { StepReady } from './steps/StepReady'
 import { candidateToConnection } from './onboardingHelpers'
-import type { WizardStep, ConnectionConfig, OnboardingWizardProps } from './onboardingTypes'
+import { StepConnectionMode } from './steps/StepConnectionMode'
+import { StepClaudeDetect } from './steps/StepClaudeDetect'
+import type {
+  WizardStep,
+  ConnectionConfig,
+  ConnectionMode,
+  OnboardingWizardProps,
+} from './onboardingTypes'
 
 const APPLICATION_JSON = 'application/json'
 const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
 
 export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState<WizardStep>(1)
-  const [showOpenClawWizard, setShowOpenClawWizard] = useState(false)
+  const [_connectionMode, setConnectionMode] = useState<ConnectionMode | null>(null)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<Parameters<typeof StepScan>[0]['scanResult']>(null)
   const [candidates, setCandidates] = useState<DiscoveryCandidate[]>([])
@@ -141,7 +146,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
         }
         await fetch('/api/connections', {
           method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
+          headers: { 'Content-Type': APPLICATION_JSON },
           body: JSON.stringify({ name: conn.name, type: conn.type, config, enabled: true }),
         })
       } catch {
@@ -156,7 +161,7 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     try {
       await fetch('/api/settings/crewhub-onboarded', {
         method: 'PUT',
-        headers: { CONTENT_TYPE: APPLICATION_JSON },
+        headers: { 'Content-Type': APPLICATION_JSON },
         body: JSON.stringify({ value: 'true' }),
       })
     } catch {
@@ -169,6 +174,25 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
 
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, 6) as WizardStep), [])
   const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 1) as WizardStep), [])
+
+  const handleConnectionMode = useCallback(
+    (mode: ConnectionMode) => {
+      setConnectionMode(mode)
+      if (mode === 'claude_code') {
+        // Show Claude detect step
+        setStep(2)
+      } else if (mode === 'both') {
+        // Both: scan first, then claude detect
+        setStep(2)
+        runScan()
+      } else {
+        // OpenClaw only: scan
+        setStep(2)
+        runScan()
+      }
+    },
+    [runScan]
+  )
   const handleSkip = useCallback(() => {
     localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
     onSkip()
@@ -178,85 +202,6 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
     localStorage.setItem('crewhub-demo-mode', 'true')
     onComplete()
   }, [onComplete])
-
-  const handleOpenClawComplete = useCallback(
-    async (config: {
-      name: string
-      url: string
-      token: string
-      botTemplate?: string
-      displayName?: string
-    }) => {
-      try {
-        await fetch('/api/connections', {
-          method: 'POST',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
-          body: JSON.stringify({
-            name: config.name,
-            type: 'openclaw',
-            config: { gateway_url: config.url, token: config.token },
-            enabled: true,
-          }),
-        })
-      } catch {
-        /* best-effort */
-      }
-
-      if (config.displayName) {
-        const templateToAgentId: Record<string, string> = {
-          default: 'main',
-          developer: 'dev',
-          reviewer: 'reviewer',
-        }
-        const agentId = config.botTemplate
-          ? templateToAgentId[config.botTemplate] || 'main'
-          : 'main'
-        const sessionKey = `agent:${agentId}:main`
-        try {
-          await fetch(`/api/session-display-names/${encodeURIComponent(sessionKey)}`, {
-            method: 'POST',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
-            body: JSON.stringify({ display_name: config.displayName }),
-          })
-        } catch {
-          /* intentionally empty */
-        }
-        try {
-          await fetch(`/api/agents/${encodeURIComponent(agentId)}`, {
-            method: 'PUT',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
-            body: JSON.stringify({ name: config.displayName }),
-          })
-        } catch {
-          /* intentionally empty */
-        }
-        try {
-          await fetch('/api/settings/agent-display-name', {
-            method: 'PUT',
-            headers: { CONTENT_TYPE: APPLICATION_JSON },
-            body: JSON.stringify({
-              value: JSON.stringify({ agentId, sessionKey, displayName: config.displayName }),
-            }),
-          })
-        } catch {
-          /* intentionally empty */
-        }
-      }
-
-      localStorage.setItem(KEY_CREWHUB_ONBOARDED, 'true')
-      try {
-        await fetch('/api/settings/crewhub-onboarded', {
-          method: 'PUT',
-          headers: { CONTENT_TYPE: APPLICATION_JSON },
-          body: JSON.stringify({ value: 'true' }),
-        })
-      } catch {
-        /* intentionally empty */
-      }
-      onComplete()
-    },
-    [onComplete]
-  )
 
   // ─── Render ───────────────────────────────────────────────────
 
@@ -288,24 +233,37 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-10">
-          {step === 1 && !showOpenClawWizard && (
-            <StepWelcome
-              onScan={() => {
-                setStep(2)
-                runScan()
-              }}
+          {step === 1 && (
+            <StepConnectionMode
+              onSelect={handleConnectionMode}
               onDemo={handleDemo}
-              onManual={handleSkip}
-              onOpenClawWizard={() => setShowOpenClawWizard(true)}
+              onSkip={handleSkip}
             />
           )}
-          {step === 1 && showOpenClawWizard && (
-            <OpenClawWizard
-              onComplete={handleOpenClawComplete}
-              onSkip={() => setShowOpenClawWizard(false)}
+          {step === 2 && _connectionMode === 'claude_code' && (
+            <StepClaudeDetect
+              onContinue={() => {
+                // Auto-register claude_code connection so it gets saved on completion
+                setConnections((prev) => {
+                  if (prev.some((c) => c.type === 'claude_code')) return prev
+                  return [
+                    ...prev,
+                    {
+                      id: `claude-code-${Date.now()}`,
+                      name: 'Claude Code',
+                      type: 'claude_code',
+                      url: '',
+                      token: '',
+                      enabled: true,
+                      testStatus: 'idle' as const,
+                    },
+                  ]
+                })
+                setStep(4)
+              }}
             />
           )}
-          {step === 2 && (
+          {step === 2 && _connectionMode !== 'claude_code' && (
             <StepScan
               scanning={scanning}
               scanResult={scanResult}
@@ -325,7 +283,11 @@ export function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) 
               onRemoveConnection={handleRemoveConnection}
             />
           )}
-          {step === 4 && <RoomSetupStep onComplete={goNext} />}
+          {step === 4 && (
+            <RoomSetupStep
+              onComplete={() => (_connectionMode === 'claude_code' ? setStep(6) : goNext())}
+            />
+          )}
           {step === 5 && (
             <PersonaStep
               onComplete={async (config: PersonaConfig) => {

@@ -21,7 +21,7 @@ router = APIRouter(tags=["chat"])
 
 # ── Validation ──────────────────────────────────────────────────
 
-FIXED_AGENT_PATTERN = re.compile(r"^agent:[a-zA-Z0-9_-]+:main$")
+FIXED_AGENT_PATTERN = re.compile(r"^(agent:[a-zA-Z0-9_-]+:main|cc:[a-zA-Z0-9_-]+|claude:[a-zA-Z0-9_-]+)$")
 
 AGENT_DISPLAY_NAMES = {
     "main": "Assistent",
@@ -35,18 +35,62 @@ AGENT_DISPLAY_NAMES = {
 
 
 def _validate_session_key(session_key: str) -> None:
-    """Only allow fixed agent session keys (agent:*:main)."""
+    """Only allow fixed agent session keys (agent:*:main or cc:*)."""
     if not FIXED_AGENT_PATTERN.match(session_key):
         raise HTTPException(
             status_code=403,
-            detail="Chat is only available for fixed agent sessions (agent:*:main)",
+            detail="Chat is only available for fixed agent sessions (agent:*:main or cc:*)",
         )
 
 
 def _get_agent_id(session_key: str) -> str:
-    """Extract agent id from session key like 'agent:main:main' -> 'main'."""
+    """Extract agent id from session key.
+
+    'agent:main:main' -> 'main'
+    'cc:mybot' -> 'mybot'
+    'claude:abc123' -> 'abc123'
+    """
+    if session_key.startswith("cc:"):
+        return session_key[3:]
+    if session_key.startswith("claude:"):
+        return session_key[7:]
     parts = session_key.split(":")
     return parts[1] if len(parts) > 1 else "main"
+
+
+async def _get_agent_source(agent_id: str, session_key: str = "") -> str:
+    """Look up the agent's source from the DB. Defaults to 'openclaw'."""
+    if session_key.startswith("claude:"):
+        return "claude_code"
+    try:
+        from app.db.database import get_db
+
+        async with get_db() as db:
+            async with db.execute("SELECT source FROM agents WHERE id = ?", (agent_id,)) as cursor:
+                row = await cursor.fetchone()
+                if row and "source" in row.keys():
+                    return row["source"]
+    except Exception:
+        pass
+    return "openclaw"
+
+
+async def _get_discovered_project_path(session_id: str) -> Optional[str]:
+    """Get project_path for a discovered CC session from the watcher."""
+    try:
+        from app.services.connections.claude_code import ClaudeCodeConnection
+
+        manager = await get_connection_manager()
+        cc_conn = next(
+            (c for c in manager._connections.values() if isinstance(c, ClaudeCodeConnection) and c.is_connected()),
+            None,
+        )
+        if not cc_conn or not cc_conn._watcher:
+            return None
+        ws = cc_conn._watcher.get_watched_sessions().get(session_id)
+        return ws.project_path if ws else None
+    except Exception:
+        return None
 
 
 # ── Rate limiter ────────────────────────────────────────────────
@@ -114,6 +158,37 @@ def _normalize_timestamp(value: object) -> int:
     return 0
 
 
+def _tool_label(name: str, input_data: dict | None) -> str:
+    """Extract a concise label from a tool's input for display in chat bubbles."""
+    if not input_data or not isinstance(input_data, dict):
+        return ""
+    # Map tool names to the most descriptive input field
+    field_map: dict[str, list[str]] = {
+        "Agent": ["description"],
+        "Read": ["file_path"],
+        "Write": ["file_path"],
+        "Edit": ["file_path"],
+        "Bash": ["description", "command"],
+        "Grep": ["pattern"],
+        "Glob": ["pattern"],
+        "WebSearch": ["query"],
+        "WebFetch": ["url"],
+        "Skill": ["skill"],
+    }
+    fields = field_map.get(name, [])
+    for f in fields:
+        val = input_data.get(f)
+        if isinstance(val, str) and val:
+            # Truncate long values
+            return val[:60] + ("…" if len(val) > 60 else "")
+    # Fallback: try common fields
+    for f in ("description", "file_path", "pattern", "query", "prompt"):
+        val = input_data.get(f)
+        if isinstance(val, str) and val:
+            return val[:60] + ("…" if len(val) > 60 else "")
+    return ""
+
+
 def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], list[dict], list[str]]:  # NOSONAR
     content_parts: list[str] = []
     tools: list[dict] = []
@@ -136,9 +211,14 @@ def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], l
         elif btype == "thinking" and block.get("thinking"):
             thinking_blocks.append(block["thinking"])
         elif btype == "tool_use":
-            tool_info = {"name": block.get("name", "unknown"), "status": "called"}
+            tool_name = block.get("name", "unknown")
+            tool_input = block.get("input", {})
+            tool_info: dict = {"name": tool_name, "status": "called"}
+            label = _tool_label(tool_name, tool_input)
+            if label:
+                tool_info["label"] = label
             if raw:
-                tool_info["input"] = block.get("input", {})
+                tool_info["input"] = tool_input
             tools.append(tool_info)
         elif btype == "tool_result":
             result_content = block.get("content", "")
@@ -230,6 +310,86 @@ def _build_history_message(idx: int, entry: dict, raw: bool) -> dict | None:  # 
     return payload
 
 
+def _group_cc_history(history_msgs: list, raw: bool) -> list[dict]:
+    """Group consecutive CC HistoryMessages into structured content blocks.
+
+    CC history arrives as one HistoryMessage per event (text, tool_use,
+    thinking, tool_result). This groups consecutive assistant events into a
+    single message with a structured content list so that
+    ``_extract_content_parts()`` can split them into tools/thinking/text.
+    """
+    results: list[dict] = []
+    # Accumulate content blocks for the current assistant turn
+    pending_blocks: list[dict] = []
+    pending_ts: int = 0
+    msg_counter = 0
+    # Map tool_use_id -> tool_name for resolving tool_result names
+    tool_id_to_name: dict[str, str] = {}
+
+    def flush():
+        nonlocal pending_blocks, pending_ts, msg_counter
+        if not pending_blocks:
+            return
+        entry = {
+            "message": {"role": "assistant", "content": pending_blocks},
+            "timestamp": pending_ts,
+        }
+        parsed = _build_history_message(msg_counter, entry, raw)
+        if parsed is not None:
+            results.append(parsed)
+        msg_counter += 1
+        pending_blocks = []
+        pending_ts = 0
+
+    for hm in history_msgs:
+        meta = hm.metadata or {}
+        meta_type = meta.get("type", "")
+
+        if hm.role == "user":
+            flush()
+            entry = {
+                "message": {"role": "user", "content": hm.content},
+                "timestamp": hm.timestamp,
+            }
+            parsed = _build_history_message(msg_counter, entry, raw)
+            if parsed is not None:
+                results.append(parsed)
+            msg_counter += 1
+
+        elif hm.role == "assistant":
+            if not pending_ts and hm.timestamp:
+                pending_ts = hm.timestamp
+
+            if meta_type == "tool_use":
+                tool_id_to_name[meta.get("tool_use_id", "")] = meta.get("tool_name", "unknown")
+                block: dict = {"type": "tool_use", "name": meta.get("tool_name", "unknown")}
+                if meta.get("input_data"):
+                    block["input"] = meta["input_data"]
+                pending_blocks.append(block)
+            elif meta_type == "thinking":
+                pending_blocks.append({"type": "thinking", "thinking": meta.get("thinking", "")})
+            else:
+                # Regular text
+                if hm.content:
+                    pending_blocks.append({"type": "text", "text": hm.content})
+
+        elif hm.role == "tool":
+            # Tool result — attach to the current assistant turn
+            tool_use_id = meta.get("tool_use_id", "")
+            tool_name = tool_id_to_name.get(tool_use_id, "tool")
+            pending_blocks.append(
+                {
+                    "type": "tool_result",
+                    "toolName": tool_name,
+                    "content": hm.content,
+                    "isError": meta.get("is_error", False),
+                }
+            )
+
+    flush()
+    return results
+
+
 # ── Routes ──────────────────────────────────────────────────────
 
 
@@ -242,19 +402,44 @@ async def get_chat_history(
 ):
     """Get chat history for a session with pagination."""
     _validate_session_key(session_key)
+    agent_id = _get_agent_id(session_key)
+    source = await _get_agent_source(agent_id, session_key)
 
-    manager = await get_connection_manager()
-    conn = manager.get_default_openclaw()
-    if not conn:
-        return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+    if source == "claude_code":
+        # CC agent: resolve the actual Claude session ID and pull history
+        from app.services.cc_chat import _agent_sessions
+        from app.services.connections.claude_code import ClaudeCodeConnection
 
-    fetch_limit = max(limit * 3, 90)
-    raw_entries = await conn.get_session_history_raw(session_key, limit=fetch_limit)
-    messages = [
-        parsed
-        for idx, entry in enumerate(raw_entries)
-        if (parsed := _build_history_message(idx, entry, raw)) is not None
-    ]
+        cc_session_id = _agent_sessions.get(agent_id)
+        if not cc_session_id:
+            return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+
+        # Use claude:{session_id} key that the watcher tracks
+        claude_key = f"claude:{cc_session_id}"
+        manager = await get_connection_manager()
+        cc_conn = next(
+            (c for c in manager._connections.values() if isinstance(c, ClaudeCodeConnection) and c.is_connected()),
+            None,
+        )
+        if not cc_conn:
+            return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+
+        history_msgs = await cc_conn.get_session_history(claude_key, limit=max(limit * 3, 90))
+        messages = _group_cc_history(history_msgs, raw)
+    else:
+        # OpenClaw agent
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        if not conn:
+            return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+
+        fetch_limit = max(limit * 3, 90)
+        raw_entries = await conn.get_session_history_raw(session_key, limit=fetch_limit)
+        messages = [
+            parsed
+            for idx, entry in enumerate(raw_entries)
+            if (parsed := _build_history_message(idx, entry, raw)) is not None
+        ]
 
     if before is not None:
         messages = [m for m in messages if m["timestamp"] < before]
@@ -290,45 +475,77 @@ async def send_chat_message(session_key: str, body: SendMessageBody):
     message = message.replace("\x00", "")
 
     agent_id = _get_agent_id(session_key)
+    source = await _get_agent_source(agent_id, session_key)
 
-    # Build context envelope for agent awareness
-    try:
-        from app.db.database import get_db
-        from app.services.context_envelope import build_crewhub_context, format_context_block
+    if source == "claude_code":
+        if session_key.startswith("claude:"):
+            # Discovered session — resolve project_path from watcher
+            session_id = session_key[7:]
+            project_path = await _get_discovered_project_path(session_id)
+            if not project_path:
+                return {
+                    "response": None,
+                    "tokens": 0,
+                    "success": False,
+                    "error": "Cannot resolve project path for discovered session",
+                }
+            try:
+                from app.services.cc_chat import send_cc_discovered_blocking
 
-        # Determine room_id: prefer request body, fall back to agent default
-        ctx_room_id = body.room_id
-        if not ctx_room_id:
-            async with get_db() as db:
-                cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
-                row = await cursor.fetchone()
-                if row:
-                    ctx_room_id = row["default_room_id"]
+                response_text = await send_cc_discovered_blocking(session_id, project_path, message)
+            except Exception as e:
+                logger.error(f"CC discovered send error: {e}")
+                return {"response": None, "tokens": 0, "success": False, "error": str(e)}
+        else:
+            # Fixed CC agent: prepend context then use cc_chat module
+            message = await _prepend_context_if_available(session_key, agent_id, body, message)
+            try:
+                from app.services.cc_chat import send_cc_blocking
 
-        if ctx_room_id:
-            envelope = await build_crewhub_context(room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key)
-            if envelope:
-                message = format_context_block(envelope) + CREWHUB_MSG_SEP + message
-    except Exception as e:
-        logger.warning(f"Failed to build context envelope for chat: {e}")
+                response_text = await send_cc_blocking(agent_id, message)
+            except Exception as e:
+                logger.error(f"CC send_chat error: {e}")
+                return {"response": None, "tokens": 0, "success": False, "error": str(e)}
+    else:
+        # OpenClaw agent
+        # Build context envelope for agent awareness
+        try:
+            from app.db.database import get_db
+            from app.services.context_envelope import build_crewhub_context, format_context_block
 
-    manager = await get_connection_manager()
-    conn = manager.get_default_openclaw()
-    if not conn:
-        return {"response": None, "tokens": 0, "success": False, "error": "No OpenClaw connection"}
+            ctx_room_id = body.room_id
+            if not ctx_room_id:
+                async with get_db() as db:
+                    cursor = await db.execute("SELECT default_room_id FROM agents WHERE id = ?", (agent_id,))
+                    row = await cursor.fetchone()
+                    if row:
+                        ctx_room_id = row["default_room_id"]
 
-    try:
-        response_text = await conn.send_chat(
-            message=message,
-            agent_id=agent_id,
-            timeout=120.0,
-        )
-    except Exception as e:
-        logger.error(f"send_chat error: {e}")
-        return {"response": None, "tokens": 0, "success": False, "error": str(e)}
+            if ctx_room_id:
+                envelope = await build_crewhub_context(
+                    room_id=ctx_room_id, channel="crewhub-ui", session_key=session_key
+                )
+                if envelope:
+                    message = format_context_block(envelope) + CREWHUB_MSG_SEP + message
+        except Exception as e:
+            logger.warning(f"Failed to build context envelope for chat: {e}")
+
+        manager = await get_connection_manager()
+        conn = manager.get_default_openclaw()
+        if not conn:
+            return {"response": None, "tokens": 0, "success": False, "error": "No OpenClaw connection"}
+
+        try:
+            response_text = await conn.send_chat(
+                message=message,
+                agent_id=agent_id,
+                timeout=120.0,
+            )
+        except Exception as e:
+            logger.error(f"send_chat error: {e}")
+            return {"response": None, "tokens": 0, "success": False, "error": str(e)}
 
     if response_text:
-        # Broadcast session-updated so other open chat windows can refresh
         try:
             from app.routes.sse import broadcast
 
@@ -389,6 +606,75 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
     message = message.replace("\x00", "")
 
     agent_id = _get_agent_id(session_key)
+    source = await _get_agent_source(agent_id, session_key)
+
+    if source == "claude_code":
+        if session_key.startswith("claude:"):
+            # Discovered session — stream via cc_chat discovered helper
+            disc_session_id = session_key[7:]
+            disc_project_path = await _get_discovered_project_path(disc_session_id)
+            if not disc_project_path:
+                raise HTTPException(status_code=400, detail="Cannot resolve project path for discovered session")
+
+            from app.services.cc_chat import stream_cc_discovered_response
+
+            async def generate_cc_discovered():
+                yield "event: start\ndata: {}\n\n"
+                try:
+                    async for chunk in stream_cc_discovered_response(disc_session_id, disc_project_path, message):
+                        yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
+                    yield "event: done\ndata: {}\n\n"
+                    try:
+                        from app.routes.sse import broadcast
+
+                        await broadcast("session-updated", {"key": session_key})
+                    except Exception as e:
+                        logger.warning(f"Failed to broadcast session-updated after CC discovered stream: {e}")
+                except Exception as e:
+                    logger.error(f"CC discovered streaming error: {e}")
+                    yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+            return StreamingResponse(
+                generate_cc_discovered(),
+                media_type="text/event-stream",
+                headers={
+                    "Cache-Control": "no-cache",
+                    "X-Accel-Buffering": "no",
+                    "Connection": "keep-alive",
+                },
+            )
+
+        # Fixed CC agent: prepend context then stream via cc_chat module
+        message = await _prepend_context_if_available(session_key, agent_id, body, message)
+        from app.services.cc_chat import stream_cc_response
+
+        async def generate_cc():
+            yield "event: start\ndata: {}\n\n"
+            try:
+                async for chunk in stream_cc_response(agent_id, message):
+                    yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
+                yield "event: done\ndata: {}\n\n"
+                try:
+                    from app.routes.sse import broadcast
+
+                    await broadcast("session-updated", {"key": session_key})
+                except Exception as e:
+                    logger.warning(f"Failed to broadcast session-updated after CC stream: {e}")
+            except Exception as e:
+                logger.error(f"CC streaming error: {e}")
+                yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+
+        return StreamingResponse(
+            generate_cc(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "Connection": "keep-alive",
+            },
+        )
+
+    # OpenClaw agent
     message = await _prepend_context_if_available(session_key, agent_id, body, message)
 
     manager = await get_connection_manager()
@@ -402,8 +688,6 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
             async for chunk in conn.send_chat_streaming(message, agent_id=agent_id):
                 yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
             yield "event: done\ndata: {}\n\n"
-            # Broadcast session-updated so other open chat windows can refresh.
-            # Direct await after yield is valid in an async generator.
             try:
                 from app.routes.sse import broadcast
 
@@ -430,11 +714,28 @@ async def get_chat_info(session_key: str):
     """Check if a session supports chat and return metadata."""
     agent_id = _get_agent_id(session_key)
     can_chat = bool(FIXED_AGENT_PATTERN.match(session_key))
-    agent_name = AGENT_DISPLAY_NAMES.get(agent_id, agent_id.capitalize())
+
+    # For CC agents, look up name from DB instead of hardcoded map
+    source = await _get_agent_source(agent_id, session_key)
+    if session_key.startswith("claude:"):
+        agent_name = f"Claude Session {agent_id[:8]}"
+    elif source == "claude_code":
+        try:
+            from app.db.database import get_db
+
+            async with get_db() as db:
+                async with db.execute("SELECT name FROM agents WHERE id = ?", (agent_id,)) as cursor:
+                    row = await cursor.fetchone()
+                    agent_name = row["name"] if row else agent_id.capitalize()
+        except Exception:
+            agent_name = agent_id.capitalize()
+    else:
+        agent_name = AGENT_DISPLAY_NAMES.get(agent_id, agent_id.capitalize())
 
     return {
         "canChat": can_chat,
         "agentId": agent_id,
         "agentName": agent_name,
         "sessionKey": session_key,
+        "source": source,
     }

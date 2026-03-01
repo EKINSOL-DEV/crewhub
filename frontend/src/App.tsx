@@ -182,8 +182,8 @@ function NoConnectionView({
                 <div className="text-5xl mb-4">📡</div>
                 <h2 className={CLS_TEXT_XL_FONT_SEMIBOLD_MB_2}>No Active Sessions</h2>
                 <p className={CLS_TEXT_MUTED_FOREGROUND_MB_6}>
-                  CrewHub is connected but no agent sessions are running. Configure a gateway
-                  connection or start an agent to see the 3D world.
+                  No agent sessions running yet. Start a Claude Code session in your terminal (
+                  <code>claude</code>) or connect an OpenClaw gateway to see agents appear.
                 </p>
               </>
             )
@@ -223,6 +223,13 @@ function AppContent() {
     connectionMethod,
     refresh,
   } = useSessionsStream(true)
+  // Grace period: suppress "No Connection" for 2s after mount to let SSE connect
+  const [initialGrace, setInitialGrace] = useState(true)
+  useEffect(() => {
+    const timer = setTimeout(() => setInitialGrace(false), 2000)
+    return () => clearTimeout(timer)
+  }, [])
+
   const { isDemoMode, demoSessions } = useDemoMode()
   const { windows } = useChatContext()
   const { rooms, getRoomForSession } = useRoomsContext()
@@ -477,11 +484,11 @@ function AppContent() {
         <ErrorBoundary>
           <div className="flex-1 overflow-hidden flex flex-col">
             {activeTab === 'active' &&
-              (sessions.length === 0 ? (
+              (!connected ? (
                 <NoConnectionView
                   connected={connected}
-                  loading={loading}
-                  error={error}
+                  loading={loading || initialGrace}
+                  error={initialGrace ? null : error}
                   onRetry={refresh}
                   onOpenConnections={openConnectionsSettings}
                 />
@@ -504,8 +511,8 @@ function AppContent() {
               (sessions.length === 0 ? (
                 <NoConnectionView
                   connected={connected}
-                  loading={loading}
-                  error={error}
+                  loading={loading || initialGrace}
+                  error={initialGrace ? null : error}
                   onRetry={refresh}
                   onOpenConnections={openConnectionsSettings}
                 />

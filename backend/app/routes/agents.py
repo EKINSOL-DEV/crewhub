@@ -36,6 +36,9 @@ class AgentUpdate(BaseModel):
     is_pinned: Optional[bool] = None
     auto_spawn: Optional[bool] = None
     bio: Optional[str] = None
+    source: Optional[str] = None
+    project_path: Optional[str] = None
+    permission_mode: Optional[str] = None
 
 
 class AgentCreate(BaseModel):
@@ -48,6 +51,10 @@ class AgentCreate(BaseModel):
     default_room_id: Optional[str] = "headquarters"
     agent_session_key: Optional[str] = None
     bio: Optional[str] = None
+    source: Optional[str] = "openclaw"
+    project_path: Optional[str] = None
+    permission_mode: Optional[str] = "default"
+    initial_session_id: Optional[str] = None
 
 
 # ── Routes ────────────────────────────────────────────────────────────
@@ -73,7 +80,7 @@ async def list_agents():
 async def create_agent(payload: AgentCreate):
     """Create a new agent in the local registry."""
     agent_id = payload.id.strip().lower().replace(" ", "-")
-    return await agent_svc.create_agent(
+    result = await agent_svc.create_agent(
         agent_id=agent_id,
         name=payload.name,
         icon=payload.icon or "🤖",
@@ -81,7 +88,21 @@ async def create_agent(payload: AgentCreate):
         default_room_id=payload.default_room_id or "headquarters",
         agent_session_key=payload.agent_session_key,
         bio=payload.bio,
+        source=payload.source or "openclaw",
+        project_path=payload.project_path,
+        permission_mode=payload.permission_mode or "default",
     )
+
+    # If this is a CC agent with an initial session, seed the session tracker
+    if payload.source == "claude_code" and payload.initial_session_id:
+        try:
+            from app.services.cc_chat import _agent_sessions
+
+            _agent_sessions[agent_id] = payload.initial_session_id
+        except Exception as e:
+            logger.warning(f"Failed to seed CC session for {agent_id}: {e}")
+
+    return result
 
 
 @router.get("/{agent_id}")

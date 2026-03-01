@@ -532,14 +532,11 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
   // ── Render ───────────────────────────────────────────────────
 
   const overlay = (
-    <button
-      type="button"
+    <div
+      role="dialog"
       className="fpm-overlay"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') onClose()
       }}
     >
       <PropMakerToolbar
@@ -640,7 +637,7 @@ export function FullscreenPropMaker({ onClose, onPropGenerated }: FullscreenProp
       </div>
 
       <style>{fullscreenPropMakerStyles}</style>
-    </button>
+    </div>
   )
 
   return createPortal(overlay, document.body)

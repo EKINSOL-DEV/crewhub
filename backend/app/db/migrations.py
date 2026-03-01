@@ -615,6 +615,80 @@ async def run_migrations(db) -> None:
         ON placed_props(room_id)
     """)
 
+    # ========================================
+    # v18: Claude Processes
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS claude_processes (
+            id TEXT PRIMARY KEY,
+            session_id TEXT,
+            project_path TEXT,
+            model TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            started_at REAL,
+            finished_at REAL,
+            message TEXT,
+            output TEXT,
+            metadata TEXT
+        )
+    """)
+
+    await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_claude_processes_status
+        ON claude_processes(status)
+    """)
+
+    # ========================================
+    # v19: Project Agents (agent templates per room)
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS project_agents (
+            id TEXT PRIMARY KEY,
+            room_id TEXT NOT NULL,
+            name TEXT NOT NULL,
+            cwd TEXT NOT NULL,
+            startup_prompt TEXT NOT NULL,
+            created_at INTEGER NOT NULL,
+            FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+        )
+    """)
+
+    await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_project_agents_room
+        ON project_agents(room_id)
+    """)
+
+    # ========================================
+    # v20: Claude Code Fixed Agents
+    # ========================================
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN source TEXT NOT NULL DEFAULT 'openclaw'")
+    except Exception:
+        pass  # Column already exists
+
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN project_path TEXT")
+    except Exception:
+        pass  # Column already exists
+
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN permission_mode TEXT DEFAULT 'default'")
+    except Exception:
+        pass  # Column already exists
+
+    await db.execute("""
+        CREATE INDEX IF NOT EXISTS idx_agents_source
+        ON agents(source)
+    """)
+
+    # ========================================
+    # v21: Agent↔Session linking
+    # ========================================
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN current_session_id TEXT")
+    except Exception:
+        pass  # Column already exists
+
     # Advance schema version
     await db.execute(
         """

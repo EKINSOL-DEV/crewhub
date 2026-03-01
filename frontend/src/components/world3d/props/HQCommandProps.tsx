@@ -1,63 +1,6 @@
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
 import { Screen } from './components/Screen'
 import { DataStream } from './components/DataStream'
 import { LED as Led } from './components/LED'
-
-/**
- * Holographic table effect — transparent cylinder with orbiting data particles.
- * Placed above the central meeting table in HQ.
- */
-export function HologramTable({ position = [0, 0, 0] as [number, number, number] }) {
-  const ringRef = useRef<THREE.Mesh>(null)
-
-  useFrame((state) => {
-    if (ringRef.current) {
-      ringRef.current.rotation.y = state.clock.elapsedTime * 0.5
-    }
-  })
-
-  return (
-    <group position={position}>
-      {/* Transparent hologram cylinder */}
-      <mesh position={[0, 0.8, 0]}>
-        <cylinderGeometry args={[0.8, 0.8, 1.2, 32, 1, true]} />
-        <meshStandardMaterial
-          color="#00aaff"
-          emissive="#00aaff"
-          emissiveIntensity={0.15}
-          transparent
-          opacity={0.08}
-          side={THREE.DoubleSide}
-          depthWrite={false}
-        />
-      </mesh>
-
-      {/* Rotating ring at base */}
-      <mesh ref={ringRef} position={[0, 0.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.85, 0.02, 8, 32]} />
-        <meshStandardMaterial
-          color="#00ddff"
-          emissive="#00ddff"
-          emissiveIntensity={1.5}
-          toneMapped={false}
-        />
-      </mesh>
-
-      {/* Data particles orbiting */}
-      <DataStream
-        position={[0, 0.3, 0]}
-        count={12}
-        radius={0.7}
-        height={1}
-        color="#00ccff"
-        speed={0.8}
-        particleSize={0.025}
-      />
-    </group>
-  )
-}
 
 /**
  * Wall-mounted monitor bank — 3 screens side by side.
@@ -127,9 +70,6 @@ export function HQCommandOverlay({ size = 16 }: Readonly<{ size?: number }>) {
 
   return (
     <group>
-      {/* Hologram above central meeting table area */}
-      <HologramTable position={[0, 1.2 * scale, 0]} />
-
       {/* Monitor bank on back wall */}
       <MonitorBank position={[0, 2.2 * scale, (size / 2 - 0.5) * 1]} rotation={[0, Math.PI, 0]} />
 

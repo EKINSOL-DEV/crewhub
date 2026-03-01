@@ -208,7 +208,7 @@ export function ThinkingBlock({ content, zenMode }: ThinkingBlockProps) {
   }
 
   // Inline-styles version (for float/mobile variants)
-  const displayText = isExpanded ? content : content.slice(0, 200)
+  const displayText = isExpanded ? content : content.slice(0, 500)
   return (
     <div
       style={{
@@ -266,11 +266,13 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
   const isSuccess = tool.status === 'done' || tool.status === 'called'
   const hasDetails = showDetails && (tool.input || tool.result)
 
+  const displayName = tool.label ? `${tool.name}(${tool.label})` : tool.name
+
   if (zenMode) {
     return (
       <div className="zen-tool-call">
         <span className="zen-tool-icon">🔧</span>
-        <span className="zen-tool-name">{tool.name}</span>
+        <span className="zen-tool-name">{displayName}</span>
         <span
           className={`zen-tool-status ${isSuccess ? 'zen-tool-status-success' : 'zen-tool-status-error'}`}
         >
@@ -316,7 +318,7 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
           aria-expanded={expanded}
           onClick={() => setExpanded(!expanded)}
         >
-          🔧 {tool.name} {isSuccess ? '✓' : '✗'}
+          🔧 {displayName} {isSuccess ? '✓' : '✗'}
           <span style={{ fontSize: 10, marginLeft: 'auto' }}>{expanded ? '▼' : '▶'}</span>
         </button>
       ) : (
@@ -329,7 +331,7 @@ export function ToolCallBlock({ tool, showDetails, zenMode }: ToolCallBlockProps
             color: '#b45309',
           }}
         >
-          🔧 {tool.name} {isSuccess ? '✓' : '✗'}
+          🔧 {displayName} {isSuccess ? '✓' : '✗'}
         </div>
       )}
       {expanded && tool.input && (
@@ -507,7 +509,7 @@ function ZenMessageContent({
       {showThinking && msg.thinking && msg.thinking.length > 0 && (
         <div className="zen-thinking-blocks">
           {msg.thinking.map((thought, i) => (
-            <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} zenMode />
+            <ThinkingBlock key={i} content={thought} zenMode />
           ))}
         </div>
       )}
@@ -613,7 +615,7 @@ function InlineMessageContent({
       {showThinking && msg.thinking && msg.thinking.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '100%' }}>
           {msg.thinking.map((thought, i) => (
-            <ThinkingBlock key={`thought-${i}-${thought}`} content={thought} />
+            <ThinkingBlock key={i} content={thought} />
           ))}
         </div>
       )}

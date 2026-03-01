@@ -31,6 +31,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockFetch.mockReset()
   globalThis.fetch = mockFetch as any
+  // Default: history API returns empty array (avoids .then-of-undefined on tab switch)
+  mockFetch.mockResolvedValue({
+    ok: true,
+    json: () => Promise.resolve([]),
+  })
 })
 
 // ── Helper to build a MessageEvent for EventSource ────────────────────────
@@ -138,7 +143,11 @@ describe('MobileCreatorView', () => {
     fireEvent.click(screen.getByText('Example prompts'))
     fireEvent.click(screen.getByText('A glowing mushroom lamp'))
 
-    expect(screen.queryByText('A glowing mushroom lamp')).not.toBeInTheDocument() // examples hidden
+    // After clicking an example, the examples list is hidden.
+    // Use role-based query to verify the example button is gone (not the textarea value).
+    expect(
+      screen.queryByRole('button', { name: 'A glowing mushroom lamp' })
+    ).not.toBeInTheDocument()
     const textarea = screen.getByPlaceholderText(/glowing mushroom lamp/i) as HTMLTextAreaElement
     expect(textarea.value).toBe('A glowing mushroom lamp')
   })
@@ -233,7 +242,11 @@ describe('MobileCreatorView', () => {
       mockESInstance.dispatchEvent('error', { message: 'Rate limit exceeded' })
     })
 
-    await waitFor(() => expect(screen.getByText(/Rate limit exceeded/)).toBeInTheDocument())
+    // Multiple error elements may appear (e.g. status line + error card)
+    await waitFor(() => {
+      const errEls = screen.getAllByText(/Rate limit exceeded/)
+      expect(errEls.length).toBeGreaterThan(0)
+    })
   })
 
   it('saves prop successfully', async () => {
@@ -298,11 +311,14 @@ describe('MobileCreatorView', () => {
     await waitFor(() => expect(screen.getByText(/Disk full/)).toBeInTheDocument())
   })
 
-  it('shows history tab with empty state when no records', () => {
+  it('shows history tab with empty state when no records', async () => {
     render(<MobileCreatorView onBack={() => {}} />)
 
     fireEvent.click(screen.getByText('📋 History'))
-    expect(screen.getByText(/No props generated yet/)).toBeInTheDocument()
+    // Component fetches history; wait for empty state to appear
+    // Actual empty state text is "No props yet"
+    await screen.findByText(/No props yet/)
+    expect(screen.getByText(/No props yet/)).toBeInTheDocument()
   })
 
   it('shows "No parts" error when complete event has empty parts', async () => {

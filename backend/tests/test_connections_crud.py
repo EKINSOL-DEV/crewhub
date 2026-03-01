@@ -1,5 +1,10 @@
 """Tests for connections CRUD endpoints."""
 
+import os
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
 
@@ -200,3 +205,65 @@ async def test_connection_config_is_dict(client):
     response = await client.get("/api/connections/config-test")
     data = response.json()
     assert isinstance(data["config"], dict)
+
+
+# ── Claude Code detect endpoint tests ──────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_detect_empty_dir_not_found(client, tmp_path):
+    """An empty ~/.claude dir (no CLI, no sessions) should return found=False."""
+    empty_claude_dir = tmp_path / ".claude"
+    empty_claude_dir.mkdir()
+    (empty_claude_dir / "projects").mkdir()
+
+    with patch("shutil.which", return_value=None), \
+         patch("pathlib.Path.home", return_value=tmp_path):
+        response = await client.get("/api/connections/claude-code/detect")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["found"] is False
+    assert data["status"] == "dir_only"
+    assert data["cli_available"] is False
+    assert data["session_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_detect_cli_found(client, tmp_path):
+    """CLI found but no sessions should return found=True, status=cli_only."""
+    empty_claude_dir = tmp_path / ".claude"
+    empty_claude_dir.mkdir()
+
+    with patch("shutil.which", return_value="/usr/local/bin/claude"), \
+         patch("pathlib.Path.home", return_value=tmp_path):
+        response = await client.get("/api/connections/claude-code/detect")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["found"] is True
+    assert data["status"] == "cli_only"
+    assert data["cli_available"] is True
+    assert data["cli_path"] == "/usr/local/bin/claude"
+
+
+@pytest.mark.asyncio
+async def test_detect_permission_error_graceful(client, tmp_path):
+    """PermissionError on projects dir should not cause a 500."""
+    claude_dir = tmp_path / ".claude"
+    claude_dir.mkdir()
+    projects_dir = claude_dir / "projects"
+    projects_dir.mkdir()
+
+    def _raise_perm(*args, **kwargs):
+        raise PermissionError("forbidden")
+
+    with patch("shutil.which", return_value=None), \
+         patch("pathlib.Path.home", return_value=tmp_path), \
+         patch("pathlib.Path.iterdir", side_effect=_raise_perm):
+        response = await client.get("/api/connections/claude-code/detect")
+
+    assert response.status_code == 200
+    data = response.json()
+    # Should not crash; session_count stays 0
+    assert data["session_count"] == 0

@@ -6,7 +6,9 @@ Gateway sync helpers also live here since they feed the DB.
 """
 
 import logging
+import os
 import time
+from pathlib import Path
 from typing import Optional
 
 from fastapi import HTTPException
@@ -14,6 +16,19 @@ from fastapi import HTTPException
 from app.db.database import get_db
 
 MSG_AGENT_NOT_FOUND = "Agent not found"
+
+# Known valid permission modes (case-insensitive)
+_VALID_PERMISSION_MODES = {
+    "full-auto",
+    "bypass",
+    "bypasspermissions",
+    "accept-edits",
+    "acceptedits",
+    "dont-ask",
+    "dontask",
+    "plan",
+    "default",
+}
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +91,7 @@ _AGENT_DEFAULTS = {
 
 def _build_agent_dict(row, display_name: Optional[str], is_stale: bool) -> dict:
     """Convert a DB row + extras into the agent response dict."""
+    keys = row.keys()
     return {
         "id": row["id"],
         "name": row["name"],
@@ -89,11 +105,42 @@ def _build_agent_dict(row, display_name: Optional[str], is_stale: bool) -> dict:
         "sort_order": row["sort_order"],
         "is_pinned": bool(row["is_pinned"]),
         "auto_spawn": bool(row["auto_spawn"]),
-        "bio": row["bio"] if "bio" in row.keys() else None,
+        "bio": row["bio"] if "bio" in keys else None,
+        "source": row["source"] if "source" in keys else "openclaw",
+        "project_path": row["project_path"] if "project_path" in keys else None,
+        "permission_mode": row["permission_mode"] if "permission_mode" in keys else "default",
+        "current_session_id": row["current_session_id"] if "current_session_id" in keys else None,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "is_stale": is_stale,
     }
+
+
+def _validate_project_path(project_path: str) -> str:
+    """Validate and resolve a project_path. Returns resolved absolute path.
+
+    Raises HTTPException 400 if the path does not point to an existing directory.
+    """
+    resolved = Path(project_path).expanduser().resolve()
+    if not resolved.is_dir():
+        raise HTTPException(
+            status_code=400,
+            detail=f"project_path is not a valid directory: {project_path}",
+        )
+    return str(resolved)
+
+
+def _validate_permission_mode(mode: str) -> str:
+    """Validate permission_mode against known values (case-insensitive).
+
+    Raises HTTPException 400 for unknown values. Returns the original string.
+    """
+    if mode.lower() not in _VALID_PERMISSION_MODES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown permission_mode: '{mode}'. Valid modes: {', '.join(sorted(_VALID_PERMISSION_MODES))}",
+        )
+    return mode
 
 
 # ── Gateway sync ──────────────────────────────────────────────────────────────
@@ -197,7 +244,16 @@ async def list_agents(gateway_ids: set[str], gateway_reachable: bool) -> list[di
     for row in rows:
         session_key = row["agent_session_key"]
         agent_id = row["id"]
-        is_stale = gateway_reachable and (agent_id not in gateway_ids)
+        source = row["source"] if "source" in row.keys() else "openclaw"
+
+        if source == "claude_code":
+            # CC agents are stale when their project_path doesn't exist on disk
+            project_path = row["project_path"] if "project_path" in row.keys() else None
+            is_stale = bool(project_path and not os.path.isdir(project_path))
+        else:
+            # OpenClaw agents use gateway reachability
+            is_stale = gateway_reachable and (agent_id not in gateway_ids)
+
         display_name = display_names.get(session_key) if session_key else None
         agents.append(_build_agent_dict(row, display_name, is_stale))
 
@@ -224,7 +280,12 @@ async def get_agent(agent_id: str, gateway_ids: set[str], gateway_reachable: boo
                 if dn_row:
                     display_name = dn_row["display_name"]
 
-    is_stale = gateway_reachable and (row["id"] not in gateway_ids)
+    source = row["source"] if "source" in row.keys() else "openclaw"
+    if source == "claude_code":
+        project_path = row["project_path"] if "project_path" in row.keys() else None
+        is_stale = bool(project_path and not os.path.isdir(project_path))
+    else:
+        is_stale = gateway_reachable and (row["id"] not in gateway_ids)
     return _build_agent_dict(row, display_name, is_stale)
 
 
@@ -236,10 +297,24 @@ async def create_agent(
     default_room_id: str = "headquarters",
     agent_session_key: Optional[str] = None,
     bio: Optional[str] = None,
+    source: str = "openclaw",
+    project_path: Optional[str] = None,
+    permission_mode: str = "default",
 ) -> dict:
     """Insert a new agent. Raises 409 if agent_id already exists."""
+    if project_path:
+        project_path = _validate_project_path(project_path)
+    if permission_mode:
+        _validate_permission_mode(permission_mode)
+
     now = int(time.time() * 1000)
-    session_key = agent_session_key or f"agent:{agent_id}:main"
+
+    # CC agents get a cc:<id> session key; OpenClaw agents get agent:<id>:main
+    if source == "claude_code":
+        session_key = agent_session_key or f"cc:{agent_id}"
+    else:
+        session_key = agent_session_key or f"agent:{agent_id}:main"
+
     resolved_bio = bio or f"{name} is a hardworking crew member."
 
     async with get_db() as db:
@@ -252,8 +327,12 @@ async def create_agent(
             INSERT INTO agents
                 (id, name, icon, color, agent_session_key,
                  default_model, default_room_id, sort_order,
-                 is_pinned, auto_spawn, bio, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, NULL, ?, 99, FALSE, TRUE, ?, ?, ?)
+                 is_pinned, auto_spawn, bio,
+                 source, project_path, permission_mode,
+                 created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, NULL, ?, 99, FALSE, TRUE, ?,
+                    ?, ?, ?,
+                    ?, ?)
             """,
             (
                 agent_id,
@@ -263,6 +342,9 @@ async def create_agent(
                 session_key,
                 default_room_id,
                 resolved_bio,
+                source,
+                project_path,
+                permission_mode,
                 now,
                 now,
             ),
@@ -276,6 +358,11 @@ async def update_agent(agent_id: str, updates: dict) -> dict:
     """Apply a partial update to an agent. Raises 400 if empty, 404 if not found."""
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
+
+    if "project_path" in updates and updates["project_path"]:
+        updates["project_path"] = _validate_project_path(updates["project_path"])
+    if "permission_mode" in updates and updates["permission_mode"]:
+        _validate_permission_mode(updates["permission_mode"])
 
     now = int(time.time() * 1000)
     updates["updated_at"] = now

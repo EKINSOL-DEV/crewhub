@@ -99,3 +99,35 @@ async def test_get_recent_activity_handles_content_list_and_filters(monkeypatch)
     out = await routes._get_agent_recent_activity("dev")
     assert "user: hello" in out
     assert "assistant: world" in out
+
+
+@pytest.mark.asyncio
+async def test_create_agent_rejects_nonexistent_path(client):
+    """POST /api/agents with a non-existent project_path returns 400."""
+    r = await client.post(
+        "/api/agents",
+        json={
+            "id": "bad-path",
+            "name": "Bad Path",
+            "source": "claude_code",
+            "project_path": "/tmp/nonexistent_crewhub_test_dir_xyz",
+        },
+    )
+    assert r.status_code == 400
+    assert "project_path" in r.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_create_agent_rejects_invalid_permission(client):
+    """POST /api/agents with an unknown permission_mode returns 400."""
+    r = await client.post(
+        "/api/agents",
+        json={
+            "id": "bad-perm",
+            "name": "Bad Perm",
+            "source": "claude_code",
+            "permission_mode": "yolo",
+        },
+    )
+    assert r.status_code == 400
+    assert "permission_mode" in r.json()["detail"]

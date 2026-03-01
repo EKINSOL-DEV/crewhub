@@ -183,6 +183,9 @@ export function PropControls({
       e.preventDefault()
       onGenerate()
     }
+    // Prevent keys from bubbling to the overlay <button>, which would
+    // trigger its native click (space) or onKeyDown handlers.
+    e.stopPropagation()
   }
 
   let generateBtnLabel: string

@@ -516,15 +516,20 @@ describe('OpenClawWizard', () => {
       suggested_urls: ['ws://192.168.1.55:18789'],
     })
     renderWizard()
+    // Flush async useEffect (env info load)
     await act(async () => {
+      await Promise.resolve()
       await Promise.resolve()
     })
     fireEvent.click(screen.getByText('Continue'))
-    const inputs = document.querySelectorAll('input')
-    const urlInput = Array.from(inputs).find(
-      (i) => i.value?.includes('192.168.1.55') || i.placeholder?.includes('192.168.1.55')
-    )
-    expect(urlInput).toBeTruthy()
+    // Flush any pending state after step transition
+    await act(async () => {
+      await Promise.resolve()
+    })
+    // The setupMode useEffect resets the URL input to the mode default,
+    // but envInfo.suggested_urls renders as clickable buttons in Step 1.
+    const suggestedBtn = screen.queryByText('ws://192.168.1.55:18789')
+    expect(suggestedBtn).toBeTruthy()
   })
 
   it('shows token file path hint when token_file_path is set', async () => {

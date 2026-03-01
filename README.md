@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://crewhub.dev"><img src="https://img.shields.io/badge/Website-crewhub.dev-FF6B35?style=flat&logo=safari&logoColor=white" alt="Website"></a>
   <a href="https://demo.crewhub.dev"><img src="https://img.shields.io/badge/Live%20Demo-demo.crewhub.dev-14B8A6?style=flat&logo=rocket&logoColor=white" alt="Demo"></a>
-  <img src="https://img.shields.io/badge/version-v0.18.5-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-v0.19.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/license-AGPL--3.0-green" alt="License">
   <a href="https://discord.gg/Bfupkmvp"><img src="https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
   <img src="https://img.shields.io/badge/docker-ready-2496ED?logo=docker&logoColor=white" alt="Docker">
@@ -32,6 +32,15 @@ CrewHub is an **open-source monitoring dashboard** for AI coding agents. It conn
 But CrewHub isn't just another dashboard. Your agents come alive in a **fully interactive 3D world** where they walk between rooms, gather around meeting tables, and collaborate on structured discussions that produce real results.
 
 > 🎮 **[Try the Live Demo →](https://demo.crewhub.dev)**
+
+---
+
+## 🆕 What's New in v0.19.0
+
+- **Native Claude Code support** — Connect CrewHub directly to Claude Code sessions without OpenClaw. Watches `~/.claude/projects/*/` JSONL files in real-time.
+- **New onboarding wizard** — Choose your connection mode: OpenClaw, Claude Code, or both.
+- **Source badges** — Color-coded indicators on session cards and 3D bots showing which agent type is running.
+- **Auto-detection** — CrewHub detects your Claude installation automatically at startup.
 
 ---
 
@@ -138,13 +147,35 @@ Works with:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Claude Code (Recommended)
 
-- [Docker](https://docker.com) and Docker Compose (recommended)
-- OR Node.js 18+ and Python 3.11+
-- OpenClaw running on the same machine or accessible over the network
+The fastest way to get started. Requires Python 3.11+, Node.js 18+, and the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code).
 
-### Option 1: Docker (Recommended)
+#### Mac / Linux
+
+```bash
+git clone https://github.com/EKINSOL-DEV/crewhub.git
+cd crewhub
+./scripts/setup.sh   # One-time: checks prereqs, creates venv, installs deps
+./scripts/start.sh   # Start CrewHub
+```
+
+#### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/EKINSOL-DEV/crewhub.git
+cd crewhub
+.\scripts\setup.ps1   # One-time: checks prereqs, creates venv, installs deps
+.\scripts\start.ps1   # Start CrewHub
+```
+
+Open **http://localhost:5181** — the onboarding wizard will detect your Claude Code installation automatically.
+
+> **Why local?** Full Claude Code support (chat, prop generation, interactive sessions) requires the `claude` CLI on your host machine. Docker mode only supports read-only session monitoring.
+
+### Option 2: Docker (OpenClaw / Monitoring Only)
+
+Best for OpenClaw users or read-only Claude Code session monitoring.
 
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
@@ -154,20 +185,25 @@ make prod-up
 
 The dashboard will be available at **http://localhost:8446**. The onboarding wizard will guide you through connecting to your gateway.
 
-### Option 2: Local Development
+> **Note:** Docker mode cannot run the Claude CLI, so interactive features (sending messages, generating props) are not available. For full Claude Code support, use Option 1.
+
+### Option 3: Local Development (Make)
+
+If you prefer `make` and have already set up your environment manually:
 
 ```bash
 git clone https://github.com/EKINSOL-DEV/crewhub.git
 cd crewhub
-make dev
+make setup   # Same as ./scripts/setup.sh
+make dev     # Start both backend + frontend
 ```
 
 Frontend: http://localhost:5181
 Backend API: http://localhost:8091
 
-### Option 3: Demo Mode (No OpenClaw Needed)
+### Option 4: Demo Mode (No Setup Needed)
 
-Want to explore CrewHub without setting up OpenClaw? Run in demo mode with simulated agents:
+Want to explore CrewHub without any setup? Run in demo mode with simulated agents:
 
 ```bash
 docker compose -f docker-compose.demo.yml up
@@ -176,6 +212,34 @@ docker compose -f docker-compose.demo.yml up
 Open **http://localhost:3000** — you'll see a fully interactive 3D world with mock agents and activity.
 
 > 💡 Or try it online at **[demo.crewhub.dev](https://demo.crewhub.dev)**
+
+### Run as a Background Service (Optional)
+
+Install CrewHub as a service that starts automatically on login, survives terminal closes, and auto-restarts on crashes:
+
+#### Mac / Linux
+
+```bash
+./scripts/service.sh install    # Install and start
+./scripts/service.sh status     # Check status
+./scripts/service.sh update     # Pull updates and restart
+./scripts/service.sh uninstall  # Remove service
+./scripts/service.sh logs       # Tail the log file
+```
+
+Uses launchd (macOS) or systemd (Linux) for auto-start on login.
+
+#### Windows (PowerShell)
+
+```powershell
+.\scripts\service.ps1 install
+.\scripts\service.ps1 status
+.\scripts\service.ps1 update
+.\scripts\service.ps1 uninstall
+.\scripts\service.ps1 logs
+```
+
+Backend: http://localhost:8090 | Frontend: http://localhost:8446
 
 ---
 
@@ -328,6 +392,33 @@ This is an **open research project** by [EKINSOL BV](https://ekinsol.be). We're 
 AGPL-3.0 — see [LICENSE](LICENSE)
 
 CrewHub is licensed under **AGPL-3.0**, which means any modified version that's served over a network must also be open-sourced under the same license.
+
+### Using with Claude Code (without OpenClaw)
+
+CrewHub works as a full-featured dashboard for Claude Code sessions — no OpenClaw gateway required.
+
+**What you get:**
+- **Live session monitoring** — see all active Claude Code sessions in real-time
+- **Interactive chat** — send messages to Claude Code sessions directly from CrewHub
+- **Prop generation** — generate 3D props for your agents using Claude Code
+- **3D world view** — watch your Claude Code agents in the interactive 3D office
+
+**Setup (recommended):**
+```bash
+./scripts/setup.sh   # Checks prereqs + installs everything
+./scripts/start.sh   # Starts CrewHub
+```
+
+The backend auto-detects the Claude CLI and watches `~/.claude/projects/` for active sessions.
+
+**Docker users (monitoring only):**
+Docker mode supports read-only session monitoring but cannot run the Claude CLI for interactive features. Mount your Claude data directory:
+```yaml
+volumes:
+  - ${HOME}/.claude:/root/.claude:ro
+```
+
+For full interactive Claude Code support, use the local setup scripts instead of Docker.
 
 ---
 
