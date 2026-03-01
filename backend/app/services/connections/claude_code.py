@@ -189,27 +189,56 @@ class ClaudeCodeConnection(AgentConnection):
                     )
                 )
             else:
-                # Normal discovered session (not claimed by any agent)
-                sessions.append(
-                    SessionInfo(
-                        key=f"claude:{sid}",
-                        session_id=sid,
-                        source="claude_code",
-                        connection_id=self.connection_id,
-                        agent_id="main",
-                        channel="cli",
-                        label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
-                        status=ws.last_activity.value,
-                        last_activity=last_ms,
-                        metadata={
-                            "updatedAt": last_ms,
-                            "kind": "subagent" if ws.is_subagent else "session",
-                            "projectPath": ws.project_path,
-                            "activityDetail": ws.activity_detail,
-                            "activityToolName": ws.activity_tool_name,
-                        },
+                # For sub-agents, try to link to parent agent so the frontend
+                # can detect them as children and render them in the same room.
+                parent_agent = None
+                if ws.is_subagent and ws.parent_session_uuid:
+                    parent_agent = claimed.get(ws.parent_session_uuid)
+
+                if parent_agent:
+                    parent_key = parent_agent["agent_session_key"]
+                    sessions.append(
+                        SessionInfo(
+                            key=f"claude:{sid}",
+                            session_id=sid,
+                            source="claude_code",
+                            connection_id=self.connection_id,
+                            agent_id=parent_agent["agent_id"],
+                            channel="cli",
+                            label=f"parent={parent_key}",
+                            status=ws.last_activity.value,
+                            last_activity=last_ms,
+                            metadata={
+                                "updatedAt": last_ms,
+                                "kind": "subagent",
+                                "projectPath": ws.project_path,
+                                "activityDetail": ws.activity_detail,
+                                "activityToolName": ws.activity_tool_name,
+                            },
+                        )
                     )
-                )
+                else:
+                    # Normal discovered session (not claimed by any agent)
+                    sessions.append(
+                        SessionInfo(
+                            key=f"claude:{sid}",
+                            session_id=sid,
+                            source="claude_code",
+                            connection_id=self.connection_id,
+                            agent_id="main",
+                            channel="cli",
+                            label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
+                            status=ws.last_activity.value,
+                            last_activity=last_ms,
+                            metadata={
+                                "updatedAt": last_ms,
+                                "kind": "subagent" if ws.is_subagent else "session",
+                                "projectPath": ws.project_path,
+                                "activityDetail": ws.activity_detail,
+                                "activityToolName": ws.activity_tool_name,
+                            },
+                        )
+                    )
         return sessions
 
     async def _get_agent_session_map(self) -> dict:

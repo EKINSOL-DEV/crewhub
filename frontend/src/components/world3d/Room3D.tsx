@@ -297,7 +297,7 @@ export const Room3D = memo(function Room3D({
 
       {/* ─── Task Wall (3D whiteboard with embedded TaskBoard) ─────── */}
       {/* Only visible when zoomed into a room (not in overview) */}
-      {room.project_id && state.level !== 'overview' && (
+      {room.project_id && state.focusedRoomId === room.id && state.level !== 'overview' && (
         <TaskWall3D
           projectId={room.project_id}
           roomId={room.id}
