@@ -10,7 +10,7 @@ import { API_BASE } from '@/lib/api'
 
 const VAR_MOBILE_BORDER = 'var(--mobile-border, rgba(255,255,255,0.1))'
 
-const APP_VERSION = '0.19.0'
+const APP_VERSION = '0.19.5'
 
 function isTauri(): boolean {
   return (
