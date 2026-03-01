@@ -329,8 +329,38 @@ class ClaudeCodeConnection(AgentConnection):
         message: str,
         timeout: float = 90.0,
     ) -> Optional[str]:
-        """Send a message to a Claude Code session (Phase 2)."""
-        raise NotImplementedError("ClaudeCodeConnection.send_message() requires ClaudeProcessManager (Phase 2)")
+        """Send a message to a Claude Code session."""
+        from ...services.cc_chat import send_cc_blocking, send_cc_discovered_blocking
+
+        try:
+            if session_key.startswith("cc:"):
+                agent_id = session_key.removeprefix("cc:")
+                return await asyncio.wait_for(
+                    send_cc_blocking(agent_id, message),
+                    timeout=timeout,
+                )
+            elif session_key.startswith("claude:"):
+                session_id = session_key.removeprefix("claude:")
+                ws = (
+                    self._watcher.get_watched_sessions().get(session_id)
+                    if self._watcher
+                    else None
+                )
+                if not ws or not ws.project_path:
+                    logger.warning("Cannot resolve project_path for session %s", session_id)
+                    return None
+                return await asyncio.wait_for(
+                    send_cc_discovered_blocking(session_id, ws.project_path, message),
+                    timeout=timeout,
+                )
+            else:
+                return None
+        except asyncio.TimeoutError:
+            logger.warning("send_message timed out for %s (%.0fs)", session_key, timeout)
+            return None
+        except Exception as exc:
+            logger.error("send_message failed for %s: %s", session_key, exc)
+            return None
 
     async def kill_session(self, session_key: str) -> bool:
         """Kill a Claude Code session (Phase 2)."""
