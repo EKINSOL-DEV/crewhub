@@ -269,7 +269,7 @@ export function SceneContent({
       defaultRoom ||
       fallbackRoom
 
-    for (const runtime of agentRuntimes) {
+    const placeRuntime = (runtime: AgentRuntime) => {
       if (runtime.session && visibleKeys.has(runtime.session.key)) {
         placeBot(
           runtime.session,
@@ -289,6 +289,8 @@ export function SceneContent({
         }
       }
     }
+
+    agentRuntimes.forEach(placeRuntime)
 
     for (const session of visibleSessions) {
       if (placedKeys.has(session.key)) continue

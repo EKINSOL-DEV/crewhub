@@ -93,10 +93,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
   if (loading) return null
 
   return (
-    <div
-      className="zen-agents-panel"
-      style={{ borderTop: ZEN_BORDER, padding: '8px 12px' }}
-    >
+    <div className="zen-agents-panel" style={{ borderTop: ZEN_BORDER, padding: '8px 12px' }}>
       <div
         style={{
           display: 'flex',
@@ -105,9 +102,7 @@ export function ProjectAgentsPanel({ roomId }: Props) {
           marginBottom: 6,
         }}
       >
-        <span style={{ fontSize: 12, fontWeight: 600, color: ZEN_FG_MUTED }}>
-          🤖 Agents
-        </span>
+        <span style={{ fontSize: 12, fontWeight: 600, color: ZEN_FG_MUTED }}>🤖 Agents</span>
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
