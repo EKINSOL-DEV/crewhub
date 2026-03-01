@@ -33,6 +33,15 @@ from .prop_generator import (
 logger = logging.getLogger(__name__)
 
 
+def _get_process_manager():
+    """Get the ClaudeProcessManager singleton (same pattern as cc_chat.py)."""
+    from ..connections.claude_process_manager import ClaudeProcessManager
+
+    if not hasattr(_get_process_manager, "_instance"):
+        _get_process_manager._instance = ClaudeProcessManager()
+    return _get_process_manager._instance
+
+
 def _sse_event(event_type: str, data: dict) -> str:
     return f"event: {event_type}\ndata: {json.dumps(data)}\n\n"
 
@@ -434,6 +443,258 @@ async def _late_wait_for_result(conn, req_id: str, q: asyncio.Queue, gen_id: str
         conn._response_queues.pop(req_id, None)
 
 
+async def _find_cc_project_path() -> Optional[str]:
+    """Find a suitable project_path for Claude Code from configured agents, or use cwd."""
+    try:
+        from ...db.database import get_db
+
+        async with get_db() as db:
+            async with db.execute(
+                "SELECT project_path FROM agents WHERE agent_type = 'claude_code' AND project_path IS NOT NULL LIMIT 1",
+            ) as cursor:
+                row = await cursor.fetchone()
+                if row and row["project_path"]:
+                    return row["project_path"]
+    except Exception:
+        pass
+    return None
+
+
+async def _stream_via_claude_code(
+    request,
+    prompt: str,
+    name: str,
+    model_key: str,
+    full_prompt: str,
+    gen_id: str,
+) -> AsyncGenerator[str, None]:
+    """SSE generator that uses Claude Code CLI to generate a prop.
+
+    Mirrors the OpenClaw streaming flow but spawns a `claude --print` subprocess
+    via ClaudeProcessManager and parses the JSONL output for thinking/tool/text events.
+    """
+    from ..multi_pass_generator import MultiPassGenerator
+    from ..prop_post_processor import enhance_generated_prop, validate_prop_quality
+
+    _, model_label = resolve_model(model_key)
+    pm = _get_process_manager()
+    project_path = await _find_cc_project_path()
+
+    # Queue receives (event_type, data_dict) tuples; None signals completion
+    queue: asyncio.Queue[Optional[tuple[str, dict]]] = asyncio.Queue()
+    raw_text_parts: list[str] = []
+    tool_calls_collected: list[dict] = []
+    final_text: Optional[str] = None
+
+    def on_output(process_id: str, line: str) -> None:
+        nonlocal final_text
+        try:
+            data = json.loads(line)
+        except (json.JSONDecodeError, ValueError):
+            return
+        if not isinstance(data, dict):
+            return
+
+        event_type = data.get("type", "")
+
+        if event_type == "assistant":
+            content = data.get("message", {}).get("content", [])
+            if isinstance(content, list):
+                for block in content:
+                    if not isinstance(block, dict):
+                        continue
+                    bt = block.get("type", "")
+                    if bt == "thinking":
+                        text = block.get("thinking", "")
+                        if text:
+                            for chunk in text.split("\n"):
+                                chunk = chunk.strip()
+                                if chunk:
+                                    queue.put_nowait(("thinking", {"text": chunk}))
+                    elif bt == "text":
+                        text = block.get("text", "")
+                        if text:
+                            raw_text_parts.append(text)
+                            queue.put_nowait(("text", {"text": text[:200]}))
+                    elif bt == "tool_use":
+                        tool_name = block.get("name", "unknown")
+                        tool_input = block.get("input", {})
+                        tool_calls_collected.append(
+                            {"name": tool_name, "input": str(tool_input)[:500]}
+                        )
+                        queue.put_nowait((
+                            "tool",
+                            {
+                                "name": tool_name,
+                                "input": str(tool_input)[:200],
+                                "message": f"🔧 Using tool: {tool_name}",
+                            },
+                        ))
+            elif isinstance(content, str) and content:
+                raw_text_parts.append(content)
+                queue.put_nowait(("text", {"text": content[:200]}))
+
+        elif event_type == "content_block_delta":
+            delta = data.get("delta", {})
+            if isinstance(delta, dict) and delta.get("type") == "text_delta":
+                text = delta.get("text", "")
+                if text:
+                    raw_text_parts.append(text)
+
+        elif event_type == "user":
+            content = data.get("message", {}).get("content", [])
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "tool_result":
+                        queue.put_nowait(("tool_result", {"message": "📋 Tool result received"}))
+
+        elif event_type == "result":
+            result_text = data.get("result", "")
+            if isinstance(result_text, str) and result_text:
+                final_text = result_text
+
+    yield _sse_event("status", {"message": f"🤖 Spawning Claude Code for: \"{prompt}\"...", "phase": "start"})
+    model_id, _ = resolve_model(model_key)
+    yield _sse_event("model", {"model": model_key, "modelLabel": model_label, "modelId": model_id})
+    yield _sse_event("full_prompt", {"prompt": full_prompt})
+
+    try:
+        process_id = await pm.spawn_task(
+            message=full_prompt,
+            project_path=project_path,
+            model=model_key if model_key != "default" else None,
+            permission_mode="bypassPermissions",
+        )
+    except Exception as e:
+        logger.error(f"[PropGen:{gen_id}] Failed to spawn Claude Code: {e}")
+        yield _sse_event("error", {"message": f"Failed to spawn Claude Code: {e}"})
+        return
+
+    pm.set_process_callback(process_id, on_output)
+    yield _sse_event("status", {"message": f"🧠 Claude Code ({model_label}) is thinking...", "phase": "thinking"})
+
+    try:
+        # Poll queue for streaming events until process completes
+        while True:
+            if await request.is_disconnected():
+                await pm.kill(process_id)
+                return
+
+            try:
+                event = await asyncio.wait_for(queue.get(), timeout=1.0)
+                if event is not None:
+                    evt_type, evt_data = event
+                    yield _sse_event(evt_type, evt_data)
+            except TimeoutError:
+                pass
+
+            cp = pm.get_process(process_id)
+            if cp is None:
+                break
+            if cp.status in ("completed", "error", "killed") and queue.empty():
+                # Drain remaining
+                while not queue.empty():
+                    event = queue.get_nowait()
+                    if event is not None:
+                        evt_type, evt_data = event
+                        yield _sse_event(evt_type, evt_data)
+                break
+
+    finally:
+        pm.remove_process_callback(process_id)
+
+    # Assemble the raw text from all collected parts
+    raw_text = final_text or "".join(raw_text_parts)
+    if not raw_text:
+        logger.warning(f"[PropGen:{gen_id}] No text output from Claude Code")
+        code = generate_template_code(name, prompt)
+        parts = extract_parts(prompt)
+        record = _template_record(
+            gen_id, prompt, name, model_key, model_label, full_prompt,
+            parts, code, "No AI response from Claude Code",
+            extra_diags=["No CC result, used template"],
+        )
+        add_generation_record(record)
+        yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
+        return
+
+    # Post-process the raw AI output
+    cleaned_text = _normalize_ai_raw_text(raw_text)
+    ai_parts = parse_ai_parts(cleaned_text)
+    code = strip_parts_block(cleaned_text)
+
+    if not _is_mesh_component_code(code):
+        logger.warning(f"[PropGen:{gen_id}] CC output invalid for {name}, using template fallback")
+        code = generate_template_code(name, prompt)
+        parts = extract_parts(prompt)
+        record = _template_record(
+            gen_id, prompt, name, model_key, model_label, full_prompt,
+            parts, code, "AI output validation failed",
+            extra_diags=["CC output invalid, used template"],
+            extra_tool_calls=tool_calls_collected,
+        )
+        add_generation_record(record)
+        yield _sse_event("complete", _template_complete(name, code, parts, model_key, model_label, gen_id))
+        return
+
+    # Enhance and validate
+    pp_result = enhance_generated_prop(code)
+    code = pp_result.code
+    corrections_collected = pp_result.corrections
+    diagnostics_collected = _post_processor_diagnostics(pp_result)
+    for diag in diagnostics_collected:
+        yield _sse_event("correction", {"message": diag})
+
+    mp_gen: MultiPassGenerator | None = None
+    try:
+        mp_gen = MultiPassGenerator()
+        code, mp_diags = mp_gen.generate_prop(prompt, code)
+        for diag in mp_diags:
+            diagnostics_collected.append(diag)
+            yield _sse_event("correction", {"message": diag})
+    except Exception as mp_err:
+        logger.warning(f"[PropGen:{gen_id}] Multi-pass error (non-fatal): {mp_err}")
+        diagnostics_collected.append("⚠️ Multi-pass enhancement skipped")
+
+    ai_parts_new = parse_ai_parts(code)
+    if ai_parts_new:
+        ai_parts = ai_parts_new
+    parts = ai_parts if ai_parts else extract_parts(prompt)
+    validation = validate_prop_quality(code)
+
+    add_generation_record(
+        _ai_success_record(
+            gen_id, prompt, name, model_key, model_label, full_prompt,
+            tool_calls_collected, corrections_collected, diagnostics_collected,
+            parts, code, pp_result.quality_score, validation,
+        )
+    )
+
+    refinement_options = {}
+    if mp_gen is not None:
+        try:
+            refinement_options = mp_gen.get_refinement_options(prompt)
+        except Exception:
+            refinement_options = {}
+
+    yield _sse_event(
+        "complete",
+        {
+            "name": name,
+            "filename": f"{name}.tsx",
+            "code": code,
+            "method": "ai",
+            "parts": parts,
+            "model": model_key,
+            "modelLabel": model_label,
+            "generationId": gen_id,
+            "qualityScore": pp_result.quality_score,
+            "validation": validation,
+            "refinementOptions": refinement_options,
+        },
+    )
+
+
 async def stream_prop_generation(  # noqa: C901  # NOSONAR
     request,  # starlette.requests.Request — checked only for is_disconnected()
     prompt: str,
@@ -452,22 +713,24 @@ async def stream_prop_generation(  # noqa: C901  # NOSONAR
     corrections_collected: list[str] = []
     diagnostics_collected: list[str] = []
 
-    try:
-        manager = await get_connection_manager()
-        conn = _find_connected_openclaw(manager)
-        if not conn:
-            yield _sse_event("error", {"message": "No connected OpenClaw connection"})
-            return
-    except Exception as e:
-        yield _sse_event("error", {"message": str(e)})
-        return
-
     template = load_prompt_template()
     if not template:
         yield _sse_event("error", {"message": "Prompt template not found"})
         return
 
     full_prompt = _build_full_prompt(template, prompt, name)
+
+    try:
+        manager = await get_connection_manager()
+        conn = _find_connected_openclaw(manager)
+    except Exception:
+        conn = None
+
+    if not conn:
+        # Fall back to Claude Code CLI
+        async for event in _stream_via_claude_code(request, prompt, name, model_key, full_prompt, gen_id):
+            yield event
+        return
     yield _sse_event("status", {"message": f'🔍 Analyzing prompt: "{prompt}"...', "phase": "start"})
     yield _sse_event("model", {"model": model_key, "modelLabel": model_label, "modelId": model_id})
     yield _sse_event("full_prompt", {"prompt": full_prompt})

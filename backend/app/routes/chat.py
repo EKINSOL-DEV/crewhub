@@ -160,6 +160,37 @@ def _normalize_timestamp(value: object) -> int:
     return 0
 
 
+def _tool_label(name: str, input_data: dict | None) -> str:
+    """Extract a concise label from a tool's input for display in chat bubbles."""
+    if not input_data or not isinstance(input_data, dict):
+        return ""
+    # Map tool names to the most descriptive input field
+    field_map: dict[str, list[str]] = {
+        "Agent": ["description"],
+        "Read": ["file_path"],
+        "Write": ["file_path"],
+        "Edit": ["file_path"],
+        "Bash": ["description", "command"],
+        "Grep": ["pattern"],
+        "Glob": ["pattern"],
+        "WebSearch": ["query"],
+        "WebFetch": ["url"],
+        "Skill": ["skill"],
+    }
+    fields = field_map.get(name, [])
+    for f in fields:
+        val = input_data.get(f)
+        if isinstance(val, str) and val:
+            # Truncate long values
+            return val[:60] + ("…" if len(val) > 60 else "")
+    # Fallback: try common fields
+    for f in ("description", "file_path", "pattern", "query", "prompt"):
+        val = input_data.get(f)
+        if isinstance(val, str) and val:
+            return val[:60] + ("…" if len(val) > 60 else "")
+    return ""
+
+
 def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], list[dict], list[str]]:  # NOSONAR
     content_parts: list[str] = []
     tools: list[dict] = []
@@ -182,9 +213,14 @@ def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], l
         elif btype == "thinking" and block.get("thinking"):
             thinking_blocks.append(block["thinking"])
         elif btype == "tool_use":
-            tool_info = {"name": block.get("name", "unknown"), "status": "called"}
+            tool_name = block.get("name", "unknown")
+            tool_input = block.get("input", {})
+            tool_info: dict = {"name": tool_name, "status": "called"}
+            label = _tool_label(tool_name, tool_input)
+            if label:
+                tool_info["label"] = label
             if raw:
-                tool_info["input"] = block.get("input", {})
+                tool_info["input"] = tool_input
             tools.append(tool_info)
         elif btype == "tool_result":
             result_content = block.get("content", "")
