@@ -109,6 +109,7 @@ def _build_agent_dict(row, display_name: Optional[str], is_stale: bool) -> dict:
         "source": row["source"] if "source" in keys else "openclaw",
         "project_path": row["project_path"] if "project_path" in keys else None,
         "permission_mode": row["permission_mode"] if "permission_mode" in keys else "default",
+        "current_session_id": row["current_session_id"] if "current_session_id" in keys else None,
         "created_at": row["created_at"],
         "updated_at": row["updated_at"],
         "is_stale": is_stale,

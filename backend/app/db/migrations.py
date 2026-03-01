@@ -681,6 +681,14 @@ async def run_migrations(db) -> None:
         ON agents(source)
     """)
 
+    # ========================================
+    # v21: Agent↔Session linking
+    # ========================================
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN current_session_id TEXT")
+    except Exception:
+        pass  # Column already exists
+
     # Advance schema version
     await db.execute(
         """

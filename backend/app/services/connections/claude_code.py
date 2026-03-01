@@ -140,7 +140,12 @@ class ClaudeCodeConnection(AgentConnection):
     SESSION_RECENCY_SECONDS = 30 * 60  # 30 minutes
 
     async def get_sessions(self) -> list[SessionInfo]:
-        """Return discovered Claude Code sessions active within the last 30 minutes."""
+        """Return discovered Claude Code sessions active within the last 30 minutes.
+
+        Sessions claimed by a fixed CC agent are emitted under the agent's
+        session key instead of the standalone ``claude:<uuid>`` key, so the
+        frontend shows a single entry with live activity.
+        """
         if not self.is_connected() or not self._watcher:
             return []
 
@@ -149,31 +154,81 @@ class ClaudeCodeConnection(AgentConnection):
         now_ms = int(now * 1000)
         cutoff = now - self.SESSION_RECENCY_SECONDS
 
+        # Build a map of session_id → agent info for claimed sessions
+        claimed = await self._get_agent_session_map()
+
         for sid, ws in self._watcher.get_watched_sessions().items():
             # Skip sessions with no activity in the recency window
             if ws.last_event_wall_time and ws.last_event_wall_time < cutoff:
                 continue
 
             last_ms = int(ws.last_event_wall_time * 1000) if ws.last_event_wall_time else now_ms
-            sessions.append(
-                SessionInfo(
-                    key=f"claude:{sid}",
-                    session_id=sid,
-                    source="claude_code",
-                    connection_id=self.connection_id,
-                    agent_id="main",
-                    channel="cli",
-                    label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
-                    status=ws.last_activity.value,
-                    last_activity=last_ms,
-                    metadata={
-                        "updatedAt": last_ms,
-                        "kind": "subagent" if ws.is_subagent else "session",
-                        "projectPath": ws.project_path,
-                    },
+
+            agent_info = claimed.get(sid)
+            if agent_info:
+                # Emit as agent session (absorbs the discovered session)
+                sessions.append(
+                    SessionInfo(
+                        key=agent_info["agent_session_key"],
+                        session_id=sid,
+                        source="claude_code",
+                        connection_id=self.connection_id,
+                        agent_id=agent_info["agent_id"],
+                        channel="cli",
+                        label=agent_info["agent_name"],
+                        status=ws.last_activity.value,
+                        last_activity=last_ms,
+                        metadata={
+                            "updatedAt": last_ms,
+                            "kind": "subagent" if ws.is_subagent else "session",
+                            "projectPath": ws.project_path,
+                        },
+                    )
                 )
-            )
+            else:
+                # Normal discovered session (not claimed by any agent)
+                sessions.append(
+                    SessionInfo(
+                        key=f"claude:{sid}",
+                        session_id=sid,
+                        source="claude_code",
+                        connection_id=self.connection_id,
+                        agent_id="main",
+                        channel="cli",
+                        label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
+                        status=ws.last_activity.value,
+                        last_activity=last_ms,
+                        metadata={
+                            "updatedAt": last_ms,
+                            "kind": "subagent" if ws.is_subagent else "session",
+                            "projectPath": ws.project_path,
+                        },
+                    )
+                )
         return sessions
+
+    async def _get_agent_session_map(self) -> dict:
+        """Return {session_id: {agent_session_key, agent_name, agent_id}} for claimed sessions."""
+        try:
+            from ...db.database import get_db
+
+            async with get_db() as db:
+                async with db.execute(
+                    "SELECT id, agent_session_key, current_session_id, name "
+                    "FROM agents WHERE source = 'claude_code' AND current_session_id IS NOT NULL"
+                ) as cursor:
+                    rows = await cursor.fetchall()
+            return {
+                row["current_session_id"]: {
+                    "agent_session_key": row["agent_session_key"],
+                    "agent_name": row["name"],
+                    "agent_id": row["id"],
+                }
+                for row in rows
+            }
+        except Exception as exc:
+            logger.debug("Failed to load agent session map: %s", exc)
+            return {}
 
     async def get_session_history(
         self,
@@ -184,8 +239,17 @@ class ClaudeCodeConnection(AgentConnection):
         if not self.is_connected() or not self._watcher:
             return []
 
-        # Strip claude: prefix
-        sid = session_key.removeprefix("claude:")
+        # Strip claude: or cc: prefix and resolve to real session_id
+        if session_key.startswith("cc:"):
+            # Agent session key — look up the real session_id
+            from ...services.cc_chat import _agent_sessions
+
+            agent_id = session_key.removeprefix("cc:")
+            sid = _agent_sessions.get(agent_id)
+            if not sid:
+                return []
+        else:
+            sid = session_key.removeprefix("claude:")
         ws = self._watcher.get_watched_sessions().get(sid)
         if not ws or not ws.jsonl_path.exists():
             return []
@@ -286,12 +350,23 @@ class ClaudeCodeConnection(AgentConnection):
         try:
             from ...routes.sse import broadcast
 
+            # Check if this session is claimed by an agent
+            from ...services.cc_chat import _agent_sessions
+
+            agent_key = None
+            for aid, sid in _agent_sessions.items():
+                if sid == session_id:
+                    agent_key = f"cc:{aid}"
+                    break
+
+            session_key = agent_key or f"claude:{session_id}"
+
             for ev in events[-5:]:  # Limit broadcast volume
                 asyncio.get_event_loop().create_task(
                     broadcast(
                         "session-event",
                         {
-                            "sessionKey": f"claude:{session_id}",
+                            "sessionKey": session_key,
                             "eventType": ev.event_type,
                             "source": "claude_code",
                         },
@@ -350,8 +425,19 @@ class ClaudeCodeConnection(AgentConnection):
             sessions = list(self._watcher.get_watched_sessions().values()) if self._watcher else []
             ws = next((s for s in sessions if s.session_id == session_id), None)
             if ws:
+                # Check if this session is claimed by an agent (in-memory fast path)
+                from ...services.cc_chat import _agent_sessions
+
+                agent_key = None
+                for aid, sid in _agent_sessions.items():
+                    if sid == session_id:
+                        agent_key = f"cc:{aid}"
+                        break
+
+                session_key = agent_key or f"claude:{session_id}"
+
                 si = SessionInfo(
-                    key=f"claude:{session_id}",
+                    key=session_key,
                     session_id=session_id,
                     source="claude_code",
                     connection_id=self.connection_id,
@@ -359,7 +445,7 @@ class ClaudeCodeConnection(AgentConnection):
                 )
                 self._notify_session_update(si)
                 payload = {
-                    "sessionKey": f"claude:{session_id}",
+                    "sessionKey": session_key,
                     "status": activity.value,
                     "source": "claude_code",
                 }

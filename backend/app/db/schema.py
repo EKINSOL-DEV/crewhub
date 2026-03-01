@@ -16,4 +16,4 @@ else:
     DB_PATH = DB_DIR / "crewhub.db"
 
 # Schema version — bump when adding new migrations
-SCHEMA_VERSION = 20  # v20: Claude Code Fixed Agents
+SCHEMA_VERSION = 21  # v21: Agent↔Session linking

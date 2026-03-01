@@ -22,6 +22,41 @@ STREAM_TOTAL_TIMEOUT = 600  # 10 minutes max for a streaming loop
 # ── Session tracking ───────────────────────────────────────────────
 # Maps agent_id → last known session_id so subsequent chats use --resume.
 _agent_sessions: dict[str, str] = {}
+_sessions_restored = False
+
+
+async def _persist_agent_session(agent_id: str, session_id: str) -> None:
+    """Write agent↔session mapping to DB so it survives restarts."""
+    try:
+        async with get_db() as db:
+            await db.execute(
+                "UPDATE agents SET current_session_id = ? WHERE id = ?",
+                (session_id, agent_id),
+            )
+            await db.commit()
+    except Exception as exc:
+        logger.debug("Failed to persist agent session mapping: %s", exc)
+
+
+async def _restore_agent_sessions() -> None:
+    """Load agent↔session mappings from DB into the in-memory dict."""
+    global _sessions_restored
+    if _sessions_restored:
+        return
+    _sessions_restored = True
+    try:
+        async with get_db() as db:
+            async with db.execute(
+                "SELECT id, current_session_id FROM agents "
+                "WHERE current_session_id IS NOT NULL"
+            ) as cursor:
+                rows = await cursor.fetchall()
+            for row in rows:
+                _agent_sessions[row["id"]] = row["current_session_id"]
+        if _agent_sessions:
+            logger.info("Restored %d agent↔session mapping(s) from DB", len(_agent_sessions))
+    except Exception as exc:
+        logger.debug("Failed to restore agent sessions: %s", exc)
 
 
 # ── Agent config helper ────────────────────────────────────────────
@@ -112,6 +147,14 @@ def _make_output_parser(queue: asyncio.Queue, agent_id: str | None = None):
             sid = data.get("session_id")
             if sid and agent_id:
                 _agent_sessions[agent_id] = sid
+                try:
+                    loop = asyncio.get_event_loop()
+                    loop.call_soon_threadsafe(
+                        asyncio.ensure_future,
+                        _persist_agent_session(agent_id, sid),
+                    )
+                except RuntimeError:
+                    pass
 
     return on_output
 
@@ -165,6 +208,7 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
 
     The caller (chat route) wraps each yielded string in an SSE `delta` event.
     """
+    await _restore_agent_sessions()
     config = await get_agent_config(agent_id)
     project_path = config.get("project_path")
     permission_mode = config.get("permission_mode", "default")
@@ -196,6 +240,7 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
     cp = pm.get_process(process_id)
     if cp and cp.result_session_id:
         _agent_sessions[agent_id] = cp.result_session_id
+        await _persist_agent_session(agent_id, cp.result_session_id)
 
 
 # ── Blocking (non-streaming) send ──────────────────────────────────
