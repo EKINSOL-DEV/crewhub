@@ -96,6 +96,56 @@ export function updatePositionRegistry(
   }
 }
 
+/** Compute bot-to-bot soft repulsion to prevent overlapping */
+export function computeBotRepulsion(
+  sessionKey: string | undefined,
+  currentX: number,
+  currentZ: number,
+  roomBounds: { minX: number; maxX: number; minZ: number; maxZ: number },
+  gridData: {
+    blueprint: { cellSize: number; gridWidth: number; gridDepth: number }
+    botWalkableMask: boolean[][]
+  } | null,
+  roomCenterX: number,
+  roomCenterZ: number,
+  delta: number
+): { dx: number; dz: number } {
+  if (!sessionKey) return { dx: 0, dz: 0 }
+
+  const radius = SESSION_CONFIG.wanderRepulsionRadius
+  const strength = SESSION_CONFIG.wanderRepulsionStrength
+  let pushX = 0
+  let pushZ = 0
+  let count = 0
+
+  for (const [key, pos] of botPositionRegistry) {
+    if (key === sessionKey) continue
+    if (count >= 8) break
+    count++
+
+    const dx = currentX - pos.x
+    const dz = currentZ - pos.z
+    const dist = Math.hypot(dx, dz)
+
+    if (dist < radius && dist > 0.01) {
+      const force = (1 - dist / radius) * strength * delta
+      pushX += (dx / dist) * force
+      pushZ += (dz / dist) * force
+    }
+  }
+
+  // Only apply if resulting position is walkable
+  if (Math.abs(pushX) > 0.001 || Math.abs(pushZ) > 0.001) {
+    const newX = currentX + pushX
+    const newZ = currentZ + pushZ
+    if (isWalkableAt(newX, newZ, roomBounds, gridData, roomCenterX, roomCenterZ)) {
+      return { dx: pushX, dz: pushZ }
+    }
+  }
+
+  return { dx: 0, dz: 0 }
+}
+
 /** Handle meeting gathering waypoint movement. Returns true if meeting movement was applied. */
 export function handleMeetingMovement( // NOSONAR: meeting waypoint movement with path computation
   group: THREE.Group,
@@ -207,7 +257,7 @@ export function isWalkableAt(
   return !!gridData.botWalkableMask[g.z]?.[g.x]
 }
 
-/** Pick a random walkable direction from current position */
+/** Pick a walkable direction biased toward open space and room center */
 export function pickWalkableDir(
   currentX: number,
   currentZ: number,
@@ -220,10 +270,15 @@ export function pickWalkableDir(
   roomCenterZ: number
 ): { x: number; z: number } | null {
   const cellSize = gridData ? gridData.blueprint.cellSize : 1
-  const shuffled = [...DIRECTIONS].sort(() => Math.random() - 0.5)
-  for (const d of shuffled) {
+  const lookahead = SESSION_CONFIG.wanderLookahead
+  const centerGravity = SESSION_CONFIG.wanderCenterGravity
+
+  const scored: { dir: { x: number; z: number }; score: number }[] = []
+
+  for (const d of DIRECTIONS) {
+    // First cell must be walkable
     if (
-      isWalkableAt(
+      !isWalkableAt(
         currentX + d.x * cellSize,
         currentZ + d.z * cellSize,
         roomBounds,
@@ -231,11 +286,63 @@ export function pickWalkableDir(
         roomCenterX,
         roomCenterZ
       )
-    ) {
-      return d
+    )
+      continue
+
+    // Count consecutive walkable cells ahead
+    let openCells = 1
+    for (let i = 2; i <= lookahead; i++) {
+      if (
+        isWalkableAt(
+          currentX + d.x * cellSize * i,
+          currentZ + d.z * cellSize * i,
+          roomBounds,
+          gridData,
+          roomCenterX,
+          roomCenterZ
+        )
+      ) {
+        openCells++
+      } else {
+        break
+      }
     }
+
+    // Quadratic openness score
+    let score = openCells * openCells
+
+    // Center-gravity bias: pull toward room center, stronger at edges
+    const toCenterX = roomCenterX - currentX
+    const toCenterZ = roomCenterZ - currentZ
+    const distFromCenter = Math.hypot(toCenterX, toCenterZ)
+    const halfRoomSize =
+      Math.max(roomBounds.maxX - roomBounds.minX, roomBounds.maxZ - roomBounds.minZ) / 2
+    if (distFromCenter > 0.1 && halfRoomSize > 0) {
+      const normX = toCenterX / distFromCenter
+      const normZ = toCenterZ / distFromCenter
+      const dirMag = Math.hypot(d.x, d.z)
+      const dot = (d.x / dirMag) * normX + (d.z / dirMag) * normZ
+      const distanceFactor = Math.min(1, distFromCenter / halfRoomSize)
+      score += Math.max(0, dot) * distanceFactor * centerGravity
+    }
+
+    // Non-deterministic noise
+    score += Math.random() * 0.5
+
+    scored.push({ dir: d, score })
   }
-  return null
+
+  if (scored.length === 0) return null
+
+  // Weighted random selection
+  const totalWeight = scored.reduce((sum, s) => sum + s.score, 0)
+  let r = Math.random() * totalWeight
+  for (const s of scored) {
+    r -= s.score
+    if (r <= 0) return s.dir
+  }
+
+  return scored[scored.length - 1].dir
 }
 
 /** Handle no-grid circular wandering (parking bots). Returns true if handled. */
@@ -501,4 +608,53 @@ export function handleRandomGridWalk(
   }
 
   smoothRotateY(group, Math.atan2(state.dirX, state.dirZ), 0.15)
+}
+
+/** Handle waypoint path-following movement. Returns true if following a path. */
+export function handlePathFollowing(
+  group: THREE.Group,
+  state: {
+    currentX: number
+    currentZ: number
+    isFollowingPath: boolean
+    pathWaypoints: { x: number; z: number }[]
+    pathWaypointIndex: number
+  },
+  speed: number,
+  delta: number
+): boolean {
+  if (!state.isFollowingPath || state.pathWaypoints.length === 0) return false
+
+  const wp = state.pathWaypoints[state.pathWaypointIndex]
+  if (!wp) {
+    state.isFollowingPath = false
+    state.pathWaypoints = []
+    state.pathWaypointIndex = 0
+    return false
+  }
+
+  const dx = wp.x - state.currentX
+  const dz = wp.z - state.currentZ
+  const dist = Math.hypot(dx, dz)
+
+  if (dist < 0.3) {
+    // Arrived at waypoint — advance to next
+    state.pathWaypointIndex++
+    if (state.pathWaypointIndex >= state.pathWaypoints.length) {
+      state.isFollowingPath = false
+      state.pathWaypoints = []
+      state.pathWaypointIndex = 0
+      return false
+    }
+    return true
+  }
+
+  // Move toward waypoint
+  const pathSpeed = speed * 1.3
+  const step = Math.min(pathSpeed * delta, dist)
+  state.currentX += (dx / dist) * step
+  state.currentZ += (dz / dist) * step
+  smoothRotateY(group, Math.atan2(dx, dz), 0.18)
+
+  return true
 }

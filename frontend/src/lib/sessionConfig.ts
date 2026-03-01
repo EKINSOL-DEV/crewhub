@@ -37,6 +37,11 @@ export const SESSION_CONFIG_DEFAULTS = {
   wanderMaxWaitS: 8, // max seconds between wander moves
   wanderMinSteps: 3, // min cells per random walk
   wanderMaxSteps: 8, // max cells per random walk
+  wanderLookahead: 4, // cells to look ahead for open-space scoring
+  wanderWaypointChance: 0.4, // chance to pick a patrol waypoint after pause
+  wanderRepulsionRadius: 0.8, // world units for bot-to-bot repulsion
+  wanderRepulsionStrength: 0.3, // repulsion force per second
+  wanderCenterGravity: 3, // max center-attraction bonus for direction scoring
 
   // ── Coffee Break (3D) ──
   coffeeMinTimeS: 5, // min seconds at coffee machine

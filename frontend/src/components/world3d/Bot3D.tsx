@@ -16,7 +16,7 @@ import { BotSpeechBubble } from './BotSpeechBubble'
 import { meetingGatheringState } from '@/lib/meetingStore'
 import { tickAnimState } from './botAnimTick'
 import { getRoomInteractionPoints, getWalkableCenter } from './roomInteractionPoints'
-import { getBlueprintForRoom, getWalkableMask, worldToGrid } from '@/lib/grid'
+import { getBlueprintForRoom, getWalkableMask, worldToGrid, gridToWorld } from '@/lib/grid'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
 import { useDragActions } from '@/contexts/DragDropContext'
 import type { BotVariantConfig } from './utils/botVariants'
@@ -31,7 +31,12 @@ import {
   handleNoGridWander,
   handleAnimTargetWalk,
   handleRandomGridWalk,
+  handlePathFollowing,
+  computeBotRepulsion,
 } from './botMovement'
+import { computeWanderWaypoints } from './wanderWaypoints'
+import { findPath } from '@/lib/grid/pathfinding'
+import { smoothPath } from '@/lib/spatial/navigation'
 
 import { BOT_FIXED_Y, botPositionRegistry } from './botConstants'
 import type { BotStatus } from './botConstants'
@@ -142,6 +147,12 @@ export const Bot3D = memo(function Bot3D({
     return { blueprint, walkableMask, botWalkableMask }
   }, [roomName])
 
+  // ─── Patrol waypoints for purposeful wandering ─────────────────
+  const wanderWaypoints = useMemo(() => {
+    if (!gridData) return []
+    return computeWanderWaypoints(gridData.botWalkableMask)
+  }, [gridData])
+
   // ─── Wandering state ──────────────────────────────────────────
   const wanderState = useRef({
     targetX: position[0],
@@ -165,6 +176,10 @@ export const Bot3D = memo(function Bot3D({
     meetingWaypoints: [] as { x: number; z: number }[],
     meetingWaypointIndex: 0,
     meetingPathComputed: false,
+    // Patrol path-following state
+    isFollowingPath: false,
+    pathWaypoints: [] as { x: number; z: number }[],
+    pathWaypointIndex: 0,
   })
 
   // Update base position when session key changes (bot reassigned to a new spot)
@@ -377,6 +392,9 @@ export const Bot3D = memo(function Bot3D({
     if (anim.resetWanderTarget) {
       state.stepsRemaining = 0
       state.waitTimer = 0.5
+      state.isFollowingPath = false
+      state.pathWaypoints = []
+      state.pathWaypointIndex = 0
       anim.resetWanderTarget = false
     }
 
@@ -417,20 +435,93 @@ export const Bot3D = memo(function Bot3D({
       if (state.stepsRemaining > 0) {
         smoothRotateY(groupRef.current, Math.atan2(state.dirX, state.dirZ), 0.15)
       }
+    } else if (state.isFollowingPath) {
+      // Following a patrol waypoint path
+      handlePathFollowing(groupRef.current, state, speed, delta)
     } else {
-      // Random walk with obstacle avoidance
-      handleRandomGridWalk(groupRef.current, state, gridData, roomBounds, {
-        roomCenterX,
-        roomCenterZ,
-        speed,
-        delta,
-      })
+      // Random walk — on pause completion, maybe start a waypoint path
+      if (
+        state.stepsRemaining <= 0 &&
+        state.waitTimer <= 0 &&
+        wanderWaypoints.length > 0 &&
+        gridData &&
+        Math.random() < SESSION_CONFIG.wanderWaypointChance
+      ) {
+        // Try to pathfind to a random distant waypoint
+        const { cellSize, gridWidth, gridDepth } = gridData.blueprint
+        const currentGrid = worldToGrid(
+          state.currentX - roomCenterX,
+          state.currentZ - roomCenterZ,
+          cellSize,
+          gridWidth,
+          gridDepth
+        )
+        // Pick a waypoint at least 4 cells away
+        const distant = wanderWaypoints.filter(
+          (wp) => Math.hypot(wp.x - currentGrid.x, wp.z - currentGrid.z) >= 4
+        )
+        const target = distant.length > 0
+          ? distant[Math.floor(Math.random() * distant.length)]
+          : null
+        if (target) {
+          const rawPath = findPath(gridData.botWalkableMask, currentGrid, target)
+          if (rawPath && rawPath.length > 2) {
+            const smoothed = smoothPath(rawPath, gridData.botWalkableMask)
+            // Convert grid path to world coordinates
+            state.pathWaypoints = smoothed.map((p) => {
+              const [wx, , wz] = gridToWorld(p.x, p.z, cellSize, gridWidth, gridDepth)
+              return { x: roomCenterX + wx, z: roomCenterZ + wz }
+            })
+            state.pathWaypointIndex = 0
+            state.isFollowingPath = true
+            handlePathFollowing(groupRef.current, state, speed, delta)
+          } else {
+            // Pathfinding failed — fall back to normal walk
+            handleRandomGridWalk(groupRef.current, state, gridData, roomBounds, {
+              roomCenterX,
+              roomCenterZ,
+              speed,
+              delta,
+            })
+          }
+        } else {
+          handleRandomGridWalk(groupRef.current, state, gridData, roomBounds, {
+            roomCenterX,
+            roomCenterZ,
+            speed,
+            delta,
+          })
+        }
+      } else {
+        handleRandomGridWalk(groupRef.current, state, gridData, roomBounds, {
+          roomCenterX,
+          roomCenterZ,
+          speed,
+          delta,
+        })
+      }
     }
 
     // ─── Hard clamp to room bounds (safety net) ─────────────────
     if (roomBounds) {
       state.currentX = Math.max(roomBounds.minX, Math.min(roomBounds.maxX, state.currentX))
       state.currentZ = Math.max(roomBounds.minZ, Math.min(roomBounds.maxZ, state.currentZ))
+    }
+
+    // ─── Bot-to-bot soft repulsion ──────────────────────────────
+    if (gridData) {
+      const repulsion = computeBotRepulsion(
+        session?.key,
+        state.currentX,
+        state.currentZ,
+        roomBounds,
+        gridData,
+        roomCenterX,
+        roomCenterZ,
+        delta
+      )
+      state.currentX += repulsion.dx
+      state.currentZ += repulsion.dz
     }
 
     // ─── Detect movement for walk animation ──────────────────────

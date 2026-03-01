@@ -4,6 +4,8 @@
  */
 import type { CrewSession } from '@/lib/api'
 import type { DebugBot } from '@/hooks/useDebugBots'
+import type { PathNode } from '@/lib/grid/pathfinding'
+import { gridToWorld } from '@/lib/grid'
 
 // ─── Bot Position Helpers ──────────────────────────────────────
 
@@ -65,6 +67,41 @@ export function getBotPositionsInParking(
     const z = parkingZ - availableDepth / 2 + (row + 1) * spacingZ
     positions.push([x, floorY, z])
   }
+  return positions
+}
+
+/**
+ * Spawn bots on shuffled patrol waypoints instead of a uniform grid.
+ * Falls back to getBotPositionsInRoom when waypoints are unavailable.
+ */
+export function getGridAwareBotPositions(
+  roomPos: [number, number, number],
+  roomSize: number,
+  botCount: number,
+  waypoints: PathNode[],
+  cellSize: number,
+  gridWidth: number,
+  gridDepth: number
+): [number, number, number][] {
+  if (botCount === 0) return []
+  if (waypoints.length === 0) {
+    return getBotPositionsInRoom(roomPos, roomSize, botCount)
+  }
+
+  const floorY = roomPos[1] + 0.16
+  const roomCenterX = roomPos[0]
+  const roomCenterZ = roomPos[2]
+
+  // Shuffle waypoints for variety
+  const shuffled = [...waypoints].sort(() => Math.random() - 0.5)
+
+  const positions: [number, number, number][] = []
+  for (let i = 0; i < botCount; i++) {
+    const wp = shuffled[i % shuffled.length]
+    const [relX, , relZ] = gridToWorld(wp.x, wp.z, cellSize, gridWidth, gridDepth)
+    positions.push([roomCenterX + relX, floorY, roomCenterZ + relZ])
+  }
+
   return positions
 }
 
