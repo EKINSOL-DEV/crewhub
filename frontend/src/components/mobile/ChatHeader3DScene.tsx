@@ -4,7 +4,7 @@
  * Idle animations: gentle float/bob + eye blinking.
  * Not interactive — purely decorative.
  */
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { RoundedBox, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
@@ -43,10 +43,11 @@ function HeaderBot({ config, status, animation }: HeaderBotProps) {
   const leftEyeRef = useRef<THREE.Group>(null)
   const rightEyeRef = useRef<THREE.Group>(null)
 
-  const darkColor = new THREE.Color(config.color).multiplyScalar(0.65)
-  const darkHex = '#' + darkColor.getHexString()
-  const footColor = new THREE.Color(config.color).multiplyScalar(0.5)
-  const footHex = '#' + footColor.getHexString()
+  const { darkHex, footHex } = useMemo(() => {
+    const dark = new THREE.Color(config.color).multiplyScalar(0.65)
+    const foot = new THREE.Color(config.color).multiplyScalar(0.5)
+    return { darkHex: '#' + dark.getHexString(), footHex: '#' + foot.getHexString() }
+  }, [config.color])
 
   useFrame(({ clock }) => {
     if (!groupRef.current) return

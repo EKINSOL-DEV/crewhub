@@ -307,6 +307,15 @@ export function MobileCreatorView({ onBack }: MobileCreatorViewProps) {
 
 // ── Generator Tab ─────────────────────────────────────────────────
 
+const EXAMPLE_PROMPTS = [
+  'A glowing mushroom lamp',
+  'A steampunk gear clock',
+  'A floating crystal orb',
+  'A retro arcade cabinet',
+  'A neon "OPEN" sign',
+  'A tiny robot figurine',
+]
+
 function PropGeneratorTab() {
   const [inputText, setInputText] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
@@ -323,14 +332,7 @@ function PropGeneratorTab() {
   const thinkingScrollRef = useRef<HTMLDivElement>(null)
   const lineCounterRef = useRef(0)
 
-  const examplePrompts = [
-    'A glowing mushroom lamp',
-    'A steampunk gear clock',
-    'A floating crystal orb',
-    'A retro arcade cabinet',
-    'A neon "OPEN" sign',
-    'A tiny robot figurine',
-  ]
+  const examplePrompts = EXAMPLE_PROMPTS
 
   // Cleanup on unmount
   useEffect(() => {

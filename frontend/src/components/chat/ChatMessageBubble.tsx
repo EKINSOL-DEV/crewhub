@@ -855,11 +855,16 @@ const ChatMessageBubbleInner = memo(
   }: ChatMessageBubbleProps) {
     const isUser = msg.role === 'user'
 
-    const { text, attachments } = parseMediaAttachments(msg.content || '')
-    const imageAttachments = attachments.filter((a) => a.type === 'image')
-    const videoAttachments = attachments.filter((a) => a.type === 'video')
-    const audioAttachments = attachments.filter((a) => a.type === 'audio')
-    const cleanText = stripOpenClawTags(text)
+    const { text, imageAttachments, videoAttachments, audioAttachments } = useMemo(() => {
+      const { text: t, attachments } = parseMediaAttachments(msg.content || '')
+      return {
+        text: t,
+        imageAttachments: attachments.filter((a) => a.type === 'image'),
+        videoAttachments: attachments.filter((a) => a.type === 'video'),
+        audioAttachments: attachments.filter((a) => a.type === 'audio'),
+      }
+    }, [msg.content])
+    const cleanText = useMemo(() => stripOpenClawTags(text), [text])
 
     const renderedHtml = useMemo(() => {
       if (!cleanText) return ''
