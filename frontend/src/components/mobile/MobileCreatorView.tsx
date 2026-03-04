@@ -761,12 +761,18 @@ function PropGeneratorTab() {
                 </div>
               ))}
               {isGenerating && (
-                <div style={{ color: '#818cf8', animation: 'blink 1s step-end infinite' }}>▍</div>
+                <div style={{ color: '#818cf8', animation: 'creator-blink 1s step-end infinite' }}>▍</div>
               )}
             </div>
           )}
         </div>
       )}
+      <style>{`
+        @keyframes creator-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}</style>
     </div>
   )
 }
