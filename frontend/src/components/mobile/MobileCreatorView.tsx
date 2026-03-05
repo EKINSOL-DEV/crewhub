@@ -13,6 +13,7 @@ import { ArrowLeft, Wand2, Clock, ChevronDown, ChevronUp, ChevronRight } from 'l
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Stage } from '@react-three/drei'
 import { DynamicProp, type PropPart } from '../world3d/zones/creator/DynamicProp'
+import { API_BASE } from '@/lib/api'
 
 const BORDER_1PX_SOLID_VAR_MOBILE_BORDER_RG =
   '1px solid var(--mobile-border, rgba(255,255,255,0.08))'
@@ -375,7 +376,7 @@ function PropGeneratorTab() {
     }
 
     try {
-      const url = `/api/creator/generate-prop-stream?prompt=${encodeURIComponent(text)}&model=sonnet-4-5`
+      const url = `${API_BASE}/creator/generate-prop-stream?prompt=${encodeURIComponent(text)}&model=sonnet-4-5`
       const es = new EventSource(url)
       eventSourceRef.current = es
 
@@ -457,7 +458,7 @@ function PropGeneratorTab() {
     setError(null)
     const propId = toKebabCase(result.name) || 'prop'
     try {
-      const res = await fetch('/api/creator/save-prop', {
+      const res = await fetch(`${API_BASE}/creator/save-prop`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -797,9 +798,10 @@ function PropHistoryTab() {
   const [selectedRecord, setSelectedRecord] = useState<GenerationRecord | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
     setLoading(true)
     setError(null)
-    fetch('/api/creator/generation-history?limit=50')
+    fetch(`${API_BASE}/creator/generation-history?limit=50`, { signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
@@ -808,11 +810,12 @@ function PropHistoryTab() {
         setRecords(Array.isArray(data.records) ? data.records : [])
         setLoading(false)
       })
-      .catch(() => {
-        // Silently handle — error state is shown in UI
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return
         setError('Could not load history')
         setLoading(false)
       })
+    return () => controller.abort()
   }, [])
 
   if (loading) {
