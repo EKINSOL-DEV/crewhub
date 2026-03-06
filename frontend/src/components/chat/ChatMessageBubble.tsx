@@ -103,10 +103,15 @@ export function renderMarkdown(
   // Escape HTML first to prevent XSS
   let html = escapeHtml(text)
 
-  // Code blocks (protect first — already escaped above, no double-escape)
+  // Code blocks (protect with placeholders so content is not altered by later rules)
+  const codeBlockPlaceholders: string[] = []
   html = html.replaceAll(/```(\w*)\n([\s\S]*?)```/g, (_m, lang, code) => {
     const style = codeBlockStyle ?? ''
-    return `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ' style="' + style + '"' : ''}><code>${code.trim()}</code></pre>`
+    const placeholder = `%%CODE_BLOCK_${codeBlockPlaceholders.length}%%`
+    codeBlockPlaceholders.push(
+      `<pre class="chat-md-codeblock" data-lang="${lang}"${style ? ' style="' + style + '"' : ''}><code>${code.trim()}</code></pre>`
+    )
+    return placeholder
   })
 
   // Inline code (protect from other replacements — already escaped above)
@@ -163,6 +168,11 @@ export function renderMarkdown(
   // Restore inline code
   inlineCodePlaceholders.forEach((code, i) => {
     html = html.replaceAll(`%%INLINE_CODE_${i}%%`, code)
+  })
+
+  // Restore code blocks
+  codeBlockPlaceholders.forEach((block, i) => {
+    html = html.replaceAll(`%%CODE_BLOCK_${i}%%`, block)
   })
 
   // Line breaks (not inside block elements)
