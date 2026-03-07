@@ -499,7 +499,8 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
             width: 36,
             height: 4,
             borderRadius: 2,
-            background: 'rgba(255,255,255,0.15)',
+            background: 'var(--mobile-text-muted, #64748b)',
+            opacity: 0.3,
             margin: '12px auto 4px',
             flexShrink: 0,
           }}
@@ -516,7 +517,7 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
             flexShrink: 0,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--mobile-text, #f1f5f9)' }}>
             ⚙️ Settings
           </h2>
           <button
