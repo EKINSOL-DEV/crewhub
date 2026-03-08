@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useWorldFocus } from '@/contexts/WorldFocusContext'
-import { useZenMode } from '@/components/zen'
+// useZenMode removed in v0.20.0 (Zen Mode deprecated)
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -152,8 +152,6 @@ export function ActionBar({
   isAdmin = false,
 }: ActionBarProps) {
   const { state, enterFirstPerson, goBack } = useWorldFocus()
-  const zenMode = useZenMode()
-
   const isFirstPerson = state.level === 'firstperson'
 
   const handleWalkAroundClick = useCallback(() => {
@@ -218,15 +216,7 @@ export function ActionBar({
           />
         )}
 
-        {/* Zen Mode Button */}
-        <ActionButton
-          icon="🧘"
-          label="Zen Mode"
-          onClick={() => zenMode.enter()}
-          isActive={zenMode.isActive}
-          activeBackground="rgba(99,102,241,0.2)"
-          activeBorder="1.5px solid #6366f1"
-        />
+        {/* Zen Mode Button removed in v0.20.0 (deprecated) */}
       </div>
 
       {/* Tooltip fade-in animation */}
