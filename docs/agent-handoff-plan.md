@@ -3,7 +3,7 @@
 > **Version:** v0.20.0
 > **Branch:** `feature/agent-handoff`
 > **Date:** 2026-03-08
-> **Status:** Planning
+> **Status:** Implemented
 
 ---
 
