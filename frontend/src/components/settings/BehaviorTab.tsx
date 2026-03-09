@@ -463,10 +463,9 @@ export function BehaviorTab({ settings, onSettingsChange }: Readonly<BehaviorTab
 
       <Section title="🧘 Zen Mode (Deprecated)">
         <p className="text-sm text-muted-foreground">
-          Zen Mode has been deprecated in v0.20.0. Use the new{' '}
-          <strong>"Continue in..."</strong> handoff buttons on session cards to interact
-          with agents in their native tools (Terminal, VS Code). Zen Mode will be
-          fully removed in v0.21.0.
+          Zen Mode has been deprecated in v0.20.0. Use the new <strong>"Continue in..."</strong>{' '}
+          handoff buttons on session cards to interact with agents in their native tools (Terminal,
+          VS Code). Zen Mode will be fully removed in v0.21.0.
         </p>
       </Section>
 
