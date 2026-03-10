@@ -298,9 +298,7 @@ export function AgentChatWindow({
                 {agentName}
               </div>
               <div style={{ fontSize: 10, color: '#9ca3af' }}>
-                {isSending
-                  ? (activityDetail || 'Thinking…')
-                  : 'Online'}
+                {isSending ? activityDetail || 'Thinking…' : 'Online'}
               </div>
             </div>
 

@@ -8,10 +8,7 @@ import type { RoomBounds } from './World3DView'
 
 // ─── Types ──────────────────────────────────────────────────────
 
-export type BotAnimState =
-  | typeof IDLE_WANDERING
-  | 'sleeping'
-  | 'offline'
+export type BotAnimState = typeof IDLE_WANDERING | 'sleeping' | 'offline'
 
 export interface AnimState {
   phase: BotAnimState

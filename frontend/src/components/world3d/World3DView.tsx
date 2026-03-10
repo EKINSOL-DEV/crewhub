@@ -13,7 +13,11 @@ import { DragStatusIndicator } from './DragStatusIndicator'
 import { BotInfoPanel } from './BotInfoPanel'
 import { BotQuickActions } from './BotQuickActions'
 import { RoomInfoPanel } from './RoomInfoPanel'
-import { AddAgentModal, fetchRooms as fetchAgentRooms, fetchConnectionTypes } from '@/components/sessions/AddAgentModal'
+import {
+  AddAgentModal,
+  fetchRooms as fetchAgentRooms,
+  fetchConnectionTypes,
+} from '@/components/sessions/AddAgentModal'
 import { ContextInspector } from './ContextInspector'
 import { ProjectDocsPanel } from './ProjectDocsPanel'
 import { useRooms } from '@/hooks/useRooms'
@@ -213,7 +217,9 @@ function World3DViewInner({
   const [hqBoardOpen, setHqBoardOpen] = useState(false)
   const [tasksWindowOpen, setTasksWindowOpen] = useState(false)
   const [addAgentForRoom, setAddAgentForRoom] = useState<string | null>(null)
-  const [addAgentRooms, setAddAgentRooms] = useState<Array<{ id: string; name: string; icon: string | null }>>([])
+  const [addAgentRooms, setAddAgentRooms] = useState<
+    Array<{ id: string; name: string; icon: string | null }>
+  >([])
   const [addAgentConnTypes, setAddAgentConnTypes] = useState<Set<string>>(new Set())
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -395,7 +401,14 @@ function World3DViewInner({
       }
       return roomId === focusState.focusedRoomId
     })
-  }, [focusState.focusedRoomId, allSessions, getRoomForSession, rooms, debugRoomMap, agentRuntimesForPanel])
+  }, [
+    focusState.focusedRoomId,
+    allSessions,
+    getRoomForSession,
+    rooms,
+    debugRoomMap,
+    agentRuntimesForPanel,
+  ])
 
   const handleRoomPanelBotClick = useCallback(
     (session: CrewSession) => {

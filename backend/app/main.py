@@ -26,6 +26,7 @@ from app.routes import (
     discovery,
     display_names,
     gateway_status,
+    handoff,
     health,
     history,
     media,
@@ -362,6 +363,7 @@ app.include_router(health.router, tags=["health"])
 app.include_router(agents.router, prefix="/api/agents", tags=["agents"])
 app.include_router(agent_files.router, prefix="/api/agents", tags=["agent-files"])
 app.include_router(sessions.router, prefix="/api/sessions", tags=["sessions"])
+app.include_router(handoff.router, prefix="/api/handoff", tags=["handoff"])
 app.include_router(sse.router, prefix="/api", tags=["sse"])
 app.include_router(gateway_status.router, prefix="/api/gateway", tags=["gateway"])
 

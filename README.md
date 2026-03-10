@@ -108,6 +108,13 @@ Redesigned Kanban board with columns: To Do, In Progress, Review, Done, Blocked.
 
 Browse your documentation from inside CrewHub. Full folder tree, last-modified dates, fullscreen markdown viewer with auto-generated table of contents. Available in Zen Mode sidebar and mobile menu.
 
+### 🚀 Agent Handoff
+
+Hand off agent sessions to their native tools with one click. "Continue in..." dropdown on session cards auto-detects available targets:
+- **Terminal** (iTerm2, Warp, Terminal.app) with `claude --resume`
+- **VS Code** integrated terminal
+- **Copy command** to clipboard as universal fallback
+
 ### 📡 Real-Time Monitoring
 
 - **Cards view** with status filtering (Active, Idle, Working, Meeting, Supervising)

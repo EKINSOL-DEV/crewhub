@@ -517,7 +517,14 @@ export function MobileSettingsPanel({ open, onClose }: MobileSettingsPanelProps)
             flexShrink: 0,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--mobile-text, #f1f5f9)' }}>
+          <h2
+            style={{
+              margin: 0,
+              fontSize: 18,
+              fontWeight: 700,
+              color: 'var(--mobile-text, #f1f5f9)',
+            }}
+          >
             ⚙️ Settings
           </h2>
           <button

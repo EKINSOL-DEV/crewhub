@@ -21,7 +21,7 @@ import {
   getOverrideCount,
   type SessionConfigKey,
 } from '@/lib/sessionConfig'
-import { useToast } from '@/hooks/use-toast'
+// useToast removed — was only used for Zen Mode auto-launch toggle (deprecated v0.20.0)
 import { Section, CollapsibleSection } from './shared'
 import type { SessionsSettings } from '@/components/sessions/SettingsPanel'
 
@@ -324,11 +324,8 @@ function ThresholdsTimingSection({ config }: Readonly<{ config: Record<string, n
 export function BehaviorTab({ settings, onSettingsChange }: Readonly<BehaviorTabProps>) {
   const sessionConfig = useSessionConfig()
   const overrideCount = getOverrideCount()
-  const { toast } = useToast()
 
-  const [zenAutoLaunch, setZenAutoLaunch] = useState(
-    () => localStorage.getItem('crewhub-zen-auto-launch') === 'true'
-  )
+  // Zen Mode auto-launch removed in v0.20.0 (deprecated)
   const [micDevices, setMicDevices] = useState<MediaDeviceInfo[]>([])
   const [selectedMicId, setSelectedMicId] = useState<string>(
     () => localStorage.getItem(KEY_CREWHUB_MIC_DEVICE_ID) ?? ''
@@ -464,29 +461,12 @@ export function BehaviorTab({ settings, onSettingsChange }: Readonly<BehaviorTab
         </div>
       </Section>
 
-      <Section title="🧘 Zen Mode">
-        <div className={CLS_FLEX_ITEMS_CENTER_JUSTIFY_BETWEEN}>
-          <Label htmlFor="zen-auto-launch" className="flex flex-col gap-1">
-            <span className="text-sm">Launch in Zen Mode</span>
-            <span className="text-xs text-muted-foreground font-normal">
-              Open Zen Mode automatically on startup instead of 3D world
-            </span>
-          </Label>
-          <Switch
-            id="zen-auto-launch"
-            checked={zenAutoLaunch}
-            onCheckedChange={(checked) => {
-              setZenAutoLaunch(checked)
-              localStorage.setItem('crewhub-zen-auto-launch', String(checked))
-              toast({
-                title: checked ? 'Zen Mode Auto-Launch Enabled' : 'Zen Mode Auto-Launch Disabled',
-                description: checked
-                  ? 'App will open in Zen Mode on next load'
-                  : 'App will open in 3D world on next load',
-              })
-            }}
-          />
-        </div>
+      <Section title="🧘 Zen Mode (Deprecated)">
+        <p className="text-sm text-muted-foreground">
+          Zen Mode has been deprecated in v0.20.0. Use the new <strong>"Continue in..."</strong>{' '}
+          handoff buttons on session cards to interact with agents in their native tools (Terminal,
+          VS Code). Zen Mode will be fully removed in v0.21.0.
+        </p>
       </Section>
 
       {typeof navigator !== 'undefined' &&

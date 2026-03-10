@@ -869,7 +869,15 @@ export function AgentTopBar({
       name: string
       isActive: boolean
     }>
-  }, [pinnedKeys, sessions, getBotConfig, getRoomForSession, defaultRoomId, displayNames, isActivelyRunning])
+  }, [
+    pinnedKeys,
+    sessions,
+    getBotConfig,
+    getRoomForSession,
+    defaultRoomId,
+    displayNames,
+    isActivelyRunning,
+  ])
 
   // ─── Dropdown entries ──────────────────────────────────────────
 
@@ -947,7 +955,12 @@ export function AgentTopBar({
   // Hidden in first-person and bot-focus modes
   if (state.level === 'firstperson' || state.level === 'bot') return null
   // Hide when there are no sessions at all (no agents to show)
-  if (!bossSession && fixedAgents.length === 0 && recentSubagents.length === 0 && pinnedAgentData.length === 0)
+  if (
+    !bossSession &&
+    fixedAgents.length === 0 &&
+    recentSubagents.length === 0 &&
+    pinnedAgentData.length === 0
+  )
     return null
 
   return (

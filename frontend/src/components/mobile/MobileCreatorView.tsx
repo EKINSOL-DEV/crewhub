@@ -762,7 +762,9 @@ function PropGeneratorTab() {
                 </div>
               ))}
               {isGenerating && (
-                <div style={{ color: '#818cf8', animation: 'creator-blink 1s step-end infinite' }}>▍</div>
+                <div style={{ color: '#818cf8', animation: 'creator-blink 1s step-end infinite' }}>
+                  ▍
+                </div>
               )}
             </div>
           )}

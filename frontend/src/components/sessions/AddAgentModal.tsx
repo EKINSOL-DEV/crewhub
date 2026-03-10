@@ -72,7 +72,10 @@ async function createAgent(payload: {
 
 // ── Color preview sphere ─────────────────────────────────────────────
 
-export function ColorSphere({ color, size = 48 }: Readonly<{ color: string; readonly size?: number }>) {
+export function ColorSphere({
+  color,
+  size = 48,
+}: Readonly<{ color: string; readonly size?: number }>) {
   return (
     <div
       className="rounded-full shrink-0 shadow-lg"

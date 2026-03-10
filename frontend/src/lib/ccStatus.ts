@@ -18,7 +18,4 @@ export function isCCActive(status: string | undefined): boolean {
  * All CC statuses that should be considered displayable (non-terminal).
  * Used by session filtering to keep CC sessions visible.
  */
-export const DISPLAYABLE_CC_STATUSES = new Set<string>([
-  ...CC_ACTIVE_STATUSES,
-  ...CC_IDLE_STATUSES,
-])
+export const DISPLAYABLE_CC_STATUSES = new Set<string>([...CC_ACTIVE_STATUSES, ...CC_IDLE_STATUSES])

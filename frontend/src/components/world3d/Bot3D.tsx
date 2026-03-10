@@ -433,9 +433,8 @@ export const Bot3D = memo(function Bot3D({
         const distant = wanderWaypoints.filter(
           (wp) => Math.hypot(wp.x - currentGrid.x, wp.z - currentGrid.z) >= 4
         )
-        const target = distant.length > 0
-          ? distant[Math.floor(Math.random() * distant.length)]
-          : null
+        const target =
+          distant.length > 0 ? distant[Math.floor(Math.random() * distant.length)] : null
         if (target) {
           const rawPath = findPath(gridData.botWalkableMask, currentGrid, target)
           if (rawPath && rawPath.length > 2) {

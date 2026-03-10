@@ -10,6 +10,7 @@ import { DetailPanelShell } from './DetailPanelShell'
 import { SessionHistoryView } from '@/components/shared/SessionHistoryView'
 import { useSessionHistory } from '@/components/shared/sessionHistoryUtils'
 import { formatTimestamp, formatTokens, formatDuration } from '@/lib/formatters'
+import { HandoffButton } from '@/components/sessions/HandoffButton'
 
 interface ZenSessionDetailPanelProps {
   readonly session: CrewSession
@@ -35,6 +36,12 @@ export function ZenSessionDetailPanel({ session, onClose }: Readonly<ZenSessionD
           <>
             <span className="zen-sd-header-name">{displayName}</span>
             <span className="zen-sd-header-key">{session.key}</span>
+            <HandoffButton
+              sessionKey={session.key}
+              workingDir={session.projectPath}
+              size="sm"
+              className="mt-1"
+            />
           </>
         }
         tabs={[

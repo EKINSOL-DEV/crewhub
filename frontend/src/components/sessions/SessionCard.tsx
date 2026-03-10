@@ -20,6 +20,7 @@ import {
 import { cn } from '@/lib/utils'
 import { EditableSessionName } from './EditableSessionName'
 import { SourceBadge } from '@/components/ui/SourceBadge'
+import { HandoffButton } from './HandoffButton'
 
 interface SessionCardProps {
   readonly session: CrewSession
@@ -149,6 +150,7 @@ export const SessionCard = memo(function SessionCard({ session, onViewLogs }: Se
             <FileText className="h-3.5 w-3.5 mr-1.5" />
             Logs
           </Button>
+          <HandoffButton sessionKey={session.key} workingDir={session.projectPath} />
         </div>
       </CardContent>
     </Card>

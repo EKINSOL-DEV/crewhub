@@ -18,7 +18,7 @@ import {
 import { useSessionsStream } from './hooks/useSessionsStream'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { ThemeProvider } from './contexts/ThemeContext'
-import { ChatProvider, useChatContext } from './contexts/ChatContext'
+import { ChatProvider } from './contexts/ChatContext'
 import { RoomsProvider, useRoomsContext } from './contexts/RoomsContext'
 import { DemoProvider, DemoModeIndicator, useDemoMode } from './contexts/DemoContext'
 import { ZoneProvider } from './contexts/ZoneContext'
@@ -62,15 +62,7 @@ const CLS_TEXT_MUTED_FOREGROUND_MB_6 = 'text-muted-foreground mb-6'
 const CLS_TEXT_XL_FONT_SEMIBOLD_MB_2 = 'text-xl font-semibold mb-2'
 const KEY_CREWHUB_ONBOARDED = 'crewhub-onboarded'
 
-/** Open the standalone Zen Mode Tauri window (or focus it if already open). */
-async function openZenWindow() {
-  try {
-    const { invoke } = await import('@tauri-apps/api/core')
-    await invoke('open_zen_window')
-  } catch (err) {
-    console.warn('[CrewHub] openZenWindow failed:', err)
-  }
-}
+// openZenWindow removed in v0.20.0 (Zen Mode deprecated)
 
 // ── URL Parameter Detection ────────────────────────────────────
 function isZenModeUrl(): boolean {
@@ -231,7 +223,7 @@ function AppContent() {
   }, [])
 
   const { isDemoMode, demoSessions } = useDemoMode()
-  const { windows } = useChatContext()
+  // const { windows } = useChatContext() // Removed in v0.20.0 (was used for Zen Mode auto-launch)
   const { rooms, getRoomForSession } = useRoomsContext()
 
   // Desktop Activity Feed state
@@ -239,9 +231,6 @@ function AppContent() {
 
   // Zen Mode state
   const zenMode = useZenMode()
-
-  // Get the last active chat window for Zen Mode context
-  const lastActiveWindow = windows.length > 0 ? windows[windows.length - 1] : null
 
   // Get room name for the selected agent
   const zenRoomName = useMemo(() => {
@@ -252,44 +241,12 @@ function AppContent() {
     return room?.name
   }, [zenMode.selectedAgentId, getRoomForSession, rooms])
 
-  // Global keyboard listener for Zen Mode toggle (Ctrl+Shift+Z)
+  // Zen Mode keyboard shortcut (Ctrl+Shift+Z) — DEPRECATED in v0.20.0
+  // Auto-launch Zen Mode — DEPRECATED in v0.20.0
+  // Clear the auto-launch flag if it was previously set
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+Z to toggle Zen Mode
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'z') {
-        e.preventDefault()
-        e.stopPropagation()
-
-        if (zenMode.isActive) {
-          zenMode.exit()
-        } else if (lastActiveWindow) {
-          // If there's an active chat window, use its agent
-          zenMode.enter(
-            lastActiveWindow.sessionKey,
-            lastActiveWindow.agentName,
-            lastActiveWindow.agentIcon ?? undefined,
-            lastActiveWindow.agentColor ?? undefined
-          )
-        } else {
-          // Enter without a selected agent
-          zenMode.enter()
-        }
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [zenMode, lastActiveWindow])
-
-  // Auto-launch Zen Mode if setting is enabled (once on mount)
-  const zenAutoLaunchRef = useRef(false)
-  useEffect(() => {
-    if (zenAutoLaunchRef.current) return
-    if (localStorage.getItem('crewhub-zen-auto-launch') === 'true' && !zenMode.isActive) {
-      zenAutoLaunchRef.current = true
-      zenMode.enter()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    localStorage.removeItem('crewhub-zen-auto-launch')
+  }, [])
 
   // When demo mode is active, replace real sessions with demo data.
   // Demo sessions completely replace real ones so the 3D world looks
@@ -440,17 +397,7 @@ function AppContent() {
               <RefreshCw className={refreshClass} />
             </Button>
 
-            {/* Zen Window button — only in Tauri desktop */}
-            {!!window.__TAURI_INTERNALS__ && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={openZenWindow}
-                title="Open Zen Mode in separate window"
-              >
-                <span style={{ fontSize: '14px', lineHeight: 1 }}>🧘</span>
-              </Button>
-            )}
+            {/* Zen Window button removed in v0.20.0 (deprecated) */}
 
             <DesktopActivityFeedButton isOpen={activityFeed.isOpen} onClick={activityFeed.toggle} />
 

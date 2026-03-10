@@ -478,7 +478,16 @@ export function ProjectPicker({
               </div>
             )}
             {selectedFolderHasDocs && (
-              <div style={{ fontSize: 10, color: '#059669', marginTop: 3, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: '#059669',
+                  marginTop: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
                 <span>📝</span> docs/ folder detected — will be available in the docs browser
               </div>
             )}

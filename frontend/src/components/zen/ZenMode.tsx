@@ -738,6 +738,26 @@ export function ZenMode({
       aria-modal="true"
       aria-label="Zen Mode - Focused workspace"
     >
+      {/* Deprecation banner - v0.20.0 */}
+      <div
+        style={{
+          background: 'linear-gradient(90deg, #f59e0b22, #f59e0b11)',
+          borderBottom: '1px solid #f59e0b44',
+          padding: '8px 16px',
+          fontSize: '13px',
+          color: '#f59e0b',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+        }}
+      >
+        <span>⚠️</span>
+        <span>
+          Zen Mode is deprecated in v0.20.0. Use the new <strong>&quot;Continue in...&quot;</strong>{' '}
+          button on session cards to hand off to your terminal or VS Code.
+        </span>
+      </div>
+
       <ZenTopBar
         onExit={onExit}
         exitLabel={exitLabel}
@@ -783,6 +803,12 @@ export function ZenMode({
           renderPanel={renderPanel}
         />
       </main>
+
+      {/* Subtle zen mode indicator */}
+      <div className="zen-mode-indicator" aria-hidden="true">
+        <span>⬡</span>
+        <span>zen</span>
+      </div>
 
       <ZenStatusBar
         agentName={focusedAgentName}

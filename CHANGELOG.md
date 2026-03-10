@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-03-08
+
+### ✨ Major Features
+
+- **Agent Handoff** — New "Continue in..." buttons on session cards let you hand off agent sessions to their native tools. Supported targets:
+  - **Terminal** (iTerm2, Warp, Terminal.app) — Opens a new window with `claude --resume <session-id>`
+  - **VS Code Terminal** — Opens VS Code integrated terminal with resume command
+  - **Copy Command** — Copies the ready-to-paste resume command to clipboard (universal fallback)
+- **Auto-detection** of installed terminals and tools. Only available targets are shown.
+- **Backend handoff service** with AppleScript execution for macOS terminal handoff, session key resolution (claude:*, cc:*, agent:*), and clipboard fallback via pbcopy.
+- **Handoff API** — `GET /api/handoff/targets` and `POST /api/handoff/sessions/{key}` endpoints.
+
+### ⚠️ Deprecations
+
+- **Zen Mode is deprecated.** The full-screen agent interaction UI is replaced by native tool handoff.
+  - Removed Zen Mode button from 3D world ActionBar
+  - Removed auto-launch toggle from Settings
+  - Removed Ctrl+Shift+Z keyboard shortcut
+  - Removed Zen Window button from Tauri desktop header
+  - Zen Mode still accessible via `?mode=zen` URL during transition
+  - Full removal planned for v0.21.0
+
 ## [0.14.0] - 2026-02-12
 
 ### ✨ Major Features
