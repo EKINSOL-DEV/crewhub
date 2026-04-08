@@ -4,8 +4,11 @@ import { ArrowUp, X } from 'lucide-react'
 import { useChatContext, MIN_SIZE } from '@/contexts/ChatContext'
 import { useStreamingChat } from '@/hooks/useStreamingChat'
 import { ChatMessageBubble } from './ChatMessageBubble'
+import { ConversationTreePanel } from './ConversationTreePanel'
+import { SessionTimeline } from './SessionTimeline'
 import { useVoiceRecorder, formatDuration } from '@/hooks/useVoiceRecorder'
 import { sseManager } from '@/lib/sseManager'
+import { PermissionPromptPanel } from './PermissionPromptPanel'
 
 const BACKGROUND_0_15S_COLOR_0_15S = 'background 0.15s, color 0.15s'
 const SYSTEM_UI_SANS_SERIF = 'system-ui, sans-serif'
@@ -65,6 +68,9 @@ export function AgentChatWindow({
   const [isResizing, setIsResizing] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [activityDetail, setActivityDetail] = useState<string | null>(null)
+  const [sessionStatus, setSessionStatus] = useState<string | null>(null)
+  const [showTreePanel, setShowTreePanel] = useState(false)
+  const [showTimeline, setShowTimeline] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -126,6 +132,7 @@ export function AgentChatWindow({
         const data = JSON.parse(event.data)
         if (data.source === 'claude_code' && data.sessionKey === sessionKey) {
           setActivityDetail(data.activity_detail || null)
+          setSessionStatus(data.status || null)
         }
       } catch {
         // ignore
@@ -310,6 +317,22 @@ export function AgentChatWindow({
                 </HeaderBtn>
               )}
               <HeaderBtn
+                onClick={() => setShowTreePanel((v) => !v)}
+                tooltip={showTreePanel ? 'Hide conversation tree' : 'Show conversation tree'}
+                active={showTreePanel}
+                activeColor="#3b82f6"
+              >
+                🌳
+              </HeaderBtn>
+              <HeaderBtn
+                onClick={() => setShowTimeline((v) => !v)}
+                tooltip={showTimeline ? 'Hide timeline' : 'Show timeline'}
+                active={showTimeline}
+                activeColor="#f59e0b"
+              >
+                📊
+              </HeaderBtn>
+              <HeaderBtn
                 onClick={() => toggleInternals(sessionKey)}
                 tooltip={showInternals ? 'Hide thinking & tools' : 'Show thinking & tools'}
                 active={showInternals}
@@ -333,6 +356,42 @@ export function AgentChatWindow({
               background: `linear-gradient(90deg, ${accentColor}00, ${accentColor}, ${accentColor}00)`,
             }}
           />
+
+          {/* ── Timeline ── */}
+          {showTimeline && (
+            <SessionTimeline
+              messages={messages}
+              onEventClick={(id) => {
+                const el = document.getElementById(`msg-${id}`)
+                el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              }}
+            />
+          )}
+
+          {/* ── Main content area (tree + messages) ── */}
+          <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+            {/* Conversation tree panel */}
+            {showTreePanel && (
+              <div style={{ width: 200, flexShrink: 0, overflow: 'hidden' }}>
+                <ConversationTreePanel
+                  messages={messages}
+                  onMessageClick={(id) => {
+                    const el = document.getElementById(`msg-${id}`)
+                    el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }}
+                />
+              </div>
+            )}
+
+          {/* ── Permission prompt ── */}
+          {sessionStatus === 'waiting_permission' && (
+            <PermissionPromptPanel
+              sessionKey={sessionKey}
+              toolName={activityDetail?.split(': ')[0] ?? undefined}
+              toolDetail={activityDetail ?? undefined}
+              isManaged={sessionKey.startsWith('cc:')}
+            />
+          )}
 
           {/* ── Messages ── */}
           <div
@@ -388,14 +447,15 @@ export function AgentChatWindow({
             )}
 
             {messages.map((msg) => (
-              <ChatMessageBubble
-                key={msg.id}
-                msg={msg}
-                variant="float"
-                accentColor={accentColor}
-                showThinking={showInternals}
-                showToolDetails={showInternals}
-              />
+              <div key={msg.id} id={`msg-${msg.id}`}>
+                <ChatMessageBubble
+                  msg={msg}
+                  variant="float"
+                  accentColor={accentColor}
+                  showThinking={showInternals}
+                  showToolDetails={showInternals}
+                />
+              </div>
             ))}
 
             {isSending && (
@@ -486,6 +546,7 @@ export function AgentChatWindow({
 
             <div ref={messagesEndRef} />
           </div>
+          </div>{/* end main content area (tree + messages) */}
 
           {/* ── Input ── */}
           <div

@@ -51,7 +51,11 @@ from app.routes.personas import router as personas_router
 from app.routes.project_agents import router as project_agents_router
 from app.routes.project_files import discover_router as project_discover_router
 from app.routes.prop_placement import router as prop_placement_router
+from app.routes.conflicts import router as conflicts_router
+from app.routes.notifications import router as notifications_router
+from app.routes.pipelines import router as pipelines_router
 from app.routes.self_routes import router as self_router
+from app.routes.templates import router as templates_router
 from app.routes.sse import broadcast
 from app.routes.standups import router as standups_router
 from app.routes.threads import router as threads_router
@@ -427,6 +431,12 @@ app.include_router(threads_router, prefix="/api/threads", tags=["threads"])
 
 # Project agents (agent templates per room)
 app.include_router(project_agents_router, prefix="/api/rooms", tags=["project-agents"])
+
+# Phase 8: Prompt Templates, Pipelines, Conflicts, Notifications
+app.include_router(templates_router)
+app.include_router(pipelines_router)
+app.include_router(conflicts_router)
+app.include_router(notifications_router)
 
 
 # ── Static frontend serving (service / production mode) ─────────────

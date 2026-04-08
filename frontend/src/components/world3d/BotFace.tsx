@@ -2,9 +2,10 @@ import { useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { BotExpression } from './utils/botVariants'
+import type { BotStatus } from './botConstants'
 
 interface BotFaceProps {
-  readonly status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
+  readonly status: BotStatus
   readonly expression: BotExpression
 }
 

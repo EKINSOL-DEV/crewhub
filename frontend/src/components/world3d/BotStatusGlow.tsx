@@ -3,7 +3,7 @@ import { useThrottledFrame } from './utils/useThrottledFrame'
 import * as THREE from 'three'
 
 interface BotStatusGlowProps {
-  readonly status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
+  readonly status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting' | 'error' | 'waiting_permission'
 }
 
 const STATUS_GLOW_COLOR: Record<string, string> = {
@@ -13,6 +13,8 @@ const STATUS_GLOW_COLOR: Record<string, string> = {
   meeting: '#0ea5e9', // sky blue
   sleeping: '#9ca3af', // gray
   offline: '#6b7280', // dark gray
+  error: '#ef4444', // red
+  waiting_permission: '#eab308', // yellow
 }
 
 /**
@@ -32,9 +34,9 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
 
     switch (status) {
       case 'active':
-        // Pulsing glow
-        mat.emissiveIntensity = 0.5 + Math.sin(t * 3) * 0.3
-        mat.opacity = 0.7 + Math.sin(t * 3) * 0.2
+        // Pulsing glow (energetic)
+        mat.emissiveIntensity = 0.5 + Math.sin(t * 4) * 0.3
+        mat.opacity = 0.7 + Math.sin(t * 4) * 0.2
         break
       case 'idle':
         // Steady glow
@@ -45,6 +47,16 @@ export function BotStatusGlow({ status }: BotStatusGlowProps) {
         // Slow pulse — watching over subagents
         mat.emissiveIntensity = 0.4 + Math.sin(t * 1.5) * 0.2
         mat.opacity = 0.6 + Math.sin(t * 1.5) * 0.15
+        break
+      case 'error':
+        // Fast pulse — warning effect
+        mat.emissiveIntensity = 0.8 + Math.sin(t * 6) * 0.4
+        mat.opacity = 0.8 + Math.sin(t * 6) * 0.2
+        break
+      case 'waiting_permission':
+        // Slow blink/flash effect
+        mat.emissiveIntensity = 0.3 + Math.sin(t * 2) * 0.5
+        mat.opacity = 0.5 + Math.sin(t * 2) * 0.3
         break
       case 'sleeping':
       case 'offline':

@@ -39,6 +39,7 @@ class AgentUpdate(BaseModel):
     source: Optional[str] = None
     project_path: Optional[str] = None
     permission_mode: Optional[str] = None
+    system_prompt: Optional[str] = None
 
 
 class AgentCreate(BaseModel):
@@ -54,6 +55,7 @@ class AgentCreate(BaseModel):
     source: Optional[str] = "openclaw"
     project_path: Optional[str] = None
     permission_mode: Optional[str] = "default"
+    system_prompt: Optional[str] = None
     initial_session_id: Optional[str] = None
 
 
@@ -124,6 +126,40 @@ async def update_agent(agent_id: str, patch: AgentUpdate):
 async def delete_agent(agent_id: str):
     """Remove an agent from the local registry."""
     return await agent_svc.delete_agent(agent_id)
+
+
+@router.post("/{agent_id}/clone")
+async def clone_agent(agent_id: str):
+    """Clone an agent's configuration, optionally forking the session."""
+    import time
+    import uuid
+    from app.db.database import get_db
+
+    async with get_db() as db:
+        async with db.execute("SELECT * FROM agents WHERE id = ?", (agent_id,)) as cursor:
+            source_agent = await cursor.fetchone()
+        if not source_agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+
+        new_id = f"{agent_id}-clone-{uuid.uuid4().hex[:6]}"
+        new_name = f"{source_agent['name']} (clone)"
+        now = int(time.time() * 1000)
+
+        await db.execute(
+            """INSERT INTO agents (id, name, icon, avatar_url, color, default_model,
+               default_room_id, sort_order, is_pinned, auto_spawn, bio, source,
+               project_path, permission_mode, agent_session_key, created_at, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (new_id, new_name, source_agent.get("icon"), source_agent.get("avatar_url"),
+             source_agent.get("color"), source_agent.get("default_model"),
+             source_agent.get("default_room_id"), 0, False, True,
+             source_agent.get("bio"), source_agent.get("source", "claude_code"),
+             source_agent.get("project_path"), source_agent.get("permission_mode", "default"),
+             f"cc:{new_id}", now, now),
+        )
+        await db.commit()
+
+    return {"success": True, "agent_id": new_id, "name": new_name}
 
 
 async def _read_agent_soul(agent_id: str) -> str:

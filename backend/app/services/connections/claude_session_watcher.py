@@ -13,10 +13,15 @@ from typing import Optional
 from .claude_transcript_parser import (
     AgentActivity,
     AssistantTextEvent,
+    BashProgressEvent,
     ClaudeTranscriptParser,
+    ErrorEvent,
+    HookProgressEvent,
     ParsedEvent,
     ProjectContextEvent,
     SubAgentProgressEvent,
+    SummaryEvent,
+    TokenUsageEvent,
     ToolResultEvent,
     ToolUseEvent,
     TurnCompleteEvent,
@@ -82,6 +87,23 @@ class WatchedSession:
     parent_session_uuid: Optional[str] = None  # UUID of parent session (for subagents)
     activity_detail: Optional[str] = None
     activity_tool_name: Optional[str] = None
+    # Feature 2: Session summary
+    summary: Optional[str] = None
+    # Feature 3: Error tracking
+    error_count: int = 0
+    last_error: Optional[str] = None
+    # Feature 5: Token usage
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    total_cache_read_tokens: int = 0
+    total_cache_creation_tokens: int = 0
+    # Feature 19: Git activity
+    git_commits: int = 0
+    git_pushes: int = 0
+    last_git_action: Optional[str] = None
+    # Feature 20: MCP server monitoring
+    mcp_usage: dict = field(default_factory=dict)
+    mcp_tool_ids: dict = field(default_factory=dict)
 
 
 class ClaudeSessionWatcher:
@@ -396,10 +418,36 @@ class ClaudeSessionWatcher:
                     ws.active_subagents[event.tool_use_id] = {
                         "description": event.input_data.get("description", ""),
                     }
+                # Feature 19: Git activity detection
+                if event.tool_name in ("Bash", "bash", "exec"):
+                    cmd = event.input_data.get("command", "")
+                    if "git commit" in cmd:
+                        ws.git_commits += 1
+                        ws.last_git_action = "commit"
+                    elif "git push" in cmd:
+                        ws.git_pushes += 1
+                        ws.last_git_action = "push"
+                    elif "git checkout" in cmd or "git switch" in cmd:
+                        ws.last_git_action = "branch switch"
+                # Feature 20: MCP tool tracking
+                if event.tool_name.startswith("mcp__"):
+                    parts = event.tool_name.split("__", 2)
+                    server = parts[1] if len(parts) > 1 else "unknown"
+                    if server not in ws.mcp_usage:
+                        ws.mcp_usage[server] = {"calls": 0, "errors": 0, "last_used": 0.0}
+                    ws.mcp_usage[server]["calls"] += 1
+                    ws.mcp_usage[server]["last_used"] = time.time()
+                    ws.mcp_tool_ids[event.tool_use_id] = server
             elif isinstance(event, ToolResultEvent):
                 ws.pending_tool_uses.discard(event.tool_use_id)
                 if event.tool_use_id in ws.active_subagents:
                     del ws.active_subagents[event.tool_use_id]
+                # Feature 20: MCP error tracking
+                if event.tool_use_id in ws.mcp_tool_ids:
+                    server = ws.mcp_tool_ids[event.tool_use_id]
+                    if "error" in event.content.lower():
+                        if server in ws.mcp_usage:
+                            ws.mcp_usage[server]["errors"] += 1
             elif isinstance(event, TurnCompleteEvent):
                 ws.pending_tool_uses.clear()
                 ws.has_pending_tools = False
@@ -416,6 +464,28 @@ class ClaudeSessionWatcher:
                 ws.project_name = event.project_name
                 if event.cwd:
                     ws.project_path = event.cwd
+            elif isinstance(event, BashProgressEvent):
+                # Feature 1: Live terminal output
+                output_last_line = event.output.rstrip().rsplit("\n", 1)[-1] if event.output else ""
+                ws.activity_detail = output_last_line[:80]
+                ws.activity_tool_name = "Bash"
+            elif isinstance(event, SummaryEvent):
+                # Feature 2: Session titles
+                ws.summary = event.summary
+            elif isinstance(event, ErrorEvent):
+                # Feature 3: Error tracking
+                ws.error_count += 1
+                ws.last_error = event.error_message
+            elif isinstance(event, TokenUsageEvent):
+                # Feature 5: Token usage accumulation
+                ws.total_input_tokens += event.input_tokens
+                ws.total_output_tokens += event.output_tokens
+                ws.total_cache_read_tokens += event.cache_read_tokens
+                ws.total_cache_creation_tokens += event.cache_creation_tokens
+            elif isinstance(event, HookProgressEvent):
+                # Feature 6: Hook visibility
+                ws.activity_detail = f"Running hook: {event.hook_name}"
+                ws.activity_tool_name = "Hook"
             elif isinstance(event, SubAgentProgressEvent):
                 pass
 
