@@ -416,12 +416,16 @@ async def get_chat_history(
         from app.services.cc_chat import _agent_sessions
         from app.services.connections.claude_code import ClaudeCodeConnection
 
-        cc_session_id = _agent_sessions.get(agent_id)
-        if not cc_session_id:
-            return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+        if session_key.startswith("claude:"):
+            # Discovered session — session_id is already in the key
+            claude_key = session_key
+        else:
+            # Fixed CC agent — look up the current session ID
+            cc_session_id = _agent_sessions.get(agent_id)
+            if not cc_session_id:
+                return {"messages": [], "hasMore": False, "oldestTimestamp": None}
+            claude_key = f"claude:{cc_session_id}"
 
-        # Use claude:{session_id} key that the watcher tracks
-        claude_key = f"claude:{cc_session_id}"
         manager = await get_connection_manager()
         cc_conn = next(
             (c for c in manager._connections.values() if isinstance(c, ClaudeCodeConnection) and c.is_connected()),
