@@ -26,7 +26,7 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
   const scrollRef = useRef<HTMLDivElement>(null)
   const prevCountRef = useRef(0)
 
-  // Bug 1 fix: only show loading spinner on the very first fetch
+  // Bug 1 fix: only show loading spinner on the very first fetch per session
   const isInitialLoad = useRef(true)
 
   // Bug 2 fix: track whether the user has manually scrolled up
@@ -35,10 +35,19 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
   // Debounce ref: avoid burst SSE events triggering many fetches
   const debouncedFetch = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Reset loading state when session changes
+  const prevSessionKey = useRef(sessionKey)
+  if (prevSessionKey.current !== sessionKey) {
+    prevSessionKey.current = sessionKey
+    isInitialLoad.current = true
+  }
+
   const fetchHistory = useCallback(async () => {
-    // Only set loading on the initial fetch — prevents flicker on SSE updates
-    if (isInitialLoad.current) {
+    // Only set loading=true on the initial fetch — prevents flicker on SSE updates
+    const isFirst = isInitialLoad.current
+    if (isFirst) {
       setLoading(true)
+      isInitialLoad.current = false
     }
     try {
       const activityEvents = await fetchActivityEntries(sessionKey, { limit: 20 })
@@ -46,8 +55,7 @@ export function ActivityLogStream({ sessionKey, onOpenFullLog }: ActivityLogStre
     } catch (error) {
       console.error('[ActivityLogStream] Failed to fetch activity:', error)
     } finally {
-      if (isInitialLoad.current) {
-        isInitialLoad.current = false
+      if (isFirst) {
         setLoading(false)
       }
     }
