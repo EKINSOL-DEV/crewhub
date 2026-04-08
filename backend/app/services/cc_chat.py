@@ -215,10 +215,31 @@ def _make_output_parser(queue: asyncio.Queue, agent_id: str | None = None, persi
         # Capture session_id from result event for future --resume
         elif event_type == "result":
             if data.get("is_error"):
-                error_text = data.get("error", "unknown error")
+                # Claude Code puts error details in "errors" (list) or "error" (string/dict)
+                errors = data.get("errors", [])
+                error_field = data.get("error", "")
+                if errors:
+                    error_text = "; ".join(str(e) for e in errors)
+                elif error_field:
+                    error_text = error_field if isinstance(error_field, str) else str(error_field)
+                else:
+                    error_text = data.get("subtype", "unknown error")
+                logger.error("Claude result error for agent=%s: %s", agent_id, error_text)
                 queue.put_nowait(f"[Error: {error_text}]")
+                # Clear stale session_id if the conversation was not found
+                if agent_id and any("No conversation found" in str(e) for e in errors):
+                    logger.info("Clearing stale session_id for agent %s", agent_id)
+                    _agent_sessions.pop(agent_id, None)
+                    try:
+                        loop = asyncio.get_event_loop()
+                        loop.call_soon_threadsafe(
+                            asyncio.ensure_future,
+                            _persist_agent_session(agent_id, ""),
+                        )
+                    except RuntimeError:
+                        pass
             sid = data.get("session_id")
-            if sid and agent_id:
+            if sid and agent_id and not data.get("is_error"):
                 _agent_sessions[agent_id] = sid
                 try:
                     loop = asyncio.get_event_loop()
