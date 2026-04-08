@@ -294,7 +294,21 @@ export function getMinionType(session: MinionSession): {
 export function getSessionDisplayName(session: MinionSession, customName?: string | null): string {
   // 1. Custom name from display names API
   if (customName) return customName
-  // 2. Human-readable label (e.g. "crewhub-fix-3d-view", "hallo-laurens")
+  // 2. For CC subagents with parent= labels, derive a name from activity or project
+  if (session.label?.startsWith('parent=')) {
+    // Try activity detail as a human-readable name (e.g. "Editing config.py")
+    if (session.activityDetail) return session.activityDetail
+    // Try project path basename
+    if (session.projectPath) {
+      const basename = session.projectPath.split('/').pop()
+      if (basename) return `Subagent (${basename})`
+    }
+    // Extract parent agent name for fallback
+    const parentKey = session.label.replace('parent=', '')
+    const parentId = parentKey.startsWith('cc:') ? parentKey.slice(3) : parentKey.split(':')[1] || ''
+    return `Subagent of ${parentId}`
+  }
+  // 2b. Human-readable label (e.g. "crewhub-fix-3d-view", "hallo-laurens")
   if (session.label) return session.label
   const key = session.key || ''
   // 3. Fixed agents (agent:*:main) — use agent ID as display name
