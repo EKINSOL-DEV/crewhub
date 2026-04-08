@@ -4,10 +4,11 @@ import { useFrame } from '@react-three/fiber'
 import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 import { getToonMaterialProps } from './utils/toonMaterials'
+import type { BotStatus } from './botConstants'
 
 interface BotBodyProps {
   readonly color: string
-  readonly status: 'active' | 'idle' | 'sleeping' | 'supervising' | 'offline' | 'meeting'
+  readonly status: BotStatus
   /** Mutable ref for walk animation phase; >0 when walking, 0 when stopped */
   readonly walkPhaseRef?: React.MutableRefObject<number>
 }

@@ -501,6 +501,77 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
     return jsonResponse([])
   }
 
+  // GET /api/templates
+  if (pathname === '/api/templates' && method === 'GET') {
+    console.log('[MockAPI] GET /api/templates → 200')
+    return jsonResponse({
+      templates: [
+        { id: 'tpl-1', name: 'Run tests and fix failures', template: 'Run all tests in the project. If any fail, analyze the failure and fix it. Then re-run to confirm.', variables: '[]', project_id: null, is_builtin: true, created_at: Date.now() - 86400000, updated_at: Date.now() - 86400000 },
+        { id: 'tpl-2', name: 'Review current branch', template: 'Review all changes on the current git branch. Check for bugs, security issues, and code style.', variables: '[]', project_id: null, is_builtin: true, created_at: Date.now() - 86400000, updated_at: Date.now() - 86400000 },
+        { id: 'tpl-3', name: 'Explain this file', template: 'Read and explain the purpose, structure, and key logic of {{file}}.', variables: '["file"]', project_id: null, is_builtin: true, created_at: Date.now() - 86400000, updated_at: Date.now() - 86400000 },
+      ],
+    })
+  }
+
+  // GET /api/pipelines
+  if (pathname === '/api/pipelines' && method === 'GET') {
+    console.log('[MockAPI] GET /api/pipelines → 200')
+    return jsonResponse({
+      pipelines: [
+        { id: 'pipe-1', name: 'Code → Review → Test', description: 'Write code, then review it, then run tests', steps_json: '[{"agent_id":"dev","prompt_template":"Implement the feature","timeout_seconds":300},{"agent_id":"reviewer","prompt_template":"Review the changes","timeout_seconds":300}]', status: 'draft', current_step: 0, created_at: Date.now() - 172800000, updated_at: Date.now() - 172800000 },
+      ],
+    })
+  }
+
+  // GET /api/pipelines/:id
+  if (/^\/api\/pipelines\/[\w-]+$/.exec(pathname) && method === 'GET') {
+    console.log('[MockAPI] GET /api/pipelines/:id → 200')
+    return jsonResponse({ id: pathname.split('/').pop(), name: 'Code → Review → Test', description: 'Write code, then review it, then run tests', steps_json: '[]', status: 'draft', current_step: 0, created_at: Date.now(), updated_at: Date.now() })
+  }
+
+  // GET /api/pipelines/:id/runs
+  if (/^\/api\/pipelines\/[\w-]+\/runs$/.exec(pathname) && method === 'GET') {
+    console.log('[MockAPI] GET /api/pipelines/:id/runs → 200')
+    return jsonResponse({ runs: [] })
+  }
+
+  // GET /api/conflicts
+  if (pathname === '/api/conflicts' && method === 'GET') {
+    console.log('[MockAPI] GET /api/conflicts → 200')
+    return jsonResponse({ edits: {} })
+  }
+
+  // GET /api/conflicts/:key
+  if (/^\/api\/conflicts\//.exec(pathname) && method === 'GET') {
+    console.log('[MockAPI] GET /api/conflicts/:key → 200')
+    return jsonResponse({ edits: {} })
+  }
+
+  // GET /api/notifications/rules
+  if (pathname === '/api/notifications/rules' && method === 'GET') {
+    console.log('[MockAPI] GET /api/notifications/rules → 200')
+    return jsonResponse({
+      rules: [
+        { id: 'rule-1', agent_id: null, project_id: null, rule_type: 'on_error', config_json: '{}', enabled: true, created_at: Date.now() - 86400000, updated_at: Date.now() - 86400000 },
+        { id: 'rule-2', agent_id: null, project_id: null, rule_type: 'on_permission_wait', config_json: '{}', enabled: true, created_at: Date.now() - 86400000, updated_at: Date.now() - 86400000 },
+      ],
+    })
+  }
+
+  // GET /api/chat/:key/info
+  if (/^\/api\/chat\/.*\/info$/.exec(pathname) && method === 'GET') {
+    const key = decodeURIComponent(pathname.split('/')[3] || '')
+    const agentId = key.startsWith('cc:') ? key.slice(3) : key.split(':')[1] || 'main'
+    console.log('[MockAPI] GET /api/chat/:key/info → 200')
+    return jsonResponse({ canChat: true, agentId, agentName: agentId.charAt(0).toUpperCase() + agentId.slice(1), sessionKey: key, source: 'openclaw' })
+  }
+
+  // GET /api/handoff/targets
+  if (pathname === '/api/handoff/targets' && method === 'GET') {
+    console.log('[MockAPI] GET /api/handoff/targets → 200')
+    return jsonResponse({ targets: [{ id: 'clipboard', name: 'Copy to Clipboard', icon: 'clipboard', available: true }] })
+  }
+
   // === MUTATIONS — persist some to localStorage, rest are no-op ===
 
   // PUT /api/settings/:key
@@ -674,6 +745,79 @@ export function handleMockRequest( // NOSONAR: complexity from legitimate mock r
   if (/^\/api\/backup/.exec(pathname) && method === 'POST') {
     console.log(`[MockAPI] ${method} ${pathname} → 200`)
     return okResponse()
+  }
+
+  // POST /api/templates
+  if (pathname === '/api/templates' && method === 'POST') {
+    console.log('[MockAPI] POST /api/templates → 200')
+    return jsonResponse({ id: 'tpl-new-' + Date.now(), success: true })
+  }
+
+  // PUT /api/templates/:id
+  if (/^\/api\/templates\/[\w-]+$/.exec(pathname) && method === 'PUT') {
+    console.log('[MockAPI] PUT /api/templates/:id → 200')
+    return jsonResponse({ success: true })
+  }
+
+  // DELETE /api/templates/:id
+  if (/^\/api\/templates\/[\w-]+$/.exec(pathname) && method === 'DELETE') {
+    console.log('[MockAPI] DELETE /api/templates/:id → 200')
+    return jsonResponse({ success: true })
+  }
+
+  // POST/PUT/DELETE /api/pipelines
+  if (/^\/api\/pipelines/.exec(pathname) && method !== 'GET') {
+    console.log(`[MockAPI] ${method} ${pathname} → 200`)
+    if (method === 'POST' && pathname === '/api/pipelines') {
+      return jsonResponse({ id: 'pipe-new-' + Date.now(), success: true })
+    }
+    if (/\/run$/.exec(pathname)) {
+      return jsonResponse({ run_id: 'run-' + Date.now(), status: 'running' })
+    }
+    return jsonResponse({ success: true })
+  }
+
+  // POST/PUT/DELETE /api/notifications/rules
+  if (/^\/api\/notifications\/rules/.exec(pathname) && method !== 'GET') {
+    console.log(`[MockAPI] ${method} ${pathname} → 200`)
+    if (method === 'POST') {
+      return jsonResponse({ id: 'rule-new-' + Date.now(), success: true })
+    }
+    return jsonResponse({ success: true })
+  }
+
+  // POST /api/chat/:key/kill
+  if (/^\/api\/chat\/.*\/kill$/.exec(pathname) && method === 'POST') {
+    console.log('[MockAPI] POST /api/chat/:key/kill → 200')
+    return jsonResponse({ success: true, message: 'Session terminated (demo)' })
+  }
+
+  // POST /api/agents/:id/clone
+  if (/^\/api\/agents\/[\w-]+\/clone$/.exec(pathname) && method === 'POST') {
+    const agentId = pathname.split('/')[3]
+    console.log(`[MockAPI] POST /api/agents/${agentId}/clone → 200`)
+    return jsonResponse({ success: true, agent_id: agentId + '-clone-' + Date.now().toString(36), name: agentId + ' (clone)' })
+  }
+
+  // POST /api/tasks/:id/assign
+  if (/^\/api\/tasks\/[\w-]+\/assign$/.exec(pathname) && method === 'POST') {
+    console.log('[MockAPI] POST /api/tasks/:id/assign → 200')
+    return jsonResponse({ success: true, message: 'Task assigned (demo)' })
+  }
+
+  // POST /api/chat/:key/stream — handle as non-streaming fallback in demo
+  if (/^\/api\/chat\/.*\/stream$/.exec(pathname) && method === 'POST') {
+    console.log('[MockAPI] POST /api/chat/:key/stream → 200')
+    return new Response(
+      'event: start\ndata: {}\n\nevent: delta\ndata: {"text":"This is a demo — I can\'t actually process messages, but in a real CrewHub setup I\'d be an AI agent working on your tasks! 🤖"}\n\nevent: done\ndata: {}\n\n',
+      { status: 200, headers: { 'Content-Type': 'text/event-stream' } }
+    )
+  }
+
+  // POST /api/chat/:key/permission
+  if (/^\/api\/chat\/.*\/permission$/.exec(pathname) && method === 'POST') {
+    console.log('[MockAPI] POST /api/chat/:key/permission → 200')
+    return jsonResponse({ success: true })
   }
 
   return null

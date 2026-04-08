@@ -117,6 +117,7 @@ class ClaudeProcessManager:
         project_path: Optional[str] = None,
         model: Optional[str] = None,
         permission_mode: str = "default",
+        system_prompt: str = "",
     ) -> str:
         """Spawn a new Claude Code CLI process.
 
@@ -136,6 +137,9 @@ class ClaudeProcessManager:
         resolved_mode = _resolve_permission_mode(permission_mode)
         if resolved_mode != "default":
             cmd.extend(["--permission-mode", resolved_mode])
+
+        if system_prompt:
+            cmd.extend(["--append-system-prompt", system_prompt])
 
         # For long messages, pipe via stdin to avoid shell arg length limits.
         # --print with no argument reads from stdin.
@@ -200,6 +204,7 @@ class ClaudeProcessManager:
         project_path: Optional[str] = None,
         model: Optional[str] = None,
         permission_mode: str = "bypassPermissions",
+        system_prompt: str = "",
     ) -> str:
         """Spawn a persistent interactive Claude session (stdin stays open)."""
         import time
@@ -219,6 +224,9 @@ class ClaudeProcessManager:
         resolved_mode = _resolve_permission_mode(permission_mode)
         if resolved_mode != "default":
             cmd.extend(["--permission-mode", resolved_mode])
+
+        if system_prompt:
+            cmd.extend(["--append-system-prompt", system_prompt])
 
         # NO --print flag → process stays alive waiting for stdin
         cp = ClaudeProcess(

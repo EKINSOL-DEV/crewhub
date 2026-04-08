@@ -794,3 +794,35 @@ async def get_chat_info(session_key: str):
         "sessionKey": session_key,
         "source": source,
     }
+
+
+@router.post("/api/chat/{session_key}/kill")
+async def kill_session(session_key: str):
+    """Kill a running Claude Code session."""
+    _validate_session_key(session_key)
+
+    agent_id = _get_agent_id(session_key)
+    source = await _get_agent_source(agent_id, session_key)
+
+    if source != "claude_code":
+        raise HTTPException(status_code=400, detail="Kill is only supported for Claude Code sessions")
+
+    manager = await get_connection_manager()
+    from app.services.connections.claude_code import ClaudeCodeConnection
+    cc_conn = next(
+        (c for c in manager._connections.values() if isinstance(c, ClaudeCodeConnection) and c.is_connected()),
+        None,
+    )
+    if not cc_conn:
+        raise HTTPException(status_code=503, detail="No Claude Code connection available")
+
+    success = await cc_conn.kill_session(session_key)
+    if success:
+        try:
+            from app.routes.sse import broadcast
+            await broadcast("session-updated", {"key": session_key, "status": "killed"})
+        except Exception:
+            pass
+        return {"success": True, "message": f"Session {session_key} terminated"}
+    else:
+        return {"success": False, "message": "No running process found for this session"}

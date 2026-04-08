@@ -40,6 +40,10 @@ function getStatusBadge(status: BotStatus): { label: string; color: string; bg: 
       return { label: 'In Meeting', color: '#0369a1', bg: '#e0f2fe' }
     case 'offline':
       return { label: 'Offline', color: '#991b1b', bg: '#fecaca' }
+    case 'error':
+      return { label: 'Error', color: '#dc2626', bg: '#fee2e2' }
+    case 'waiting_permission':
+      return { label: 'Waiting Permission', color: '#ca8a04', bg: '#fef9c3' }
   }
 }
 

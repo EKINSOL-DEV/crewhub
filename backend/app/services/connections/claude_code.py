@@ -23,7 +23,10 @@ from .claude_session_watcher import ClaudeSessionWatcher, _humanize_tool
 from .claude_transcript_parser import (
     AgentActivity,
     AssistantTextEvent,
+    BashProgressEvent,
     ClaudeTranscriptParser,
+    ErrorEvent,
+    HookProgressEvent,
     ParsedEvent,
     ProjectContextEvent,
     SubAgentProgressEvent,
@@ -165,6 +168,25 @@ class ClaudeCodeConnection(AgentConnection):
 
             last_ms = int(ws.last_event_wall_time * 1000) if ws.last_event_wall_time else now_ms
 
+            # Common metadata for all session types
+            _base_meta = {
+                "updatedAt": last_ms,
+                "projectPath": ws.project_path,
+                "activityDetail": ws.activity_detail,
+                "activityToolName": ws.activity_tool_name,
+                "summary": ws.summary,
+                "errorCount": ws.error_count,
+                "lastError": ws.last_error,
+                "totalInputTokens": ws.total_input_tokens,
+                "totalOutputTokens": ws.total_output_tokens,
+                "totalCacheReadTokens": ws.total_cache_read_tokens,
+                "totalCacheCreationTokens": ws.total_cache_creation_tokens,
+                "gitCommits": ws.git_commits,
+                "gitPushes": ws.git_pushes,
+                "lastGitAction": ws.last_git_action,
+                "mcpUsage": ws.mcp_usage,
+            }
+
             agent_info = claimed.get(sid)
             if agent_info:
                 # Emit as agent session (absorbs the discovered session)
@@ -180,11 +202,8 @@ class ClaudeCodeConnection(AgentConnection):
                         status=ws.last_activity.value,
                         last_activity=last_ms,
                         metadata={
-                            "updatedAt": last_ms,
+                            **_base_meta,
                             "kind": "subagent" if ws.is_subagent else "session",
-                            "projectPath": ws.project_path,
-                            "activityDetail": ws.activity_detail,
-                            "activityToolName": ws.activity_tool_name,
                         },
                     )
                 )
@@ -209,16 +228,16 @@ class ClaudeCodeConnection(AgentConnection):
                             status=ws.last_activity.value,
                             last_activity=last_ms,
                             metadata={
-                                "updatedAt": last_ms,
+                                **_base_meta,
                                 "kind": "subagent",
-                                "projectPath": ws.project_path,
-                                "activityDetail": ws.activity_detail,
-                                "activityToolName": ws.activity_tool_name,
                             },
                         )
                     )
                 else:
                     # Normal discovered session (not claimed by any agent)
+                    label = ws.summary or (
+                        f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"
+                    )
                     sessions.append(
                         SessionInfo(
                             key=f"claude:{sid}",
@@ -227,15 +246,12 @@ class ClaudeCodeConnection(AgentConnection):
                             connection_id=self.connection_id,
                             agent_id="main",
                             channel="cli",
-                            label=(f"{ws.project_name} ({sid[:6]})" if ws.project_name else f"Claude Code {sid[:8]}"),
+                            label=label,
                             status=ws.last_activity.value,
                             last_activity=last_ms,
                             metadata={
-                                "updatedAt": last_ms,
+                                **_base_meta,
                                 "kind": "subagent" if ws.is_subagent else "session",
-                                "projectPath": ws.project_path,
-                                "activityDetail": ws.activity_detail,
-                                "activityToolName": ws.activity_tool_name,
                             },
                         )
                     )
@@ -410,8 +426,32 @@ class ClaudeCodeConnection(AgentConnection):
             return None
 
     async def kill_session(self, session_key: str) -> bool:
-        """Kill a Claude Code session (Phase 2)."""
-        logger.warning("kill_session not yet implemented for Claude Code")
+        """Kill a Claude Code session."""
+        from ...services.cc_chat import _agent_sessions, _persistent_processes, _get_process_manager
+
+        # For agent sessions (cc:agent_id), kill the persistent process
+        if session_key.startswith("cc:"):
+            agent_id = session_key.removeprefix("cc:")
+            pm = _get_process_manager()
+            pid = _persistent_processes.get(agent_id)
+            if pid:
+                success = await pm.kill(pid)
+                if success:
+                    _persistent_processes.pop(agent_id, None)
+                    from ...services.cc_chat import _persistent_last_active
+                    _persistent_last_active.pop(agent_id, None)
+                    logger.info("Killed persistent process for agent %s", agent_id)
+                    return True
+
+        # For discovered sessions, try to find a matching process
+        if session_key.startswith("claude:"):
+            session_id = session_key.removeprefix("claude:")
+            pm = _get_process_manager()
+            for cp in pm.list_processes():
+                if cp.session_id == session_id and cp.status == "running":
+                    return await pm.kill(cp.process_id)
+
+        logger.warning("No running process found for session %s", session_key)
         return False
 
     async def health_check(self) -> bool:
@@ -447,6 +487,31 @@ class ClaudeCodeConnection(AgentConnection):
                 if isinstance(ev, ToolUseEvent):
                     event_data["toolName"] = ev.tool_name
                     event_data["detail"] = _humanize_tool(ev.tool_name, ev.input_data)
+                    # Conflict detection for file-editing tools
+                    if ev.tool_name in ("Edit", "Write") and isinstance(ev.input_data, dict):
+                        fp = ev.input_data.get("file_path")
+                        if fp:
+                            try:
+                                from ...services.conflict_detector import get_conflict_detector
+                                detector = get_conflict_detector()
+                                conflicts = detector.record_edit(fp, session_key)
+                                if conflicts:
+                                    asyncio.get_event_loop().create_task(
+                                        broadcast("file-conflict", {
+                                            "file_path": fp,
+                                            "session_key": session_key,
+                                            "conflicting_sessions": conflicts,
+                                        })
+                                    )
+                            except Exception:
+                                pass
+                elif isinstance(ev, BashProgressEvent):
+                    event_data["output"] = ev.output[-200:] if ev.output else ""
+                    event_data["command"] = ev.command
+                elif isinstance(ev, ErrorEvent):
+                    event_data["errorMessage"] = ev.error_message
+                elif isinstance(ev, HookProgressEvent):
+                    event_data["hookName"] = ev.hook_name
                 asyncio.get_event_loop().create_task(
                     broadcast("session-event", event_data)
                 )

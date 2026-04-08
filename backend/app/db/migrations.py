@@ -689,6 +689,80 @@ async def run_migrations(db) -> None:
     except Exception:
         pass  # Column already exists
 
+    # ========================================
+    # v22: System prompt for agents
+    # ========================================
+    try:
+        await db.execute("ALTER TABLE agents ADD COLUMN system_prompt TEXT DEFAULT ''")
+    except Exception:
+        pass  # Column already exists
+
+    # ========================================
+    # v23: Prompt Templates
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS prompt_templates (
+            id TEXT PRIMARY KEY,
+            project_id TEXT,
+            name TEXT NOT NULL,
+            template TEXT NOT NULL,
+            variables TEXT DEFAULT '[]',
+            is_builtin BOOLEAN DEFAULT FALSE,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL,
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        )
+    """)
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_prompt_templates_project ON prompt_templates(project_id)")
+
+    # ========================================
+    # v24: Agent Pipelines
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS pipelines (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT DEFAULT '',
+            steps_json TEXT NOT NULL DEFAULT '[]',
+            status TEXT DEFAULT 'draft',
+            current_step INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+    """)
+
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS pipeline_runs (
+            id TEXT PRIMARY KEY,
+            pipeline_id TEXT NOT NULL REFERENCES pipelines(id),
+            status TEXT DEFAULT 'pending',
+            current_step INTEGER DEFAULT 0,
+            results_json TEXT DEFAULT '[]',
+            started_at INTEGER,
+            completed_at INTEGER,
+            error_message TEXT,
+            created_at INTEGER NOT NULL
+        )
+    """)
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_pipeline_runs_pipeline ON pipeline_runs(pipeline_id)")
+
+    # ========================================
+    # v25: Notification Rules
+    # ========================================
+    await db.execute("""
+        CREATE TABLE IF NOT EXISTS notification_rules (
+            id TEXT PRIMARY KEY,
+            agent_id TEXT,
+            project_id TEXT,
+            rule_type TEXT NOT NULL,
+            config_json TEXT DEFAULT '{}',
+            enabled BOOLEAN DEFAULT TRUE,
+            created_at INTEGER NOT NULL,
+            updated_at INTEGER NOT NULL
+        )
+    """)
+    await db.execute("CREATE INDEX IF NOT EXISTS idx_notification_rules_agent ON notification_rules(agent_id)")
+
     # Advance schema version
     await db.execute(
         """

@@ -63,6 +63,7 @@ async def seed_default_data():
                 await _seed_demo_agents(db, now)
                 await _seed_demo_tasks_and_history(db, now)
                 await _seed_demo_threads(db, now)
+                await _seed_demo_new_features(db, now)
 
             # Create default settings
             default_settings = [
@@ -711,3 +712,142 @@ async def _seed_demo_threads(db, now: int):
         )
 
     await db.execute("UPDATE threads SET last_message_at = ? WHERE id = 'thread-standup-group'", (t4_last,))
+
+
+async def _seed_demo_new_features(db, now: int):
+    """Seed demo data for v0.21.0 features: templates, pipelines, notification rules."""
+
+    # Prompt templates
+    demo_templates = [
+        (
+            "tpl-demo-1",
+            None,
+            "Run tests and fix failures",
+            "Run all tests in the project. If any fail, analyze the failure and fix it. Then re-run to confirm.",
+            "[]",
+            True,
+            now,
+            now,
+        ),
+        (
+            "tpl-demo-2",
+            None,
+            "Review current branch",
+            "Review all changes on the current git branch. Check for bugs, security issues, and code style.",
+            "[]",
+            True,
+            now,
+            now,
+        ),
+        (
+            "tpl-demo-3",
+            None,
+            "Explain this file",
+            "Read and explain the purpose, structure, and key logic of {{file}}.",
+            '["file"]',
+            True,
+            now,
+            now,
+        ),
+        (
+            "tpl-demo-4",
+            "proj-crewhub",
+            "Deploy to staging",
+            "Build the project, run tests, then deploy to the staging environment. Report any errors.",
+            "[]",
+            False,
+            now,
+            now,
+        ),
+        (
+            "tpl-demo-5",
+            None,
+            "Refactor for readability",
+            "Refactor the code in {{file}} to improve readability. Keep functionality identical. Add comments only where logic is non-obvious.",
+            '["file"]',
+            False,
+            now,
+            now,
+        ),
+    ]
+
+    await db.executemany(
+        """INSERT OR IGNORE INTO prompt_templates
+           (id, project_id, name, template, variables, is_builtin, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        demo_templates,
+    )
+
+    # Pipelines
+    import json
+
+    demo_pipelines = [
+        (
+            "pipe-demo-1",
+            "Code → Review → Test",
+            "Agent writes code, reviewer checks it, then tests are run",
+            json.dumps(
+                [
+                    {"agent_id": "dev", "prompt_template": "Implement the requested feature", "timeout_seconds": 300},
+                    {
+                        "agent_id": "reviewer",
+                        "prompt_template": "Review the changes made by the developer",
+                        "timeout_seconds": 300,
+                    },
+                    {
+                        "agent_id": "dev",
+                        "prompt_template": "Run all tests and fix any failures",
+                        "timeout_seconds": 300,
+                    },
+                ]
+            ),
+            "draft",
+            0,
+            now,
+            now,
+        ),
+        (
+            "pipe-demo-2",
+            "Bug Fix Pipeline",
+            "Reproduce bug, fix it, verify with tests",
+            json.dumps(
+                [
+                    {"agent_id": "dev", "prompt_template": "Reproduce and diagnose the bug", "timeout_seconds": 300},
+                    {"agent_id": "dev", "prompt_template": "Implement the fix", "timeout_seconds": 300},
+                    {
+                        "agent_id": "reviewer",
+                        "prompt_template": "Review the fix for correctness",
+                        "timeout_seconds": 300,
+                    },
+                ]
+            ),
+            "draft",
+            0,
+            now,
+            now,
+        ),
+    ]
+
+    await db.executemany(
+        """INSERT OR IGNORE INTO pipelines
+           (id, name, description, steps_json, status, current_step, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        demo_pipelines,
+    )
+
+    # Notification rules
+    demo_rules = [
+        ("notif-demo-1", None, None, "on_error", "{}", True, now, now),
+        ("notif-demo-2", None, None, "on_permission_wait", "{}", True, now, now),
+        ("notif-demo-3", "dev", None, "on_completion", '{"notify_after_seconds": 0}', True, now, now),
+        ("notif-demo-4", None, "proj-crewhub", "on_idle", '{"idle_threshold_seconds": 300}', False, now, now),
+    ]
+
+    await db.executemany(
+        """INSERT OR IGNORE INTO notification_rules
+           (id, agent_id, project_id, rule_type, config_json, enabled, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        demo_rules,
+    )
+
+    logger.info("Seeded demo templates, pipelines, and notification rules")

@@ -100,7 +100,7 @@ async def get_agent_config(agent_id: str) -> dict:
     """Load project_path, permission_mode, default_model from DB."""
     async with get_db() as db:
         async with db.execute(
-            "SELECT project_path, permission_mode, default_model FROM agents WHERE id = ?",
+            "SELECT project_path, permission_mode, default_model, system_prompt FROM agents WHERE id = ?",
             (agent_id,),
         ) as cursor:
             row = await cursor.fetchone()
@@ -111,6 +111,7 @@ async def get_agent_config(agent_id: str) -> dict:
                 "project_path": row["project_path"] if "project_path" in keys else None,
                 "permission_mode": row["permission_mode"] if "permission_mode" in keys else "default",
                 "default_model": row["default_model"],
+                "system_prompt": row["system_prompt"] if "system_prompt" in keys else "",
             }
 
 
@@ -289,6 +290,8 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
     permission_mode = config.get("permission_mode", "default")
     model = config.get("default_model")
 
+    system_prompt = config.get("system_prompt", "")
+
     if not project_path:
         yield "[Error: No project_path configured for this agent]"
         return
@@ -305,6 +308,7 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
         project_path=project_path,
         model=model,
         permission_mode=permission_mode,
+        system_prompt=system_prompt,
     )
     pm.set_process_callback(process_id, on_output)
 
@@ -380,6 +384,7 @@ async def _get_or_spawn_persistent(agent_id: str) -> tuple:
         project_path=config.get("project_path"),
         model=config.get("default_model"),
         permission_mode=config.get("permission_mode", "bypassPermissions"),
+        system_prompt=config.get("system_prompt", ""),
     )
     _persistent_processes[agent_id] = pid
     _persistent_last_active[agent_id] = time.monotonic()

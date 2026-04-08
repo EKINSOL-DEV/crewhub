@@ -213,6 +213,77 @@ async def delete_task(task_id: str):
 # ========================================
 
 
+class TaskAssignBody(BaseModel):
+    """Request body for assigning a task to an agent session."""
+
+    agent_id: str
+    session_key: str
+
+
+@router.post(
+    "/{task_id}/assign",
+    responses={404: {"description": "Not found"}, 500: {"description": "Internal server error"}},
+)
+async def assign_task_to_agent(task_id: str, body: TaskAssignBody):
+    """Assign a task to an agent and send it as a prompt."""
+    try:
+        task = await task_service.get_task_row(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=MSG_TASK_NOT_FOUND)
+
+        agent = await task_service.get_agent_row(body.agent_id)
+        if not agent:
+            raise HTTPException(status_code=404, detail="Agent not found")
+
+        # Build prompt from task
+        prompt_parts = [f"**Task from Planner:** {task['title']}"]
+        if task.get("description"):
+            prompt_parts.append(f"\n{task['description']}")
+        prompt = "\n".join(prompt_parts)
+
+        # Send to agent via connection manager
+        manager = await get_connection_manager()
+        sent = False
+        for conn in manager.get_connections().values():
+            try:
+                await conn.send_message(
+                    session_key=body.session_key,
+                    message=prompt,
+                    timeout=90.0,
+                )
+                sent = True
+                break
+            except Exception as e:
+                logger.warning(f"Failed to send via connection: {e}")
+
+        # Update task status
+        await task_service.set_task_running(
+            task_id=task_id,
+            project_id=task["project_id"],
+            agent_id=body.agent_id,
+            agent_name=agent["name"],
+            session_key=body.session_key,
+            prompt_preview=prompt,
+        )
+
+        await broadcast(
+            "task-updated",
+            {
+                "task_id": task_id,
+                "project_id": task["project_id"],
+                "room_id": task.get("room_id"),
+                "changes": {"status": {"old": task["status"], "new": "in_progress"}},
+            },
+        )
+
+        return {"success": True, "sent": sent, "task_id": task_id, "session_key": body.session_key}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to assign task {task_id}: {e}")  # NOSONAR
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 class RunRequest(BaseModel):
     """Request body for running a task with an agent's main session."""
 

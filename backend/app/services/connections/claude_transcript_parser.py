@@ -98,6 +98,22 @@ class HookProgressEvent(ParsedEvent):
     hook_name: str = ""
 
 
+@dataclass
+class ErrorEvent(ParsedEvent):
+    event_type: str = "error"
+    error_message: str = ""
+    is_api_error: bool = False
+
+
+@dataclass
+class TokenUsageEvent(ParsedEvent):
+    event_type: str = "token_usage"
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cache_read_tokens: int = 0
+    cache_creation_tokens: int = 0
+
+
 def project_name_from_cwd(cwd: str) -> str:
     """Extract project name from a working directory path.
 
@@ -135,6 +151,8 @@ class ClaudeTranscriptParser:
             events.extend(self._parse_progress(record))
         elif record_type == "summary":
             events.extend(self._parse_summary(record))
+        elif record_type == "result":
+            events.extend(self._parse_result(record))
         elif record_type in ("file-history-snapshot", "queue-operation"):
             pass
 
@@ -175,6 +193,10 @@ class ClaudeTranscriptParser:
                         raw=record,
                     )
                 )
+        if record.get("isApiErrorMessage"):
+            error = record.get("error", {})
+            msg = error.get("message", str(error)) if isinstance(error, dict) else str(error)
+            events.append(ErrorEvent(error_message=msg, is_api_error=True, raw=record))
         return events
 
     def _parse_user(self, record: dict) -> list[ParsedEvent]:
@@ -211,6 +233,19 @@ class ClaudeTranscriptParser:
                     )
                 ]
         return []
+
+    def _parse_result(self, record: dict) -> list[ParsedEvent]:
+        events = []
+        usage = record.get("usage", {})
+        if usage:
+            events.append(TokenUsageEvent(
+                input_tokens=usage.get("input_tokens", 0),
+                output_tokens=usage.get("output_tokens", 0),
+                cache_read_tokens=usage.get("cache_read_input_tokens", 0),
+                cache_creation_tokens=usage.get("cache_creation_input_tokens", 0),
+                raw=record,
+            ))
+        return events
 
     def _parse_summary(self, record: dict) -> list[ParsedEvent]:
         return [SummaryEvent(summary=record.get("summary", ""), raw=record)]
