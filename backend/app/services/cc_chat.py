@@ -320,21 +320,37 @@ async def stream_cc_response(agent_id: str, message: str) -> AsyncGenerator[str,
     session_id = _agent_sessions.get(agent_id)
     pm = _get_process_manager()
 
-    queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
-    on_output = _make_output_parser(queue, agent_id=agent_id)
+    # Retry logic: if resume fails with stale session, retry without session_id
+    for attempt in range(2):
+        queue: asyncio.Queue[Optional[str]] = asyncio.Queue()
+        on_output = _make_output_parser(queue, agent_id=agent_id)
 
-    process_id = await pm.spawn_task(
-        message=message,
-        session_id=session_id,
-        project_path=project_path,
-        model=model,
-        permission_mode=permission_mode,
-        system_prompt=system_prompt,
-    )
-    pm.set_process_callback(process_id, on_output)
+        process_id = await pm.spawn_task(
+            message=message,
+            session_id=session_id if attempt == 0 else None,
+            project_path=project_path,
+            model=model,
+            permission_mode=permission_mode,
+            system_prompt=system_prompt,
+        )
+        pm.set_process_callback(process_id, on_output)
 
-    async for chunk in _stream_process(pm, process_id, queue):
-        yield chunk
+        chunks: list[str] = []
+        async for chunk in _stream_process(pm, process_id, queue):
+            chunks.append(chunk)
+
+        # Check if we got a stale session error — retry without session_id
+        full_response = "".join(chunks)
+        if attempt == 0 and session_id and "No conversation found" in full_response:
+            logger.info("Stale session_id for agent %s, retrying without resume", agent_id)
+            _agent_sessions.pop(agent_id, None)
+            await _persist_agent_session(agent_id, "")
+            continue
+
+        # Success or non-retryable error — yield all chunks
+        for chunk in chunks:
+            yield chunk
+        break
 
     # Capture session_id from the process result if not already captured
     cp = pm.get_process(process_id)
