@@ -199,6 +199,10 @@ interface ThinkingBlockProps {
 }
 
 export function ThinkingBlock({ content, zenMode }: ThinkingBlockProps) {
+  // Don't render empty thinking blocks (encrypted thinking)
+  if (!content || !content.trim()) {
+    return null
+  }
   const [isExpanded, setIsExpanded] = useState(false)
   const isLong = content.length > 500
 
@@ -537,6 +541,17 @@ function ZenMessageContent({
       {msg.contentSegments && msg.contentSegments.length > 0 ? (
         <>
           {msg.contentSegments.map((seg, i) => {
+            if (seg.type === 'thinking') {
+              if (!seg.thinking) {
+                return (
+                  <div key={`seg-${i}`} className="zen-thinking-indicator" style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>
+                    <span>&#x1f9e0;</span>
+                    <span>Extended thinking</span>
+                  </div>
+                )
+              }
+              return <ThinkingBlock key={`seg-${i}`} content={seg.thinking} zenMode />
+            }
             if (seg.type === 'tool' && seg.tool) {
               return (
                 <ToolCallBlock
@@ -686,6 +701,28 @@ function InlineMessageContent({
       {msg.contentSegments && msg.contentSegments.length > 0 ? (
         <>
           {msg.contentSegments.map((seg, i) => {
+            if (seg.type === 'thinking') {
+              if (!seg.thinking) {
+                return (
+                  <div
+                    key={`seg-${i}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '3px 8px',
+                      fontSize: 11,
+                      color: '#9ca3af',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    <span>&#x1f9e0;</span>
+                    <span>Extended thinking</span>
+                  </div>
+                )
+              }
+              return <ThinkingBlock key={`seg-${i}`} content={seg.thinking} />
+            }
             if (seg.type === 'tool' && seg.tool) {
               return (
                 <ToolCallBlock

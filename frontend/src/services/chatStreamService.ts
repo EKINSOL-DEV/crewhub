@@ -24,9 +24,15 @@ export interface ToolEventData {
   label?: string
 }
 
+export interface ThinkingEventData {
+  type: 'thinking'
+  has_text: boolean
+}
+
 export interface StreamCallbacks {
   onChunk: (text: string) => void
   onTool?: (tool: ToolEventData) => void
+  onThinking?: (data: ThinkingEventData) => void
   onDone: () => void
   onError: (error: string) => void
   onQuestion?: (questions: QuestionData[]) => void
@@ -77,6 +83,13 @@ function processEventBatch(eventBlocks: string[], callbacks: StreamCallbacks): B
         if (callbacks.onTool) callbacks.onTool(parsed)
       } catch {
         // Skip malformed tool data
+      }
+    } else if (eventType === 'thinking' && dataLine && !batchDone) {
+      try {
+        const parsed = JSON.parse(dataLine)
+        if (callbacks.onThinking) callbacks.onThinking(parsed)
+      } catch {
+        // Skip malformed thinking data
       }
     } else if (eventType === 'question' && dataLine && !batchDone) {
       try {
