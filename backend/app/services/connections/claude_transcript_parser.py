@@ -35,6 +35,7 @@ class AssistantTextEvent(ParsedEvent):
 class ThinkingEvent(ParsedEvent):
     event_type: str = "thinking"
     thinking: str = ""
+    signature: str = ""
 
 
 @dataclass
@@ -182,7 +183,11 @@ class ClaudeTranscriptParser:
             if block.get("type") == "text":
                 events.append(AssistantTextEvent(text=block["text"], model=model, raw=record))
             elif block.get("type") == "thinking":
-                events.append(ThinkingEvent(thinking=block.get("thinking", ""), raw=record))
+                events.append(ThinkingEvent(
+                    thinking=block.get("thinking", ""),
+                    signature=block.get("signature", ""),
+                    raw=record,
+                ))
             elif block.get("type") == "tool_use":
                 events.append(
                     ToolUseEvent(

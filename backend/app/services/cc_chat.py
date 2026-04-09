@@ -168,6 +168,10 @@ def _make_output_parser(queue: asyncio.Queue, agent_id: str | None = None, persi
                                 label = _tool_label(tool_name, tool_input)
                                 marker = json.dumps({"name": tool_name, "status": "called", "label": label} if label else {"name": tool_name, "status": "called"})
                                 queue.put_nowait(f"\n__TOOL__{marker}__TOOL__\n")
+                        elif block.get("type") == "thinking":
+                            has_text = bool(block.get("thinking", "").strip())
+                            marker = json.dumps({"type": "thinking", "has_text": has_text})
+                            queue.put_nowait(f"\n__THINKING__{marker}__THINKING__\n")
             elif isinstance(content, str) and content:
                 queue.put_nowait(content)
 

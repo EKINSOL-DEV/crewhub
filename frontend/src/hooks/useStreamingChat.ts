@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { streamMessage, type QuestionData, type ToolEventData } from '@/services/chatStreamService'
+import { streamMessage, type QuestionData, type ToolEventData, type ThinkingEventData } from '@/services/chatStreamService'
 import { API_BASE } from '@/lib/api'
 import { sseManager } from '@/lib/sseManager'
 
@@ -19,9 +19,11 @@ export interface ToolCallData {
 }
 
 export interface ContentSegment {
-  type: 'text' | 'tool'
+  type: 'text' | 'tool' | 'thinking'
   text?: string
   tool?: ToolCallData
+  thinking?: string
+  hasSignature?: boolean
 }
 
 export interface ChatMessageData {
@@ -274,6 +276,21 @@ export function useStreamingChat(
                     contentSegments: segments,
                     isStreaming: true,
                   }
+                : m
+            )
+          )
+        },
+        onThinking: (_data: ThinkingEventData) => {
+          const id = streamingIdRef.current
+          if (!id) return
+          segmentsRef.current.push({ type: 'thinking', hasSignature: true })
+          // Immediate update
+          const segments = segmentsRef.current.map((s) => ({ ...s }))
+          const content = pendingContentRef.current
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === id
+                ? { ...m, content, contentSegments: segments, isStreaming: true }
                 : m
             )
           )

@@ -211,8 +211,17 @@ def _extract_content_parts(raw_content: object, raw: bool) -> tuple[list[str], l
         if btype == "text" and block.get("text"):
             content_parts.append(block["text"])
             segments.append({"type": "text", "text": block["text"]})
-        elif btype == "thinking" and block.get("thinking"):
-            thinking_blocks.append(block["thinking"])
+        elif btype == "thinking":
+            thinking_text = block.get("thinking", "")
+            has_signature = bool(block.get("signature", ""))
+            if thinking_text:
+                thinking_blocks.append(thinking_text)
+            # Always add to segments so position is preserved
+            segments.append({
+                "type": "thinking",
+                "thinking": thinking_text,
+                "hasSignature": has_signature,
+            })
         elif btype == "tool_use":
             tool_name = block.get("name", "unknown")
             tool_input = block.get("input", {})
@@ -658,6 +667,16 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
                                     yield f"event: tool\ndata: {part}\n\n"
                                 elif part:
                                     yield f"event: delta\ndata: {json.dumps({'text': part})}\n\n"
+                        elif "__THINKING__" in chunk:
+                            parts = chunk.split("__THINKING__")
+                            for i, part in enumerate(parts):
+                                part = part.strip()
+                                if not part:
+                                    continue
+                                if i % 2 == 1:
+                                    yield f"event: thinking\ndata: {part}\n\n"
+                                elif part:
+                                    yield f"event: delta\ndata: {json.dumps({'text': part})}\n\n"
                         else:
                             yield f"event: delta\ndata: {json.dumps({'text': chunk})}\n\n"
                     yield "event: done\ndata: {}\n\n"
@@ -708,6 +727,16 @@ async def stream_chat_message(session_key: str, body: SendMessageBody):
                                 continue
                             if i % 2 == 1:
                                 yield f"event: tool\ndata: {part}\n\n"
+                            elif part:
+                                yield f"event: delta\ndata: {json.dumps({'text': part})}\n\n"
+                    elif "__THINKING__" in chunk:
+                        parts = chunk.split("__THINKING__")
+                        for i, part in enumerate(parts):
+                            part = part.strip()
+                            if not part:
+                                continue
+                            if i % 2 == 1:
+                                yield f"event: thinking\ndata: {part}\n\n"
                             elif part:
                                 yield f"event: delta\ndata: {json.dumps({'text': part})}\n\n"
                     else:
