@@ -336,6 +336,11 @@ Set the Gateway URL to reach your host:
 
 ```bash
 # Production (Docker)
+
+> **CrewHub v2** — a ground-up Tauri v2 rebuild focused on Claude Code — lives at [EKINSOL-DEV/crewhub2](https://github.com/EKINSOL-DEV/crewhub2).
+> **This repository (v1) remains the OpenClaw build** and stays available for OpenClaw users.
+
+
 make prod-up       # Start production containers
 make prod-down     # Stop production
 make prod-logs     # View logs
